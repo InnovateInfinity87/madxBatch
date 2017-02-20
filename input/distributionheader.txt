@@ -1,0 +1,6 @@
+@ NAME             %09s "TRACKTEST"
+@ TYPE             %04s "USER"
+@ TITLE            %08s "TI2 line"
+@ ORIGIN           %22s "MAD-X 5.01.00 Linux 64"
+@ DATE             %08s "16/12/13"
+@ TIME             %08s "15.28.02"

@@ -1,0 +1,19 @@
+!---|----1----|----2----|----3----|----4----|----5----|----6----|----7----|----8
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+! Beam characteristics for the CNGS beam at extraction
+! r.m.s. momentum spread is given
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+Beam, particle = proton, pc = 400.0,exn=12.0e-6*4.0, eyn=7.0E-6*4.0,
+sige=0.4e-3, NPART=2E10, BUNCHED;
+
+Z:=1;
+A:=1;
+TBUNCH:=0.5e-9;
+DPP:=BEAM->SIGE*(BEAM->ENERGY/BEAM->PC)^2;
+
+value, dpp;
+return;

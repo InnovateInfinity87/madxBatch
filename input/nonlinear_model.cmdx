@@ -1,0 +1,368 @@
+!--------------------------------------------------------------------------
+! SPS non-linear model
+! MAD-X file for SPS optics calculations
+! version by G. Arduini, A. Faus-Golfe and F. Zimmermann
+! fixed bug found by R. Tomas in the definition of SR5b (20/2/2006)
+! Dipoles in LSS6 are no more displaced and included dot in the sequence names (20/2/2007)
+! Corrected bug by changing the "." in the patterns to "\." (2/3/2011)
+!--------------------------------------------------------------------------
+!option, echo;
+!save, sequence=SPS, file=SPS.save;
+
+
+
+ON_b3:=1.0; //switches on(1.0)/off(0.0) sextupolar component in main bends
+ON_b5:=1.0; //switches on(1.0)/off(0.0) decapolar component in main bends
+ON_b4:=1.0; //switches on(1.0)/off(0.0) octupolar component in main quads
+ON_bendali:=1.0; //switches on(1.0)/off(0.0) bend displacement due to sagitta
+ON_misalign:=1.0; //switches on(1.0)/off(0.0) volountary displacements
+
+
+PRINTMIS:=1.0; // if PRINTMIS=1.0 then misalignments are printed
+
+b3a:=8.313142398E-4;
+b3b:=-2.7088286e-3;
+b4f:=0.389e-1;
+b4fa:=0.389e-1;
+b4d:=-0.844e-1;
+b4da:=-0.844e-1;
+b5a:=-8.610; //23/08/02 Niida 
+b5b:=-6.108; //23/08/02 Niida 
+
+
+
+
+
+RADIUS:=MBA->L/2.0/SIN(kMBA/2.0);
+LMBSB:=RADIUS*kMBA;
+SAGITTA:=RADIUS*(1-COS(kMBA/2.0))*ON_bendali;
+BENDDISPL:=4.8e-3*ON_bendali;
+LQM:=QD->L;    ! Could also have been QF->L
+LQMA:=QDA->L;
+
+
+
+LMBSB = LMBSB-2E-5; ! Modification because of numerical inaccuracies
+
+
+
+QCUT:=2;
+BCUT:=2;
+
+!!!!!!!VOLOUNTARY MISALIGNMENTS!!!!!!!
+
+mbb21530Hentry:=0.0*ON_misalign;
+mbb21530Hexit:=0.005*ON_misalign;
+mbb21550Hentry:=0.005*ON_misalign;
+mbb21550Hexit:=0.01*ON_misalign;
+mba21570Hentry:=0.01*ON_misalign;
+mba21570Hexit:=0.011*ON_misalign;
+mba21590Hentry:=0.011*ON_misalign;
+mba21590Hexit:=0.011*ON_misalign;
+qda11710Hentry:=-0.0048*ON_misalign;
+qda11710Hexit:=-0.0048*ON_misalign;
+qda11710Ventry:=-0.005*ON_misalign;
+qda11710Vexit:=-0.005*ON_misalign;
+qfa11810Hentry:=-0.00297*ON_misalign;
+qfa11810Hexit:=-0.00297*ON_misalign;
+qfa11810Ventry:=-0.01649*ON_misalign;
+qfa11810Vexit:=-0.01649*ON_misalign;
+qda11910Hentry:=-0.0048*ON_misalign;
+qda11910Hexit:=-0.0048*ON_misalign;
+qda11910Ventry:=-0.005*ON_misalign;
+qda11910Vexit:=-0.005*ON_misalign;
+
+!!!!!!!!!!!!!MAIN BENDS!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+             HMBAU:SBEND, L:=LMBSB/2.0, ANGLE:=kMBA/2.0, E1:=kMBA/2.0;
+             HMBAD:SBEND, L:=LMBSB/2.0, ANGLE:=kMBA/2.0, E2:=kMBA/2.0;
+             HMBBU:SBEND, L:=LMBSB/2.0, ANGLE:=kMBB/2.0, E1:=kMBB/2.0;
+             HMBBD:SBEND, L:=LMBSB/2.0, ANGLE:=kMBB/2.0, E2:=kMBB/2.0;
+             HMBAU21570:SBEND, L:=LMBSB/2.0, ANGLE:=kMBA/2.0, E1:=kMBA/2.0;
+             HMBAU21590:SBEND, L:=LMBSB/2.0, ANGLE:=kMBA/2.0, E1:=kMBA/2.0;
+             HMBAD21570:SBEND, L:=LMBSB/2.0, ANGLE:=kMBA/2.0, E2:=kMBA/2.0;
+             HMBAD21590:SBEND, L:=LMBSB/2.0, ANGLE:=kMBA/2.0, E2:=kMBA/2.0;
+             HMBBU21530:SBEND, L:=LMBSB/2.0, ANGLE:=kMBB/2.0, E1:=kMBB/2.0;
+             HMBBU21550:SBEND, L:=LMBSB/2.0, ANGLE:=kMBB/2.0, E1:=kMBB/2.0;
+             HMBBD21530:SBEND, L:=LMBSB/2.0, ANGLE:=kMBB/2.0, E2:=kMBB/2.0;
+             HMBBD21550:SBEND, L:=LMBSB/2.0, ANGLE:=kMBB/2.0, E2:=kMBB/2.0;
+
+
+SR3a:multipole, knl:={0,0,ON_b3*(b3a)};
+SR3a21570:multipole, knl:={0,0,ON_b3*(b3a)};
+SR3a21590:multipole, knl:={0,0,ON_b3*(b3a)};
+SR3b:multipole, knl:={0,0,ON_b3*(b3b)};
+SR3b21530:multipole, knl:={0,0,ON_b3*(b3b)};
+SR3b21550:multipole, knl:={0,0,ON_b3*(b3b)};
+SR5a:multipole, knl:={0,0,0,0,ON_b5*(b5a)};
+SR5a21570:multipole, knl:={0,0,0,0,ON_b5*(b5a)};
+SR5a21590:multipole, knl:={0,0,0,0,ON_b5*(b5a)};
+SR5b:multipole, knl:={0,0,0,0,ON_b5*(b5b)};
+SR5b21530:multipole, knl:={0,0,0,0,ON_b5*(b5b)};
+SR5b21550:multipole, knl:={0,0,0,0,ON_b5*(b5b)};
+
+value, LMBSB;
+value, RADIUS;
+value, SAGITTA;
+value, BENDDISPL;
+value, LQM;
+value, LQMA;
+
+
+
+seqedit, sequence=sps;
+
+select, flag=seqedit, pattern=MBA\.21570;
+install, element=HMBAU21570, at:=-LMBSB/BCUT/2.0, from=selected;
+install, element=SR3a21570, at:=0.0, from=selected;
+install, element=SR5a21570, at:=0.0, from=selected;
+install, element=HMBAD21570, at:=LMBSB/BCUT/2.0, from=selected;
+flatten;
+remove, element=selected;
+select, flag=seqedit, clear = true;
+
+
+select, flag=seqedit, pattern=MBA\.21590;
+install, element=HMBAU21590, at:=-LMBSB/BCUT/2.0, from=selected;
+install, element=SR3a21590, at:=0.0, from=selected;
+install, element=SR5a21590, at:=0.0, from=selected;
+install, element=HMBAD21590, at:=LMBSB/BCUT/2.0, from=selected;
+flatten;
+remove, element=selected;
+select, flag=seqedit, clear = true;
+
+
+select, flag=seqedit, pattern=MBB\.21530;
+install, element=HMBBU21530, at:=-LMBSB/BCUT/2.0, from=selected;
+install, element=SR3b21530, at:=0.0, from=selected;
+install, element=SR5b21530, at:=0.0, from=selected;
+install, element=HMBBD21530, at:=LMBSB/BCUT/2.0, from=selected;
+flatten;
+remove, element=selected;
+select, flag=seqedit, clear = true;
+
+
+select, flag=seqedit, pattern=MBB\.21550;
+install, element=HMBBU21550, at:=-LMBSB/BCUT/2.0, from=selected;
+install, element=SR3b21550, at:=0.0, from=selected;
+install, element=SR5b21550, at:=0.0, from=selected;
+install, element=HMBBD21550, at:=LMBSB/BCUT/2.0, from=selected;
+flatten;
+remove, element=selected;
+select, flag=seqedit, clear = true;
+
+
+select, flag=seqedit, class=MBA;
+install, element=HMBAU, at:=-LMBSB/BCUT/2.0, from=selected;
+install, element=SR3a, at:=0.0, from=selected;
+install, element=SR5a, at:=0.0, from=selected;
+install, element=HMBAD, at:=LMBSB/BCUT/2.0, from=selected;
+flatten;
+remove, element=selected;
+select, flag=seqedit, clear = true;
+
+
+select, flag=seqedit, class=MBB;
+install, element=HMBBU, at:=-LMBSB/BCUT/2.0, from=selected;
+install, element=SR3b, at:=0.0, from=selected;
+install, element=SR5b, at:=0.0, from=selected;
+install, element=HMBBD, at:=LMBSB/BCUT/2.0, from=selected;
+flatten;
+remove, element=selected;
+select, flag=seqedit, clear = true;
+ENDEDIT;
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!save, sequence=SPS, file=SPSnew.save;
+
+
+
+
+
+
+!!!!!!!!!!!!!MAIN QUADS!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+HQF1:quadrupole, L:=LQM/QCUT, k1:=kQF1;
+HQF1A:quadrupole, L:=LQMA/QCUT, k1:=kQF1A;
+HQF2:quadrupole, L:=LQM/QCUT, k1:=kQF2;
+HQF2A:quadrupole, L:=LQMA/QCUT, k1:=kQF2A;
+HQD:quadrupole, L:=LQM/QCUT, k1:=kQD;
+HQDA:quadrupole, L:=LQMA/QCUT, k1:=kQDA;
+
+
+HQDA11710:quadrupole, L:=LQMA/QCUT, k1:=kQDA;
+HQFA11810:quadrupole, L:=LQMA/QCUT, k1:=kQF2A;
+HQDA11910:quadrupole, L:=LQMA/QCUT, k1:=kQDA;
+
+SR4da11710:multipole, knl:={0,0,0,ON_b4*(b4da)};
+SR4fa11810:multipole, knl:={0,0,0,ON_b4*(b4fa)};
+SR4da11910:multipole, knl:={0,0,0,ON_b4*(b4da)};
+
+SR4f:multipole, knl:={0,0,0,ON_b4*(b4f)};
+SR4fa:multipole, knl:={0,0,0,ON_b4*(b4fa)};
+SR4d:multipole, knl:={0,0,0,ON_b4*(b4d)};
+SR4da:multipole, knl:={0,0,0,ON_b4*(b4da)};
+
+seqedit, sequence=sps;
+
+
+select, flag=seqedit, pattern=QDA\.11710;
+install, element=SR4da11710, at:=0.0, from=selected;
+flatten;
+remove, element=selected;
+install, element=HQDA11710, at:=-LQMA/QCUT/2.0, from=SR4da11710;
+install, element=HQDA11710, at:=LQMA/QCUT/2.0, from=SR4da11710;
+select, flag=seqedit, clear = true;
+
+select, flag=seqedit, pattern=QFA\.11810;
+install, element=SR4fa11810, at:=0.0, from=selected;
+flatten;
+remove, element=selected;
+install, element=HQFA11810, at:=-LQMA/QCUT/2.0, from=SR4fa11810;
+install, element=HQFA11810, at:=LQMA/QCUT/2.0, from=SR4fa11810;
+select, flag=seqedit, clear = true;
+
+select, flag=seqedit, pattern=QDA\.11910;
+install, element=SR4da11910, at:=0.0, from=selected;
+flatten;
+remove, element=selected;
+install, element=HQDA11910, at:=-LQMA/QCUT/2.0, from=SR4da11910;
+install, element=HQDA11910, at:=LQMA/QCUT/2.0, from=SR4da11910;
+select, flag=seqedit, clear = true;
+
+
+select, flag=seqedit, class=QF1.F;
+install, element=HQF1, at:=-LQM/QCUT/2.0, from=selected;
+install, element=SR4f, at:=0.0, from=selected;
+install, element=HQF1, at:=LQM/QCUT/2.0, from=selected;
+flatten;
+remove, element=selected;
+select, flag=seqedit, clear = true;
+
+select, flag=seqedit, class=QF2.F;
+install, element=HQF2, at:=-LQM/QCUT/2.0, from=selected;
+install, element=SR4f, at:=0.0, from=selected;
+install, element=HQF2, at:=LQM/QCUT/2.0, from=selected;
+flatten;
+remove, element=selected;
+select, flag=seqedit, clear = true;
+
+select, flag=seqedit, class=QD.F;
+install, element=HQD, at:=-LQM/QCUT/2.0, from=selected;
+install, element=SR4d, at:=0.0, from=selected;
+install, element=HQD, at:=LQM/QCUT/2.0, from=selected;
+flatten;
+remove, element=selected;
+select, flag=seqedit, clear = true;
+
+select, flag=seqedit, class=QF1A.F;
+install, element=HQF1A, at:=-LQMA/QCUT/2.0, from=selected;
+install, element=SR4fa, at:=0.0, from=selected;
+install, element=HQF1A, at:=LQMA/QCUT/2.0, from=selected;
+flatten;
+remove, element=selected;
+select, flag=seqedit, clear = true;
+
+select, flag=seqedit, class=QF2A.F;
+install, element=HQF2A, at:=-LQMA/QCUT/2.0, from=selected;
+install, element=SR4fa, at:=0.0, from=selected;
+install, element=HQF2A, at:=LQMA/QCUT/2.0, from=selected;
+flatten;
+remove, element=selected;
+select, flag=seqedit, clear = true;
+
+select, flag=seqedit, class=QDA.F;
+install, element=HQDA, at:=-LQMA/QCUT/2.0, from=selected;
+install, element=SR4da, at:=0.0, from=selected;
+install, element=HQDA, at:=LQMA/QCUT/2.0, from=selected;
+flatten;
+remove, element=selected;
+select, flag=seqedit, clear = true;
+
+
+endedit;
+
+
+USE, period=SPS, range=#S/#E;
+
+
+
+select, flag=error, pattern=SR3a;
+select, flag=error, pattern=SR5a;
+ealign, dx:=-sagitta+benddispl;
+IF(PRINTMIS == 1.0){
+eprint;
+}
+select, flag=error, clear = true;
+
+
+
+select, flag=error, pattern=SR3b;
+select, flag=error, pattern=SR5b;
+ealign, dx:=-sagitta+benddispl;
+IF(PRINTMIS == 1.0){
+eprint;
+}
+select, flag=error, clear = true;
+
+select, flag=error, pattern=SR3a21570;
+select, flag=error, pattern=SR5a21570;
+ealign, dx:=-sagitta+benddispl+(mba21570Hentry+mba21570Hexit)/2.0;
+IF(PRINTMIS == 1.0){
+eprint;
+}
+select, flag=error, clear = true;
+
+select, flag=error, pattern=SR3a21590;
+select, flag=error, pattern=SR5a21590;
+ealign, dx:=-sagitta+benddispl+(mba21590Hentry+mba21590Hexit)/2.0;
+IF(PRINTMIS == 1.0){
+eprint;
+}
+select, flag=error, clear = true;
+
+select, flag=error, pattern=SR3b21530;
+select, flag=error, pattern=SR5b21530;
+ealign, dx:=-sagitta+benddispl+(mbb21530Hentry+mbb21530Hexit)/2.0;
+IF(PRINTMIS == 1.0){
+eprint;
+}
+select, flag=error, clear = true;
+
+select, flag=error, pattern=SR3b21550;
+select, flag=error, pattern=SR5b21550;
+ealign, dx:=-sagitta+benddispl+(mbb21550Hentry+mbb21550Hexit)/2.0;
+IF(PRINTMIS == 1.0){
+eprint;
+}
+select, flag=error, clear = true;
+
+
+select, flag=error, pattern=HQDA11710;
+select, flag=error, pattern=SR4da11710;
+ealign, dx:=(qda11710Hentry+qda11710Hexit)/2.0, dy:=(qda11710Ventry+qda11710Vexit)/2.0;
+IF(PRINTMIS == 1.0){
+eprint;
+}
+select, flag=error, clear = true;
+
+select, flag=error, pattern=HQFA11810;
+select, flag=error, pattern=SR4fa11810;
+ealign, dx:=(qfa11810Hentry+qfa11810Hexit)/2.0, dy:=(qfa11810Ventry+qfa11810Vexit)/2.0;
+IF(PRINTMIS == 1.0){
+eprint;
+}
+select, flag=error, clear = true;
+
+select, flag=error, pattern=HQDA11910;
+select, flag=error, pattern=SR4da11910;
+ealign, dx:=(qda11910Hentry+qda11910Hexit)/2.0, dy:=(qda11910Ventry+qda11910Vexit)/2.0;
+IF(PRINTMIS == 1.0){
+eprint;
+}
+select, flag=error, clear = true;
+
+
+return;
