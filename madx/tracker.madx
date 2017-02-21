@@ -1,15 +1,15 @@
 option, -echo;
 option, RBARC=FALSE;
 
-call, file = '/afs/cern.ch/work/w/wvandepo/public/SPS/input/cngs_extraction.beamx';
-call, file = '/afs/cern.ch/work/w/wvandepo/public/SPS/input/sps.ele';
-call, file = '/afs/cern.ch/work/w/wvandepo/public/SPS/input/aperturedb_1.dbx';
-call, file = '/afs/cern.ch/work/w/wvandepo/public/SPS/input/aperturedb_2.dbx';   
-call, file = '/afs/cern.ch/work/w/wvandepo/public/SPS/input/sps.seq';
-call, file = '/afs/cern.ch/work/w/wvandepo/public/SPS/input/aperturedb_3.dbx';
-call, file = '/afs/cern.ch/work/w/wvandepo/public/SPS/input/ft_noqs_ext.str';
-call, file = '/afs/cern.ch/work/w/wvandepo/public/SPS/input/elements.str';
-//call, file = '/afs/cern.ch/work/w/wvandepo/public/SPS/input/virtual_cor.madx';
+call, file = '../input/cngs_extraction.beamx';
+call, file = '../input/sps.ele';
+call, file = '../input/aperturedb_1.dbx';
+call, file = '../input/aperturedb_2.dbx';   
+call, file = '../input/sps.seq';
+call, file = '../input/aperturedb_3.dbx';
+call, file = '../input/ft_noqs_ext.str';
+call, file = '../input/elements.str';
+//call, file = '../input/virtual_cor.madx';
 
 KlSDA = -0.189  ;
 KlSDB = -0.185615 ;
@@ -187,7 +187,7 @@ efcomp, order:=0, dkn:=- kMPLH21995;
 
 ///////////////////////////////////////////////////
 
-//call, file = '/afs/cern.ch/work/w/wvandepo/public/SPS/input/stren.out';
+//call, file = '../input/stren.out';
 /////////////////////////////////////////////////////
 !================================
 ! Misa in Sextant 2

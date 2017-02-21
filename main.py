@@ -49,7 +49,7 @@ def writeTracker(k,data):
     line+="n_d = kqd_start - m_d;\n\n"
     
     if(c.dataripple):
-        line+= "READTABLE, FILE='/afs/cern.ch/work/w/wvandepo/public/SPS/input/"+c.ripplefile+".prt';\n"
+        line+= "READTABLE, FILE='"+c.inputdir+c.ripplefile+".prt';\n"
         
     line+="tr$macro(turn): macro = {"
     line+='\n'

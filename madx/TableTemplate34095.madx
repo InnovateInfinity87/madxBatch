@@ -1,14 +1,14 @@
 option, -echo;
 option, RBARC=FALSE;
-call, file = '/afs/cern.ch/work/w/wvandepo/public/SPS/input/cngs_extraction.beamx';
-call, file = '/afs/cern.ch/work/w/wvandepo/public/SPS/input/sps.ele';
-call, file = '/afs/cern.ch/work/w/wvandepo/public/SPS/input/aperturedb_1.dbx';
-call, file = '/afs/cern.ch/work/w/wvandepo/public/SPS/input/aperturedb_2.dbx';   
-call, file = '/afs/cern.ch/work/w/wvandepo/public/SPS/input/sps.seq';
-call, file = '/afs/cern.ch/work/w/wvandepo/public/SPS/input/aperturedb_3.dbx';
-call, file = '/afs/cern.ch/work/w/wvandepo/public/SPS/input/ft_noqs_ext.str';
-call, file = '/afs/cern.ch/work/w/wvandepo/public/SPS/input/elements.str';
-call, file = '/afs/cern.ch/work/w/wvandepo/public/SPS/input/virtual_cor.madx';
+call, file = '../input/cngs_extraction.beamx';
+call, file = '../input/sps.ele';
+call, file = '../input/aperturedb_1.dbx';
+call, file = '../input/aperturedb_2.dbx';   
+call, file = '../input/sps.seq';
+call, file = '../input/aperturedb_3.dbx';
+call, file = '../input/ft_noqs_ext.str';
+call, file = '../input/elements.str';
+call, file = '../input/virtual_cor.madx';
 
 KlSDA = -0.189  ;
 KlSDB = -0.185615 ;
@@ -82,7 +82,7 @@ select, flag=error, clear;
 
 select, flag=twiss, range=#S/#E, column=name,s,betx,alfx,x,dx,px,y,dy,py,bety,alfy;
 twiss;
-write, table=twiss, file='/afs/cern.ch/work/w/wvandepo/public/SPS/twiss/twiss_before_thinning.prt';
+write, table=twiss, file='../twiss/twiss_before_thinning.prt';
 
 ///////////////////////////////////////////////////
 /////////// MAKE THIN /////////////////////////////
@@ -114,7 +114,7 @@ knob_ext_sext = 0;
 ///////////////////////////////////////////////
 use, period=sps;
 
-call, file = '/afs/cern.ch/work/w/wvandepo/public/SPS/madx/matchtune.cmdx'
+call, file = '../madx/matchtune.cmdx'
 option, -echo;
 
 ///////////////////////////////////////////////
@@ -227,7 +227,7 @@ efcomp, order:=0, dkn:=- kMPLH21995;
 
 ///////////////////////////////////////////////////
 
-call, file = '/afs/cern.ch/work/w/wvandepo/public/SPS/input/stren.out';
+call, file = '../input/stren.out';
 
 // Turn extraction sextupoles on again
 knob_ext_sext = 1;
@@ -235,7 +235,7 @@ knob_ext_sext = 1;
 select, flag=twiss, clear;
 select, flag=twiss, range=#S/#E, column=name,s,betx,alfx,x,dx,px,dpx,y,dy,py,dpy,bety,alfy;
 TWISS;
-write, table=twiss, file='/afs/cern.ch/work/w/wvandepo/public/SPS/twiss/twiss_after_thinning.prt';
+write, table=twiss, file='../twiss/twiss_after_thinning.prt';
 
 ////////////////////////////////////////////////////
 
@@ -358,9 +358,9 @@ start, x=0.0, px= -0.0, y= 0.0, py= 0.0 , t= 0, pt= 0.0;
 run,turns=34095;
 endtrack;
 
-//write, table = twissStart, file='/afs/cern.ch/work/w/wvandepo/public/SPS/twiss/twissStart.prt';
-//write, table = twissSeptum1, file='/afs/cern.ch/work/w/wvandepo/public/SPS/twiss/twissSeptum1.prt';
-//write, table = twissSeptum2, file='/afs/cern.ch/work/w/wvandepo/public/SPS/twiss/twissSeptum2.prt';
-write, table = tune_var, file='/afs/cern.ch/work/w/wvandepo/public/SPS/twiss/tune_var.prt';
+//write, table = twissStart, file='../twiss/twissStart.prt';
+//write, table = twissSeptum1, file='../twiss/twissSeptum1.prt';
+//write, table = twissSeptum2, file='../twiss/twissSeptum2.prt';
+write, table = tune_var, file='../twiss/tune_var.prt';
 
 exit;

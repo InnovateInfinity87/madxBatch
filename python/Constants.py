@@ -5,6 +5,9 @@ Created on Tue Jul 26 10:26:33 2016
 @author: wvandepo
 """
 
+import os
+import sys
+
 ### For simulation ###
 
 elements=['AP.UP.ZS21633','ZS.21633','AP.DO.ZS21633']
@@ -30,7 +33,8 @@ dataripple=True
 ripplefile="ripple"
 
 
-home='/afs/cern.ch/work/w/wvandepo/public/SPS/'
+user = os.environ["USER"]
+home = sys.path[0]
 twissdir = home+'twiss/'
 inputdir = home+'input/'
 madxdir  = home+'madx/'
