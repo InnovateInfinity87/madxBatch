@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Jul 14 17:31:19 2016
+Batched MAD-X slow extraction
 
-@author: wvandepo
+Modifies files for running MAD-X simulations of slow extraction with a
+tune ripple and then submits them to the CERN LSF batching service.
+
+@author: Wouter van de Pontseele, Linda Stoel
 """
 import fileinput
 import subprocess
@@ -12,36 +15,60 @@ import sys
 import numpy as np
 import python.Constants as c
 
-def whichQueue(turns):
+def whichQueue():
+    """Determines appropriate LSF queue based on particles*turns."""
+    n = c.Nturns*c.Nparperbatch
     queue = "1nh"
-    if turns > 10e6:
+    if n > 10e6:
         queue = "8nh"
-    if turns > 10e6:
+    if n > 10e6:
         queue = "1nd"
-    elif turns > 2e7:
+    elif n > 2e7:
         queue = "2nd"
-    elif turns > 7e7:
+    elif n > 7e7:
         queue = "1nw"
-    elif turns > 1e8:
+    elif n > 1e8:
         queue = "2nw"
     return queue
  
 
 def replacer(filename,searchExp,replaceExp):
+    """In-place replacement in text files.
+
+    Finds all occurences of searchExp in the file and replaces each one
+    with replaceExp, overwriting the original file.
+    """
     for line in fileinput.input(filename, inplace=1):
         if searchExp in line:
             line = line.replace(searchExp,replaceExp)
         sys.stdout.write(line)
         
 def adapter(filename,searchExp,replaceExp):
-    out=open(filename, 'w')
-    #print filename
-    for line in fileinput.input(c.madxdir+'tracker.madx', inplace=0):
-        if searchExp in line:
-            line = line.replace(searchExp,replaceExp)
-        out.write(line)
+    """Creates a new file adapted from the tracker.madx template."""
+    with open(filename, 'w') as out:
+        for line in fileinput.input(c.madxdir+'tracker.madx', inplace=0):
+            if searchExp in line:
+                line = line.replace(searchExp,replaceExp)
+            out.write(line)
         
 def writeTracker(k,data):
+    """Creates the text to replace ADAPTTHISPART in tracker.madx.
+
+    To simulate a linear sweep plus a perturbation in the form of a
+    damped sinusoid.
+
+    Some comments:
+    - Changing Nturns without changing start and end tune actually
+      changes the tune sweep speed, is that intended?
+    - Commented out lines of code can be removed, right?
+    - Most replacement seems rather unnecessary with the exception
+      of specifying tracksdir and initial coordinates. The other
+      constants can just be written to a file that's read by MADX. If we
+      would split the input coordinates into different files there would
+      be no more need to generate the full script for every batch, we
+      could just generate (shorter) input files. This would also make
+      the MAD-X templates easier to maintain.
+    """
     line= "m_f = (kqf1_start - kqf1_end) / (1 - "+str(c.Nturns)+");\n"
     line+="m_d = (kqd_start -  kqd_end ) / (1 - "+str(c.Nturns)+");\n\n"
     
@@ -100,10 +127,39 @@ def writeTracker(k,data):
     return line
 
 def writeTabler():
+    """Seems unused. To be deleted?"""
     return 0
     
     
 def onerun():
+    """Submits jobs for simulation defined in main.
+
+    Needs some fixing:
+    - The replacers inside the createTwiss part will have worked only
+      the first time he ran it, since replace() is defined as in-place
+      replacement. After that they were useless.
+      Moreover, it looks like the difference between initial and final
+      tune did not take number of turns into account. Probably best to
+      set initial and final tune as standard and then change
+      "run,turns=6;" -> "run,turns=Nturns;", and then save a replaced
+      file somewhere else.
+      Also, it seems like a bit of a waste of time to run a tracking to
+      create the tune_var table. If you agree the commented tables
+      aren't useful then we can find a quicker way. (A simple loop
+      should do the trick.)
+    - Replacer in the tracking has the same problem, but with the
+      relative path 'homedir' replacement has become redundant anyhow.
+      We can delete that line.
+    - The MAD-X code used should somehow be linked to the
+      slowExtractionMADX code. (Can be done with an out-of-place
+      replacer and the c.madxdir variable.)
+    - We may want to pick non-random seeds for comparing loss-reduction
+      methods. 
+
+    And then the adapter needs to be made much more flexible, or
+    different template options added, so that we can run new simulations
+    instead of just tune ripple.
+    """
     #Redirect the output to DEVNULL
     oldstdout = sys.stdout
     FNULL = open(os.devnull, 'w')
@@ -148,13 +204,18 @@ def onerun():
             print 'Job '+str(nrb)+' of '+str(c.Nbatches)+', containing '+ str(c.Nparperbatch)+' particles, started.'
             
             if(c.LXplus):
-                subprocess.Popen("bsub -q "+whichQueue(c.Nturns*c.Nparperbatch)+" madx "+c.jobsdir+"batch"+str(nrb)+".madx", stdout=LOG, shell=True).wait()
+                subprocess.Popen("bsub -q "+whichQueue()+" madx "+c.jobsdir+"batch"+str(nrb)+".madx", stdout=LOG, shell=True).wait()
                 print "Job submitted!"
             else:
                 subprocess.Popen("madx<"+c.jobsdir+"batch"+str(nrb)+".madx", stdout=LOG, shell=True).wait()
     print "Done!"
     
 def main():
+    """Set parameters for the simulation and let it be batched.
+
+    At the moment you have to change and comment settings for different
+    studies. At some point we can change this to take command line input.
+    """
     
 #    print '##########################################################'
 #    print '#####   Glitches with 50k particles and 34095 turns  #####'
@@ -227,6 +288,12 @@ def main():
 
     
 def tester():
+    """Test of the main program functionality.
+
+    Runs a simple test to see if everything is working as it should. We
+    should think about replacing this with our (still to be defined)
+    test-case(s).
+    """
     print 'test'
     c.SetGeneral(f_Nturns=34095,f_Nbatches=1,f_Nparperbatch=50,f_turnmultiplicity=10000)
     c.SetBools(f_ripple=False,f_dataripple=True, f_writetrack=True)
