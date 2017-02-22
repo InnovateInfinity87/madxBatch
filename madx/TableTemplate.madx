@@ -1,13 +1,13 @@
 option, -echo;
 option, RBARC=FALSE;
-call, file = '../input/cngs_extraction.beamx';
-call, file = '../input/sps.ele';
-call, file = '../input/aperturedb_1.dbx';
-call, file = '../input/aperturedb_2.dbx';   
-call, file = '../input/sps.seq';
+call, file = '/afs/cern.ch/eng/sps/2015/beams/cngs_extraction.beamx';
+call, file = '/afs/cern.ch/eng/sps/2015/elements/sps.ele';
+call, file = '/afs/cern.ch/eng/sps/2015/aperture/aperturedb_1.dbx';
+call, file = '/afs/cern.ch/eng/sps/2015/aperture/aperturedb_2.dbx';   
+call, file = '/afs/cern.ch/eng/sps/2015/sequence/sps.seq';
 call, file = '../input/aperturedb_3.dbx';
-call, file = '../input/ft_noqs_ext.str';
-call, file = '../input/elements.str';
+call, file = '/afs/cern.ch/eng/sps/2015/strength/ft_noqs_ext.str';
+call, file = '/afs/cern.ch/eng/sps/2015/elements/elements.str';
 //call, file = '../input/virtual_cor.madx';
 
 KlSDA = -0.189  ;

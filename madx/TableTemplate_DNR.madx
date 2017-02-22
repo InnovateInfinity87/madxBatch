@@ -3,19 +3,19 @@ option, RBARC=FALSE;  ! the length of a rectangular magnet
 				   ! is the distance between the polefaces
 				   ! and not the arc length
 
-call, file = '../input/cngs_extraction.beamx';
-call, file = '../input/sps.ele';
+call, file = '/afs/cern.ch/eng/sps/2015/beams/cngs_extraction.beamx';
+call, file = '/afs/cern.ch/eng/sps/2015/elements/sps.ele';
 //add apertures later
-call, file = '../input/sps.seq';
-call, file = '../input/ft_noqs_ext.str';
-call, file = '../input/elements.str';
+call, file = '/afs/cern.ch/eng/sps/2015/sequence/sps.seq';
+call, file = '/afs/cern.ch/eng/sps/2015/strength/ft_noqs_ext.str';
+call, file = '/afs/cern.ch/eng/sps/2015/elements/elements.str';
 
 KlSDA = -0.189  ;
 KlSDB = -0.185615 ;
 KlSFA = 0.0613956  ;
 KlSFB = 0.0276  ;
 
-!call, file = '../input/nonlinear_model.cmdx';
+!call, file = '/afs/cern.ch/eng/sps/2015/cmd/nonlinear_model.cmdx';
 
 //////////////////////////////////////////////////////////////////////
 /////// Slow extraction sextupoles and bumpers values ////////////////
