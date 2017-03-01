@@ -10,7 +10,6 @@ call, file = '/afs/cern.ch/eng/sps/2014/strength/ft_noqs_ext.str';
 call, file = '/afs/cern.ch/eng/sps/2014/strength/elements.str';
 //call, file = 'input/virtual_cor.madx';
 
-
 ! With the new Thinning of MADX the sequence has to be flatten before being thinned
 
 seqedit, sequence = sps;
@@ -56,6 +55,14 @@ endedit;
 
 use, sequence=SPS;
 
+knob = 0.945 ;
+
+kMPLH21431 := 4.9e-4 * knob;
+kMPLH21995 := 2.503e-4 * knob;
+kMPLH22195 := -3.5585e-4 * knob;
+kMPNH21732 := 3.3309e-4 * knob;
+kMPSH21202 := -7.6765e-5 * knob;
+
 
 ///////////////////////////////////////////////////
 /////////// MAKE THIN /////////////////////////////
@@ -63,7 +70,7 @@ use, sequence=SPS;
 
 select, flag = makethin, clear;
 select, flag = makethin, class = quadrupole, slice = 4;
-select, flag = makethin, class = rbend, slice = 8;
+select, flag = makethin, class = rbend, slice = 4;
 select, flag = makethin, class = sextupole, slice = 1;
 
 //select, flag = makethin, class = VKICKER, slice = 1;
@@ -81,119 +88,32 @@ USE, SEQUENCE=sps;
 /////// THIN EXTRACTION ERRORS ////////////////
 ///////////////////////////////////////////////
 
-knob = 0.945 / 8.;
+knob = knob / 4.;
 
-kMPLH21431 := 4.9e-4 * knob;
-kMPLH21995 := 2.503e-4 * knob;
-kMPLH22195 := -3.5585e-4 * knob;
-kMPNH21732 := 3.3309e-4 * knob;
-kMPSH21202 := -7.6765e-5 * knob;
-
- select, flag=error, range=MPSH_rb.21202..1;
- efcomp, order:=0, dkn:=- kMPSH21202;
- select, flag=error, range=MPSH_rb.21202..2;
- efcomp, order:=0, dkn:=- kMPSH21202;
- select, flag=error, range=MPSH_rb.21202..3;
- efcomp, order:=0, dkn:=- kMPSH21202;
- select, flag=error, range=MPSH_rb.21202..4;
- efcomp, order:=0, dkn:=- kMPSH21202;
-
- select, flag=error, range=MPSH_rb.21202..5;
- efcomp, order:=0, dkn:=- kMPSH21202;
- select, flag=error, range=MPSH_rb.21202..6;
- efcomp, order:=0, dkn:=- kMPSH21202;
- select, flag=error, range=MPSH_rb.21202..7;
- efcomp, order:=0, dkn:=- kMPSH21202;
- select, flag=error, range=MPSH_rb.21202..8;
- efcomp, order:=0, dkn:=- kMPSH21202;
-
- !EPRINT;
- select, flag=error, clear;
- select, flag=error, range=MPLH_rb.21431..1;
- efcomp, order:=0, dkn:=- kMPLH21431;
- select, flag=error, range=MPLH_rb.21431..2;
- efcomp, order:=0, dkn:=- kMPLH21431;
- select, flag=error, range=MPLH_rb.21431..3;
- efcomp, order:=0, dkn:=- kMPLH21431;
- select, flag=error, range=MPLH_rb.21431..4;
- efcomp, order:=0, dkn:=- kMPLH21431;
-
- select, flag=error, range=MPLH_rb.21431..5;
- efcomp, order:=0, dkn:=- kMPLH21431;
- select, flag=error, range=MPLH_rb.21431..6;
- efcomp, order:=0, dkn:=- kMPLH21431;
- select, flag=error, range=MPLH_rb.21431..7;
- efcomp, order:=0, dkn:=- kMPLH21431;
- select, flag=error, range=MPLH_rb.21431..8;
- efcomp, order:=0, dkn:=- kMPLH21431;
-
- !EPRINT;
- select, flag=error, clear;
- select, flag=error, range=MPNH_rb.21732..1;
- efcomp, order:=0, dkn:=- kMPNH21732;
- select, flag=error, range=MPNH_rb.21732..2;
- efcomp, order:=0, dkn:=- kMPNH21732;
- select, flag=error, range=MPNH_rb.21732..3;
- efcomp, order:=0, dkn:=- kMPNH21732;
- select, flag=error, range=MPNH_rb.21732..4;
- efcomp, order:=0, dkn:=- kMPNH21732;
-
- select, flag=error, clear;
- select, flag=error, range=MPNH_rb.21732..5;
- efcomp, order:=0, dkn:=- kMPNH21732;
- select, flag=error, range=MPNH_rb.21732..6;
- efcomp, order:=0, dkn:=- kMPNH21732;
- select, flag=error, range=MPNH_rb.21732..7;
- efcomp, order:=0, dkn:=- kMPNH21732;
- select, flag=error, range=MPNH_rb.21732..8;
- efcomp, order:=0, dkn:=- kMPNH21732;
-
-!EPRINT;
+ select, flag=error, pattern="MPSH_rb\.21202.*";
+efcomp, order:=0, dkn:=kMPSH.21202;
+EPRINT;
 select, flag=error, clear;
-select, flag=error, range=MPLH_rb.21995..1;
-efcomp, order:=0, dkn:=- kMPLH21995;
-select, flag=error, range=MPLH_rb.21995..2;
-efcomp, order:=0, dkn:=- kMPLH21995;
-select, flag=error, range=MPLH_rb.21995..3;
-efcomp, order:=0, dkn:=- kMPLH21995;
-select, flag=error, range=MPLH_rb.21995..4;
-efcomp, order:=0, dkn:=- kMPLH21995;
-select, flag=error, range=MPLH_rb.21995..5;
-efcomp, order:=0, dkn:=- kMPLH21995;
-select, flag=error, range=MPLH_rb.21995..6;
-efcomp, order:=0, dkn:=- kMPLH21995;
-select, flag=error, range=MPLH_rb.21995..7;
-efcomp, order:=0, dkn:=- kMPLH21995;
-select, flag=error, range=MPLH_rb.21995..8;
-efcomp, order:=0, dkn:=- kMPLH21995;
-
-
- !EPRINT;
- select, flag=error, clear;
- select, flag=error, range=MPLH_rb.22195..1;
- efcomp, order:=0, dkn:=- kMPLH22195;
- select, flag=error, range=MPLH_rb.22195..2;
- efcomp, order:=0, dkn:=- kMPLH22195;
- select, flag=error, range=MPLH_rb.22195..3;
- efcomp, order:=0, dkn:=- kMPLH22195;
- select, flag=error, range=MPLH_rb.22195..4;
- efcomp, order:=0, dkn:=- kMPLH22195;
-
- select, flag=error, range=MPLH_rb.22195..5;
- efcomp, order:=0, dkn:=- kMPLH22195;
- select, flag=error, range=MPLH_rb.22195..6;
- efcomp, order:=0, dkn:=- kMPLH22195;
- select, flag=error, range=MPLH_rb.22195..7;
- efcomp, order:=0, dkn:=- kMPLH22195;
- select, flag=error, range=MPLH_rb.22195..8;
- efcomp, order:=0, dkn:=- kMPLH22195;
-
- !EPRINT;
- select, flag=error, clear;
+select, flag=error, pattern="MPLH_rb\.21431.*";
+efcomp, order:=0, dkn:=kMPLH.21431;
+EPRINT;
+select, flag=error, clear;
+select, flag=error, pattern="MPNH_rb\.21732.*";
+efcomp, order:=0, dkn:=kMPNH.21732;
+EPRINT;
+select, flag=error, clear;
+select, flag=error, pattern="MPLH_rb\.21995.*";
+efcomp, order:=0, dkn:=kMPLH.21995;
+EPRINT;
+select, flag=error, clear;
+select, flag=error, pattern="MPLH_rb\.22195.*";
+efcomp, order:=0, dkn:=kMPLH.22195;
+EPRINT;
+select, flag=error, clear;
 
 ///////////////////////////////////////////////////
 
-//call, file = '../input/stren.out';
+//call, file = 'input/stren.out';
 /////////////////////////////////////////////////////
 !================================
 ! Misa in Sextant 2
@@ -241,8 +161,8 @@ select, flag=error, clear;
 *****************************/
 //kqd_start     =                -1.46297e-02;
 //kqf1_start     =                1.46363e-02;
-kqd_start = -1.46312e-2
-kqf1_start=  1.46376e-2
+kqd_start = -1.46312e-2;
+kqf1_start=  1.46376e-2;
 
 
 
@@ -257,8 +177,8 @@ kqf1_start=  1.46376e-2
 //kqd_end =                     -1.46359e-02;
 //kqf1_end=                      1.46698e-02;
 //Vitout real orbit
-kqd_end = -1.46375e-2
-kqf1_end=  1.46712e-2
+kqd_end = -1.46375e-2;
+kqf1_end=  1.46712e-2;
 
 kqf1 = kqf1_start ;
 kqd  = kqd_start ;
