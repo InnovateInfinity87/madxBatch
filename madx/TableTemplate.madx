@@ -118,26 +118,26 @@ option, -echo;
 /////// THIN EXTRACTION ERRORS ////////////////
 ///////////////////////////////////////////////
 
-knob = knob / 8.;
+knob = knob / 4.;
 
  select, flag=error, pattern="MPSH_rb\.21202.*";
-efcomp, order:=0, dkn:=MPSH.21202;
+efcomp, order:=0, dkn:=kMPSH.21202;
 EPRINT;
 select, flag=error, clear;
 select, flag=error, pattern="MPLH_rb\.21431.*";
-efcomp, order:=0, dkn:=-MPLH.21431;
+efcomp, order:=0, dkn:=kMPLH.21431;
 EPRINT;
 select, flag=error, clear;
 select, flag=error, pattern="MPNH_rb\.21732.*";
-efcomp, order:=0, dkn:=MPNH.21732;
+efcomp, order:=0, dkn:=kMPNH.21732;
 EPRINT;
 select, flag=error, clear;
 select, flag=error, pattern="MPLH_rb\.21995.*";
-efcomp, order:=0, dkn:=MPLH.21995;
+efcomp, order:=0, dkn:=kMPLH.21995;
 EPRINT;
 select, flag=error, clear;
 select, flag=error, pattern="MPLH_rb\.22195.*";
-efcomp, order:=0, dkn:=MPLH.22195;
+efcomp, order:=0, dkn:=kMPLH.22195;
 EPRINT;
 select, flag=error, clear;
 
