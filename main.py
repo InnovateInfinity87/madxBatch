@@ -7,9 +7,6 @@ tune ripple and then submits them to the CERN LSF batching service.
 
 @author: Wouter van de Pontseele, Linda Stoel
 """
-import sys
-sys.path.insert(1, './python')
-
 import fileinput
 import subprocess
 import python.make_ps_distribution as dis
