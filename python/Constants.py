@@ -36,7 +36,7 @@ ripplefile="ripple"
 
 user = os.environ["USER"]
 home = sys.path[0]+'/'
-outputdir = '/afs/cern.ch/work/'+user[0]+'/'+user+'/private/madxBatch/'
+outputdir = '/afs/cern.ch/work/'+user[0]+'/'+user+'/private/madxBatchData/'
 
 twissdir = home+'twiss/'
 inputdir = home+'input/'
@@ -45,7 +45,7 @@ madxdir  = home+'madx/'
 name="name"
 #name="t80_a35"
 
-data=outputdir+'Data/'+name+"/"
+data=outputdir+name+"/"
 
 tracksdir= data+'tracks/'
 lossdir  = data+'losses/'
@@ -106,7 +106,7 @@ def SetDirs(f_name=None):
             name='glitch_t'+str(period)+'e'+str(expperiod)+'_a'+str(amplitude)+'_p'+str(int(Nbatches*Nparperbatch/1000))+'k'
     else:
         name=f_name
-    data=outputdir+'Data/'+name+"/"
+    data=outputdir+name+"/"
     tracksdir= data+'tracks/'
     lossdir  = data+'losses/'
     jobsdir  = data+'jobs/'
