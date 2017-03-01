@@ -6,10 +6,10 @@ call, file = '/afs/cern.ch/eng/sps/2015/elements/sps.ele';
 call, file = '/afs/cern.ch/eng/sps/2015/aperture/aperturedb_1.dbx';
 call, file = '/afs/cern.ch/eng/sps/2015/aperture/aperturedb_2.dbx';   
 call, file = '/afs/cern.ch/eng/sps/2015/sequence/sps.seq';
-call, file = '../input/aperturedb_3.dbx';
+call, file = 'input/aperturedb_3.dbx';
 call, file = '/afs/cern.ch/eng/sps/2015/strength/ft_noqs_ext.str';
-call, file = '/afs/cern.ch/eng/sps/2015/elements/elements.str';
-//call, file = '../input/virtual_cor.madx';
+call, file = '/afs/cern.ch/eng/sps/2015/strength/elements.str';
+//call, file = 'input/virtual_cor.madx';
 
 KlSDA = -0.189  ;
 KlSDB = -0.185615 ;
@@ -187,7 +187,7 @@ efcomp, order:=0, dkn:=- kMPLH21995;
 
 ///////////////////////////////////////////////////
 
-//call, file = '../input/stren.out';
+//call, file = 'input/stren.out';
 /////////////////////////////////////////////////////
 !================================
 ! Misa in Sextant 2
@@ -235,8 +235,8 @@ select, flag=error, clear;
 *****************************/
 //kqd_start     =                -1.46297e-02;
 //kqf1_start     =                1.46363e-02;
-kqd_start = -1.46312e-2
-kqf1_start=  1.46376e-2
+kqd_start = -1.46312e-2;
+kqf1_start=  1.46376e-2;
 
 
 
@@ -251,8 +251,8 @@ kqf1_start=  1.46376e-2
 //kqd_end =                     -1.46359e-02;
 //kqf1_end=                      1.46698e-02;
 //Vitout real orbit
-kqd_end = -1.46375e-2
-kqf1_end=  1.46712e-2
+kqd_end = -1.46375e-2;
+kqf1_end=  1.46712e-2;
 
 kqf1 = kqf1_start ;
 kqd  = kqd_start ;

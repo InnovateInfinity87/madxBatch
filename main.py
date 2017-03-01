@@ -7,6 +7,9 @@ tune ripple and then submits them to the CERN LSF batching service.
 
 @author: Wouter van de Pontseele, Linda Stoel
 """
+import sys
+sys.path.insert(1, './python')
+
 import fileinput
 import subprocess
 import python.make_ps_distribution as dis
@@ -160,24 +163,25 @@ def onerun():
     different template options added, so that we can run new simulations
     instead of just tune ripple.
     """
+    if not os.path.exists(c.data):
+            os.makedirs(c.data)
+
     #Redirect the output to DEVNULL
     oldstdout = sys.stdout
     FNULL = open(os.devnull, 'w')
-    LOG = open("log.txt","w")
+    LOG = open(c.data+"log.txt","w")
     
     #Generate twiss files before and after thinning, used to make initial distributions
     if(c.createTwiss):
         replacer(c.madxdir+'TableTemplate.madx','homedir',c.home)
         replacer(c.madxdir+'TableTemplate.madx','Nturns',str(c.Nturns)) 
         subprocess.Popen("madx<"+c.madxdir+"TableTemplate.madx", stdout=LOG, shell=True).wait()
-        print 'Table creation is finished!'
+        print('Table creation is finished!')
     
     if(c.trackingBool):
-        if not os.path.exists(c.data):
-                os.makedirs(c.data)
         #Generate initial particle distributions
         data=dis.get_gauss_distribution(output=c.data+'initial_distribution_gauss', input=c.twissdir+'twiss_after_thinning.prt',n_part=c.Nbatches*c.Nparperbatch, sigmas=6, beam_t='FT', seed=np.random.randint(9999))
-        print 'Initial particles distributions created!'
+        print('Initial particles distributions created!')
         
         if not os.path.exists(c.tracksdir):
                 os.makedirs(c.tracksdir)
@@ -197,18 +201,18 @@ def onerun():
             searchExp='ADAPTTHISPART'
             replaceExp=writeTracker(nr,data)
             adapter(file,searchExp,replaceExp)
-        print 'Input madx files created!'
+        print('Input madx files created!')
         
         #Actual particle tracking
         for nrb in range(c.Nbatches):
-            print 'Job '+str(nrb)+' of '+str(c.Nbatches)+', containing '+ str(c.Nparperbatch)+' particles, started.'
+            print('Job '+str(nrb)+' of '+str(c.Nbatches)+', containing '+ str(c.Nparperbatch)+' particles, started.')
             
             if(c.LXplus):
-                subprocess.Popen("bsub -q "+whichQueue()+" madx "+c.jobsdir+"batch"+str(nrb)+".madx", stdout=LOG, shell=True).wait()
-                print "Job submitted!"
+                subprocess.Popen("bsub -q "+whichQueue()+" /afs/cern.ch/user/m/mad/bin/madx_dev "+c.jobsdir+"batch"+str(nrb)+".madx", stdout=LOG, shell=True).wait()
+                print("Job submitted!")
             else:
-                subprocess.Popen("madx<"+c.jobsdir+"batch"+str(nrb)+".madx", stdout=LOG, shell=True).wait()
-    print "Done!"
+                subprocess.Popen("/afs/cern.ch/user/m/mad/bin/madx<"+c.jobsdir+"batch"+str(nrb)+".madx", stdout=LOG, shell=True).communicate()
+    print("Done!")
     
 def main():
     """Set parameters for the simulation and let it be batched.
@@ -217,9 +221,9 @@ def main():
     studies. At some point we can change this to take command line input.
     """
     
-#    print '##########################################################'
-#    print '#####   Glitches with 50k particles and 34095 turns  #####'
-#    print '##########################################################'
+#    print('##########################################################')
+#    print('#####   Glitches with 50k particles and 34095 turns  #####')
+#    print('##########################################################')
 #    #Glitches
 #    c.SetGeneral(f_Nturns=34095,f_Nbatches=1000,f_Nparperbatch=50,f_turnmultiplicity=50)
 #    c.SetBools(f_ripple=True,f_dataripple=False, f_writetrack=True)
@@ -236,11 +240,11 @@ def main():
 #    c.SetDirs(f_name=None)
 #    onerun()
 #    
-#    print '##########################################################'
-#    print '## Ripple from data with 50k particles and 34095 turns  ##'
-#    print '#############  Without harmonics suppression  ############'
-#    print '##  or (50,100,150)Hz or (50,100,150,300)Hz supression  ##'
-#    print '##########################################################'
+#    print('##########################################################')
+#    print('## Ripple from data with 50k particles and 34095 turns  ##')
+#    print('#############  Without harmonics suppression  ############')
+#    print('##  or (50,100,150)Hz or (50,100,150,300)Hz supression  ##')
+#    print('##########################################################')
 #    
 #    c.SetGeneral(f_Nturns=34095,f_Nbatches=1000,f_Nparperbatch=50,f_turnmultiplicity=10000)
 #    c.SetBools(f_ripple=False,f_dataripple=True, f_writetrack=True)
@@ -256,10 +260,10 @@ def main():
 #    c.SetDirs(f_name='realripple_50k_comp50100150300')
 #    onerun()
     
-#    print '##########################################################'
-#    print '#######  Emittance scan with 50 (freq,amp)-points  #######'
-#    print '############  50k particles and 34095 turns  #############'
-#    print '##########################################################'
+#    print('##########################################################')
+#    print('#######  Emittance scan with 50 (freq,amp)-points  #######')
+#    print('############  50k particles and 34095 turns  #############')
+#    print('##########################################################')
 #    #Emittance scan
 #    freq=np.random.uniform(10,700, size=100)
 #    freq=[10,10,10,350,350,350,700,700,700]
@@ -276,9 +280,9 @@ def main():
 #        c.SetDirs(f_name=None)
 #        onerun()
 #        
-    print '##########################################################'
-    print '###  Linear Sweep with 50k particles and 34095*6 turns ###'
-    print '##########################################################'
+    print('##########################################################')
+    print('###  Linear Sweep with 50k particles and 34095*6 turns ###')
+    print('##########################################################')
     #Long Lin Sweep
     c.SetGeneral(f_Nturns=34095*6,f_Nbatches=2000,f_Nparperbatch=50,f_turnmultiplicity=10000)
     c.SetBools(f_ripple=False,f_dataripple=False, f_writetrack=True)
@@ -294,12 +298,15 @@ def tester():
     should think about replacing this with our (still to be defined)
     test-case(s).
     """
-    print 'test'
+    print('test')
     c.SetGeneral(f_Nturns=34095,f_Nbatches=1,f_Nparperbatch=50,f_turnmultiplicity=10000)
-    c.SetBools(f_ripple=False,f_dataripple=True, f_writetrack=True)
+    c.SetBools(f_ripple=False,f_dataripple=True, f_writetrack=True,f_pycollimate=True)
     c.setripplefile('ripple0')
     c.SetDirs(f_name='ATEST_realripple_50k_pure')
+    c.createTwiss=True
+    c.trackingBool=True
+    c.LXplus=False
     onerun()
     
-#tester()   
-main()
+tester()   
+#main()
