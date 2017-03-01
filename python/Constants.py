@@ -101,7 +101,7 @@ def SetDirs(f_name=None):
         elif(expperiod==0):
             name='ripple_t'+str(period)+'_a'+str(amplitude)+'_p'+str(int(Nbatches*Nparperbatch/1000))+'k'
         elif(dataripple):
-            print("you need to submit a name for the dataripple dir")
+            print "you need to submit a name for the dataripple dir"
         else:
             name='glitch_t'+str(period)+'e'+str(expperiod)+'_a'+str(amplitude)+'_p'+str(int(Nbatches*Nparperbatch/1000))+'k'
     else:
