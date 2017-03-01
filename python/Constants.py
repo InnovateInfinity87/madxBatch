@@ -22,6 +22,7 @@ createTwiss=False
 trackingBool=True
 LXplus=True
 writetrack=True
+pycollimate=True
 
 ripple=False
 startturn=1000
@@ -34,19 +35,24 @@ ripplefile="ripple"
 
 
 user = os.environ["USER"]
-home = sys.path[0]
-twissdir = home+'/twiss/'
-inputdir = home+'/input/'
-madxdir  = home+'/madx/'
+home = sys.path[0]+'/'
+outputdir = '/afs/cern.ch/work/'+user[0]+'/'+user+'/private/madxBatch/'
+
+twissdir = home+'twiss/'
+inputdir = home+'input/'
+madxdir  = home+'madx/'
 
 name="name"
 #name="t80_a35"
 
-data=home+'Data/'+str(name)+"/"
+data=outputdir+'Data/'+name+"/"
 
 tracksdir= data+'tracks/'
 lossdir  = data+'losses/'
 jobsdir  = data+'jobs/'
+
+pycolldir = '../../pycollimate/'
+
 
 
 def SetGeneral(f_Nturns=34095,f_Nbatches=200,f_Nparperbatch=50,f_turnmultiplicity=50):
@@ -60,14 +66,16 @@ def SetGeneral(f_Nturns=34095,f_Nbatches=200,f_Nparperbatch=50,f_turnmultiplicit
     Nparperbatch=        f_Nparperbatch
     turnmultiplicity=    f_turnmultiplicity
 
-def SetBools(f_ripple=True,f_dataripple=False,f_writetrack=True):
+def SetBools(f_ripple=True,f_dataripple=False,f_writetrack=True,f_pycollimate=True):
     global ripple
     global dataripple
     global writetrack
-
+    global pycollimate
+    
     ripple=f_ripple
     dataripple=f_dataripple
     writetrack = f_writetrack
+    pycollimate = f_pycollimate
 
 def SetRipple(f_startturn=1000,f_amplitude=1000,f_period=500,f_expperiod=0):
     global startturn
@@ -93,12 +101,12 @@ def SetDirs(f_name=None):
         elif(expperiod==0):
             name='ripple_t'+str(period)+'_a'+str(amplitude)+'_p'+str(int(Nbatches*Nparperbatch/1000))+'k'
         elif(dataripple):
-            print "you need to submit a name for the dataripple dir"
+            print("you need to submit a name for the dataripple dir")
         else:
             name='glitch_t'+str(period)+'e'+str(expperiod)+'_a'+str(amplitude)+'_p'+str(int(Nbatches*Nparperbatch/1000))+'k'
     else:
         name=f_name
-    data=home+'Data/'+str(name)+"/"
+    data=outputdir+'Data/'+name+"/"
     tracksdir= data+'tracks/'
     lossdir  = data+'losses/'
     jobsdir  = data+'jobs/'

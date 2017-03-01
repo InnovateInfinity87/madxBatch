@@ -7,6 +7,9 @@ tune ripple and then submits them to the CERN LSF batching service.
 
 @author: Wouter van de Pontseele, Linda Stoel
 """
+import sys
+sys.path.insert(1, './python')
+
 import fileinput
 import subprocess
 import python.make_ps_distribution as dis
@@ -160,23 +163,28 @@ def onerun():
     different template options added, so that we can run new simulations
     instead of just tune ripple.
     """
+    if not os.path.exists(c.data):
+            os.makedirs(c.data)
+
     #Redirect the output to DEVNULL
     oldstdout = sys.stdout
     FNULL = open(os.devnull, 'w')
-    LOG = open("log.txt","w")
+    LOG = open(c.data+"log.txt","w")
 
     #Generate twiss files before and after thinning, used to make initial distributions
     if(c.createTwiss):
         print c.madxdir, c.home
         replacer(c.madxdir+'TableTemplate.madx','homedir',c.home)
         replacer(c.madxdir+'TableTemplate.madx','Nturns',str(c.Nturns))
-        print 'running: ', "madxColl<"+c.madxdir+"TableTemplate.madx"
-        subprocess.Popen("madxColl<"+c.madxdir+"TableTemplate.madx", stdout=LOG, shell=True).wait()
+        if c.pycollimate:
+            print 'running: ', c.pycolldir+"madxColl<"+c.madxdir+"TableTemplate.madx"
+            subprocess.Popen(c.pycolldir+"madxColl<"+c.madxdir+"TableTemplate.madx", stdout=LOG, shell=True).wait()
+        else:
+            print 'running: ', "/afs/cern.ch/user/m/mad/bin/madx_dev<"+c.madxdir+"TableTemplate.madx"
+            subprocess.Popen("/afs/cern.ch/user/m/mad/bin/madx_dev<"+c.madxdir+"TableTemplate.madx", stdout=LOG, shell=True).wait()
         print 'Table creation is finished!'
 
     if(c.trackingBool):
-        if not os.path.exists(c.data):
-                os.makedirs(c.data)
         #Generate initial particle distributions
         data=dis.get_gauss_distribution(output=c.data+'initial_distribution_gauss', input=c.twissdir+'twiss_after_thinning.prt',n_part=c.Nbatches*c.Nparperbatch, sigmas=6, beam_t='FT', seed=np.random.randint(9999))
         print 'Initial particles distributions created!'
@@ -206,12 +214,16 @@ def onerun():
             print 'Job '+str(nrb)+' of '+str(c.Nbatches)+', containing '+ str(c.Nparperbatch)+' particles, started.'
 
             if(c.LXplus):
-                subprocess.Popen("bsub -q "+whichQueue()+" madx "+c.jobsdir+"batch"+str(nrb)+".madx", stdout=LOG, shell=True).wait()
-                print "Job submitted!"
+                if c.pycollimate:
+                    subprocess.Popen("bsub -q "+whichQueue()+" "+c.pycolldir+"madxColl "+c.jobsdir+"batch"+str(nrb)+".madx", stdout=LOG, shell=True).wait()
+                else:
+                    subprocess.Popen("bsub -q "+whichQueue()+" /afs/cern.ch/user/m/mad/bin/madx_dev "+c.jobsdir+"batch"+str(nrb)+".madx", stdout=LOG, shell=True).wait()
+                print("Job submitted!")
+            elif c.pycollimate:
+                subprocess.Popen(c.pycolldir+"madxColl<"+c.jobsdir+"batch"+str(nrb)+".madx", stdout=LOG, shell=True).wait()
             else:
-                print 'running: ', "madxColl<"+c.jobsdir+"batch"+str(nrb)+".madx"
-                subprocess.Popen("madxColl<"+c.jobsdir+"batch"+str(nrb)+".madx", stdout=LOG, shell=True).wait()
-    print "Done!"
+                subprocess.Popen("/afs/cern.ch/user/m/mad/bin/madx<"+c.jobsdir+"batch"+str(nrb)+".madx", stdout=LOG, shell=True).communicate()
+    print("Done!")
 
 def main():
     """Set parameters for the simulation and let it be batched.
@@ -304,7 +316,7 @@ def tester():
     c.LXplus=False
 
     c.SetGeneral(f_Nturns=3,f_Nbatches=1,f_Nparperbatch=50,f_turnmultiplicity=10000)
-    c.SetBools(f_ripple=False,f_dataripple=False, f_writetrack=True)
+    c.SetBools(f_ripple=False,f_dataripple=False, f_writetrack=True,f_pycollimate=True)
     # c.setripplefile('ripple0')
     c.SetDirs(f_name='ATEST_fra')
     onerun()
