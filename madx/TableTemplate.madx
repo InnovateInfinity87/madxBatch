@@ -1,14 +1,21 @@
-option, -echo;
+option, echo;
 option, RBARC=FALSE;
-call, file = '/afs/cern.ch/eng/sps/2015/beams/cngs_extraction.beamx';
-call, file = '/afs/cern.ch/eng/sps/2015/elements/sps.ele';
-call, file = '/afs/cern.ch/eng/sps/2015/aperture/aperturedb_1.dbx';
-call, file = '/afs/cern.ch/eng/sps/2015/aperture/aperturedb_2.dbx';   
-call, file = '/afs/cern.ch/eng/sps/2015/sequence/sps.seq';
-call, file = '../input/aperturedb_3.dbx';
-call, file = '/afs/cern.ch/eng/sps/2015/strength/ft_noqs_ext.str';
-call, file = '/afs/cern.ch/eng/sps/2015/elements/elements.str';
-//call, file = '../input/virtual_cor.madx';
+call, file = '/afs/cern.ch/eng/sps/2014/beams/cngs_extraction.beamx';
+call, file = 'input/sps.ele';
+call, file = 'input/aperturedb_1.dbx';
+call, file = '/afs/cern.ch/eng/sps/2014/aperture/aperturedb_2.dbx';   
+call, file = '/afs/cern.ch/eng/sps/2014/sequence/sps.seq';
+call, file = 'input/aperturedb_3.dbx';
+call, file = '/afs/cern.ch/eng/sps/2014/strength/ft_noqs_ext.str';
+call, file = '/afs/cern.ch/eng/sps/2014/strength/elements.str';
+//call, file = 'input/virtual_cor.madx';
+
+
+! With the new Thinning of MADX the sequence has to be flatten before being thinned
+
+seqedit, sequence = sps;
+flatten;
+endedit;
 
 KlSDA = -0.189  ;
 KlSDB = -0.185615 ;
@@ -27,8 +34,8 @@ klse22402 := extr_sext * knob_ext_sext;
 klse40602 := extr_sext * knob_ext_sext;
 klse52402 := extr_sext * knob_ext_sext;
 
-! Extraction bump LSS2
 use, sequence = SPS;
+! Extraction bump LSS2
 
 MPSH_rb.21202: RBEND, L = .714, angle=0.0;
 MPLH_rb.21431: RBEND, L = 2.06, angle=0.0;
@@ -86,26 +93,17 @@ write, table=twiss, file='../twiss/twiss_before_thinning.prt';
 
 ///////////////////////////////////////////////////
 /////////// MAKE THIN /////////////////////////////
-///////////////////////////////////////////////////
+//////////////////////////////////////////////////
+use, sequence = sps;
 
 select, flag = makethin, clear;
 select, flag = makethin, class = quadrupole, slice = 4;
-select, flag = makethin, class = rbend, slice = 8;
+select, flag = makethin, class = rbend, slice = 4;
 select, flag = makethin, class = sextupole, slice = 1;
 
-//select, flag = makethin, class = VKICKER, slice = 1;
-//select, flag = makethin, class = HKICKER, slice = 1;
-//select, flag = makethin, class = HMONITOR, slice = 1;
-//select, flag = makethin, class = VMONITOR, slice = 1;
-//select, flag = makethin, class = INSTRUMENT, slice = 1;
-//select, flag = makethin, class = MONITOR, slice = 1;
-//select, flag = makethin, class = OCTUPOLE, slice = 1;
-//select, flag = makethin, class = RFCAVITY, slice = 1;
-//select, flag = makethin, class = RCOLLIMATOR, slice = 1;
-
 MAKETHIN, SEQUENCE = sps, STYLE = teapot;
-USE, SEQUENCE=sps;
 
+use, sequence = sps;
 // Turn extraction sextupoles off before matching
 knob_ext_sext = 0;
 
@@ -114,113 +112,35 @@ knob_ext_sext = 0;
 ///////////////////////////////////////////////
 use, period=sps;
 
-call, file = '../madx/matchtune.cmdx'
+call, file = 'madx/matchtune.cmdx'
 option, -echo;
-
 ///////////////////////////////////////////////
 /////// THIN EXTRACTION ERRORS ////////////////
 ///////////////////////////////////////////////
 
-knob = 0.945 / 8.;
+knob = knob / 8.;
 
- select, flag=error, range=MPSH_rb.21202..1;
- efcomp, order:=0, dkn:=- kMPSH21202;
- select, flag=error, range=MPSH_rb.21202..2;
- efcomp, order:=0, dkn:=- kMPSH21202;
- select, flag=error, range=MPSH_rb.21202..3;
- efcomp, order:=0, dkn:=- kMPSH21202;
- select, flag=error, range=MPSH_rb.21202..4;
- efcomp, order:=0, dkn:=- kMPSH21202;
-
- select, flag=error, range=MPSH_rb.21202..5;
- efcomp, order:=0, dkn:=- kMPSH21202;
- select, flag=error, range=MPSH_rb.21202..6;
- efcomp, order:=0, dkn:=- kMPSH21202;
- select, flag=error, range=MPSH_rb.21202..7;
- efcomp, order:=0, dkn:=- kMPSH21202;
- select, flag=error, range=MPSH_rb.21202..8;
- efcomp, order:=0, dkn:=- kMPSH21202;
-
- !EPRINT;
- select, flag=error, clear;
- select, flag=error, range=MPLH_rb.21431..1;
- efcomp, order:=0, dkn:=- kMPLH21431;
- select, flag=error, range=MPLH_rb.21431..2;
- efcomp, order:=0, dkn:=- kMPLH21431;
- select, flag=error, range=MPLH_rb.21431..3;
- efcomp, order:=0, dkn:=- kMPLH21431;
- select, flag=error, range=MPLH_rb.21431..4;
- efcomp, order:=0, dkn:=- kMPLH21431;
-
- select, flag=error, range=MPLH_rb.21431..5;
- efcomp, order:=0, dkn:=- kMPLH21431;
- select, flag=error, range=MPLH_rb.21431..6;
- efcomp, order:=0, dkn:=- kMPLH21431;
- select, flag=error, range=MPLH_rb.21431..7;
- efcomp, order:=0, dkn:=- kMPLH21431;
- select, flag=error, range=MPLH_rb.21431..8;
- efcomp, order:=0, dkn:=- kMPLH21431;
-
- !EPRINT;
- select, flag=error, clear;
- select, flag=error, range=MPNH_rb.21732..1;
- efcomp, order:=0, dkn:=- kMPNH21732;
- select, flag=error, range=MPNH_rb.21732..2;
- efcomp, order:=0, dkn:=- kMPNH21732;
- select, flag=error, range=MPNH_rb.21732..3;
- efcomp, order:=0, dkn:=- kMPNH21732;
- select, flag=error, range=MPNH_rb.21732..4;
- efcomp, order:=0, dkn:=- kMPNH21732;
-
- select, flag=error, clear;
- select, flag=error, range=MPNH_rb.21732..5;
- efcomp, order:=0, dkn:=- kMPNH21732;
- select, flag=error, range=MPNH_rb.21732..6;
- efcomp, order:=0, dkn:=- kMPNH21732;
- select, flag=error, range=MPNH_rb.21732..7;
- efcomp, order:=0, dkn:=- kMPNH21732;
- select, flag=error, range=MPNH_rb.21732..8;
- efcomp, order:=0, dkn:=- kMPNH21732;
-
-!EPRINT;
+ select, flag=error, pattern="MPSH_rb\.21202.*";
+efcomp, order:=0, dkn:=MPSH.21202;
+EPRINT;
 select, flag=error, clear;
-select, flag=error, range=MPLH_rb.21995..1;
-efcomp, order:=0, dkn:=- kMPLH21995;
-select, flag=error, range=MPLH_rb.21995..2;
-efcomp, order:=0, dkn:=- kMPLH21995;
-select, flag=error, range=MPLH_rb.21995..3;
-efcomp, order:=0, dkn:=- kMPLH21995;
-select, flag=error, range=MPLH_rb.21995..4;
-efcomp, order:=0, dkn:=- kMPLH21995;
-select, flag=error, range=MPLH_rb.21995..5;
-efcomp, order:=0, dkn:=- kMPLH21995;
-select, flag=error, range=MPLH_rb.21995..6;
-efcomp, order:=0, dkn:=- kMPLH21995;
-select, flag=error, range=MPLH_rb.21995..7;
-efcomp, order:=0, dkn:=- kMPLH21995;
-select, flag=error, range=MPLH_rb.21995..8;
-efcomp, order:=0, dkn:=- kMPLH21995;
+select, flag=error, pattern="MPLH_rb\.21431.*";
+efcomp, order:=0, dkn:=-MPLH.21431;
+EPRINT;
+select, flag=error, clear;
+select, flag=error, pattern="MPNH_rb\.21732.*";
+efcomp, order:=0, dkn:=MPNH.21732;
+EPRINT;
+select, flag=error, clear;
+select, flag=error, pattern="MPLH_rb\.21995.*";
+efcomp, order:=0, dkn:=MPLH.21995;
+EPRINT;
+select, flag=error, clear;
+select, flag=error, pattern="MPLH_rb\.22195.*";
+efcomp, order:=0, dkn:=MPLH.22195;
+EPRINT;
+select, flag=error, clear;
 
-
- !EPRINT;
- select, flag=error, clear;
- select, flag=error, range=MPLH_rb.22195..1;
- efcomp, order:=0, dkn:=- kMPLH22195;
- select, flag=error, range=MPLH_rb.22195..2;
- efcomp, order:=0, dkn:=- kMPLH22195;
- select, flag=error, range=MPLH_rb.22195..3;
- efcomp, order:=0, dkn:=- kMPLH22195;
- select, flag=error, range=MPLH_rb.22195..4;
- efcomp, order:=0, dkn:=- kMPLH22195;
-
- select, flag=error, range=MPLH_rb.22195..5;
- efcomp, order:=0, dkn:=- kMPLH22195;
- select, flag=error, range=MPLH_rb.22195..6;
- efcomp, order:=0, dkn:=- kMPLH22195;
- select, flag=error, range=MPLH_rb.22195..7;
- efcomp, order:=0, dkn:=- kMPLH22195;
- select, flag=error, range=MPLH_rb.22195..8;
- efcomp, order:=0, dkn:=- kMPLH22195;
 
  !EPRINT;
  select, flag=error, clear;
@@ -237,7 +157,10 @@ select, flag=twiss, range=#S/#E, column=name,s,betx,alfx,x,dx,px,dpx,y,dy,py,dpy
 TWISS;
 write, table=twiss, file='../twiss/twiss_after_thinning.prt';
 
+
 ////////////////////////////////////////////////////
+
+
 
 create, table = tune_var, column = giri, kqf1, kqf2, kqd;
 
