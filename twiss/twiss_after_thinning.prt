@@ -42,7 +42,7 @@
 @ TITLE            %08s "no-title"
 @ ORIGIN           %16s "5.02.06 Linux 64"
 @ DATE             %08s "01/03/17"
-@ TIME             %08s "16.22.29"
+@ TIME             %08s "16.35.46"
 * NAME                                S               BETX               ALFX                  X                 DX                 PX                DPX                  Y                 DY                 PY                DPY               BETY               ALFY 
 $ %s                                %le                %le                %le                %le                %le                %le                %le                %le                %le                %le                %le                %le                %le 
  "SPS$START"                          0        104.2219364       -2.369092184                  0        1.401831926                  0      0.03189076251                  0                  0                  0                 -0        20.42419742       0.5451272425
