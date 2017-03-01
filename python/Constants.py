@@ -51,7 +51,7 @@ tracksdir= data+'tracks/'
 lossdir  = data+'losses/'
 jobsdir  = data+'jobs/'
 
-pycolldir = '../../pycollimate/'
+pycolldir = home+'../pycollimate/'
 
 
 
