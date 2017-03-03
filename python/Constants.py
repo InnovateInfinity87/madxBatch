@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Jul 26 10:26:33 2016
+Settings for the batched simulation
 
-@author: wvandepo
+@author: Wouter van de Pontseele, Linda Stoel
 """
 
 import os
@@ -20,7 +20,7 @@ turnmultiplicity=50 #ffile MADX
 
 createTwiss=False
 trackingBool=True
-LXplus=True
+lsf=True
 writetrack=True
 pycollimate=True
 
@@ -35,23 +35,15 @@ ripplefile="ripple"
 
 
 user = os.environ["USER"]
-home = sys.path[0]+'/'
+home = sys.path[0]
 outputdir = '/afs/cern.ch/work/'+user[0]+'/'+user+'/private/madxBatchData/'
-
-twissdir = home+'twiss/'
-inputdir = home+'input/'
-madxdir  = home+'madx/'
 
 name="name"
 #name="t80_a35"
 
-data=outputdir+name+"/"
+datadir=outputdir+name+"/"
 
-tracksdir= data+'tracks/'
-lossdir  = data+'losses/'
-jobsdir  = data+'jobs/'
-
-pycolldir = home+'../pycollimate/'
+pycolldir = home+'/../pycollimate/'
 
 
 
@@ -90,10 +82,7 @@ def SetRipple(f_startturn=1000,f_amplitude=1000,f_period=500,f_expperiod=0):
 
 def SetDirs(f_name=None):
     global name
-    global data
-    global tracksdir
-    global lossdir
-    global jobsdir
+    global datadir
 
     if f_name is None:
         if( not ripple and not dataripple):
@@ -106,10 +95,7 @@ def SetDirs(f_name=None):
             name='glitch_t'+str(period)+'e'+str(expperiod)+'_a'+str(amplitude)+'_p'+str(int(Nbatches*Nparperbatch/1000))+'k'
     else:
         name=f_name
-    data=outputdir+name+"/"
-    tracksdir= data+'tracks/'
-    lossdir  = data+'losses/'
-    jobsdir  = data+'jobs/'
+    datadir=outputdir+name+"/"
 
 def setripplefile(f_ripple):
     global ripplefile
