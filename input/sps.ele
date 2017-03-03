@@ -2,6 +2,7 @@
   *
   * SPS Ring version STUDY in MAD X SEQUENCE format
   * Generated the 12-SEP-2014 09:26:19 from LHCLAYOUT@EDMSDB Database
+  * Adapted for pycollimate: collimators are INSTRUMENT unless needed
   *
   ***********************************************************************************/
 
@@ -130,7 +131,7 @@ TAL       :  INSTRUMENT, L := 1.25;      ! Tungsten absorber - Secondary collima
 TBSJB     :  INSTRUMENT, L := 2.1;       ! Beam stopper, before inflector, type B (?)
 TBSM      :  INSTRUMENT, L := 2;         ! Beam stopper, first turn
 TCE       :  INSTRUMENT, L := 2.7;       ! Collimator, extraction
-TCSM      :  INSTRUMENT, L := 1.83;      ! Simplified Phase I collimator prototype (Glidcop jaw with graphite inserts) with integrated BPMs
+TCSM      :  RCOLLIMATOR, L := 1.83;      ! Simplified Phase I collimator prototype (Glidcop jaw with graphite inserts) with integrated BPMs
 TIDH      :  INSTRUMENT, L := 4.3;       ! Internal beam dump, horizontal
 TIDP      :  INSTRUMENT, L := 4.3;       ! Internal beam dump, momentum
 TIDV      :  INSTRUMENT, L := 4.3;       ! Internal beam dump, vertical

@@ -1,14 +1,14 @@
 option, echo;
 option, RBARC=FALSE;
 call, file = '/afs/cern.ch/eng/sps/2014/beams/cngs_extraction.beamx';
-call, file = 'input/sps.ele';
-call, file = 'input/aperturedb_1.dbx';
+call, file = 'pyHOMEDIR/input/sps.ele';
+call, file = 'pyHOMEDIR/input/aperturedb_1.dbx';
 call, file = '/afs/cern.ch/eng/sps/2014/aperture/aperturedb_2.dbx';
 call, file = '/afs/cern.ch/eng/sps/2014/sequence/sps.seq';
-call, file = 'input/aperturedb_3.dbx';
+call, file = 'pyHOMEDIR/input/aperturedb_3.dbx';
 call, file = '/afs/cern.ch/eng/sps/2014/strength/ft_noqs_ext.str';
 call, file = '/afs/cern.ch/eng/sps/2014/strength/elements.str';
-//call, file = 'input/virtual_cor.madx';
+//call, file = 'pyHOMEDIR/input/virtual_cor.madx';
 
 ! With the new Thinning of MADX the sequence has to be flatten before being thinned
 
@@ -113,7 +113,7 @@ select, flag=error, clear;
 
 ///////////////////////////////////////////////////
 
-//call, file = 'input/stren.out';
+//call, file = 'pyHOMEDIR/input/stren.out';
 /////////////////////////////////////////////////////
 !================================
 ! Misa in Sextant 2
