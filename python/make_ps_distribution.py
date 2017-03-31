@@ -110,7 +110,7 @@ def get_gauss_distribution(output='initial_distribution_', input='sequence_totra
     y = y0 + n_y + (dy * ddp)
     py = py0 + (trandn(-1 * n_sigma, n_sigma, scale=sy).rvs(n) - alfy * n_y) / bety + (dpy * ddp)
 
-    file_head = c.inputdir+'distributionheader.txt'
+    file_head = c.home+"/input/distributionheader.txt"
     head = []
     with open(file_head, 'r') as ff:
         for i in xrange(6):

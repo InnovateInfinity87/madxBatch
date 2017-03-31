@@ -1,0 +1,2 @@
+       Element     Aper_up_p [m]      Aper_up_n [m]   Aper_down_p [m]    Aper_down_n [m]  Length [m]  Material  Error_up (Bool, std [m])  Error_down (Bool, std[m]) 
+ "TCSM.51934"              0.002             -0.002            0.0001            -0.0001        1.83     R4550                 False 0.0                  False 0.0 

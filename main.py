@@ -14,6 +14,7 @@ import os
 import sys
 import numpy as np
 import python.Constants as c
+from shutil import copyfile
 
 def whichQueue():
     """Determines appropriate LSF queue based on particles*turns."""
@@ -43,13 +44,15 @@ def replacer(filename,searchExp,replaceExp):
             line = line.replace(searchExp,replaceExp)
         sys.stdout.write(line)
 
+
 def adapter(filename,searchExp,replaceExp):
     """Creates a new file adapted from the tracker.madx template."""
     with open(filename, 'w') as out:
-        for line in fileinput.input(c.madxdir+'tracker.madx', inplace=0):
+        for line in fileinput.input('tracker.madx', inplace=0):
             if searchExp in line:
                 line = line.replace(searchExp,replaceExp)
             out.write(line)
+
 
 def writeTracker(k,data):
     """Creates the text to replace ADAPTTHISPART in tracker.madx.
@@ -61,13 +64,6 @@ def writeTracker(k,data):
     - Changing Nturns without changing start and end tune actually
       changes the tune sweep speed, is that intended?
     - Commented out lines of code can be removed, right?
-    - Most replacement seems rather unnecessary with the exception
-      of specifying tracksdir and initial coordinates. The other
-      constants can just be written to a file that's read by MADX. If we
-      would split the input coordinates into different files there would
-      be no more need to generate the full script for every batch, we
-      could just generate (shorter) input files. This would also make
-      the MAD-X templates easier to maintain.
     """
     line= "m_f = (kqf1_start - kqf1_end) / (1 - "+str(c.Nturns)+");\n"
     line+="m_d = (kqd_start -  kqd_end ) / (1 - "+str(c.Nturns)+");\n\n"
@@ -76,7 +72,7 @@ def writeTracker(k,data):
     line+="n_d = kqd_start - m_d;\n\n"
 
     if(c.dataripple):
-        line+= "READTABLE, FILE='"+c.inputdir+c.ripplefile+".prt';\n"
+        line+= "READTABLE, FILE='"+c.home+"/input/"+c.ripplefile+".prt';\n"
 
     line+="tr$macro(turn): macro = {"
     line+='\n'
@@ -108,7 +104,7 @@ def writeTracker(k,data):
     line+='\n'
     line+="};"
     line+='\n\n'
-    line+="track,onepass, aperture,  recloss, file='"+c.tracksdir+str(k)+"/track.batch"+str(k)+"', update;"
+    line+="track,onepass, aperture,  recloss, file='"+c.datadir+"tracks/"+str(k)+"/track.batch"+str(k)+"', update;"
     line+='\n\n'
     for i in range(k*c.Nparperbatch,(k+1)*c.Nparperbatch):
         line+="start, x="+str(data[0][i])+", px= "+str(data[1][i])+", y= "+str(data[2][i])+", py= "+str(data[3][i])+", t= "+str(0)+", pt= "+str(data[4][i])+";"
@@ -122,37 +118,26 @@ def writeTracker(k,data):
     line+='endtrack;'
     line+='\n\n'
     if(c.writetrack):
-        line+="write, table = trackloss, file='"+c.lossdir+"batch"+str(k)+"';"
+        line+="write, table = trackloss, file='"+c.datadir+'losses/'+"batch"+str(k)+"';"
 
     return line
-
-def writeTabler():
-    """Seems unused. To be deleted?"""
-    return 0
 
 
 def onerun():
     """Submits jobs for simulation defined in main.
 
     Needs some fixing:
-    - The replacers inside the createTwiss part will have worked only
-      the first time he ran it, since replace() is defined as in-place
-      replacement. After that they were useless.
-      Moreover, it looks like the difference between initial and final
+    - It looks like the difference between initial and final
       tune did not take number of turns into account. Probably best to
       set initial and final tune as standard and then change
       "run,turns=6;" -> "run,turns=Nturns;", and then save a replaced
       file somewhere else.
-      Also, it seems like a bit of a waste of time to run a tracking to
+    - It seems like a bit of a waste of time to run a tracking to
       create the tune_var table. If you agree the commented tables
       aren't useful then we can find a quicker way. (A simple loop
       should do the trick.)
-    - Replacer in the tracking has the same problem, but with the
-      relative path 'homedir' replacement has become redundant anyhow.
-      We can delete that line.
     - The MAD-X code used should somehow be linked to the
-      slowExtractionMADX code. (Can be done with an out-of-place
-      replacer and the c.madxdir variable.)
+      slowExtractionMADX code.
     - We may want to pick non-random seeds for comparing loss-reduction
       methods.
 
@@ -160,67 +145,80 @@ def onerun():
     different template options added, so that we can run new simulations
     instead of just tune ripple.
     """
-    if not os.path.exists(c.data):
-            os.makedirs(c.data)
+    if not os.path.exists(c.datadir):
+        os.makedirs(c.datadir)
+    os.chdir(c.datadir)               
 
     #Redirect the output to DEVNULL
     oldstdout = sys.stdout
     FNULL = open(os.devnull, 'w')
-    LOG = open(c.data+"log.txt","w")
+    LOG = open(c.datadir+"log.txt","w")
 
     #Generate twiss files before and after thinning, used to make initial distributions
     if(c.createTwiss):
-        print c.madxdir, c.home
-        replacer(c.madxdir+'TableTemplate.madx','homedir',c.home)
-        replacer(c.madxdir+'TableTemplate.madx','Nturns',str(c.Nturns))
-        if c.pycollimate:
-            print 'running: ', c.pycolldir+"madxColl<"+c.madxdir+"TableTemplate.madx"
-            subprocess.Popen(c.pycolldir+"madxColl<"+c.madxdir+"TableTemplate.madx", stdout=LOG, shell=True).wait()
-        else:
-            print 'running: ', "/afs/cern.ch/user/m/mad/bin/madx_dev<"+c.madxdir+"TableTemplate.madx"
-            subprocess.Popen("/afs/cern.ch/user/m/mad/bin/madx_dev<"+c.madxdir+"TableTemplate.madx", stdout=LOG, shell=True).wait()
+        copyfile(c.home+"/madx/table_template.madx", "table.madx")
+        replacer("table.madx", 'pyHOMEDIR', c.home)
+        replacer("table.madx",'pyTWISSDIR', c.home+"/twiss/")
+        print "Creating Twiss tables with madx_dev"
+        subprocess.Popen("/afs/cern.ch/user/m/mad/bin/madx_dev<table.madx", stdout=LOG, shell=True).wait()
         print 'Table creation is finished!'
 
     if(c.trackingBool):
         #Generate initial particle distributions
-        data=dis.get_gauss_distribution(output=c.data+'initial_distribution_gauss', input=c.twissdir+'twiss_after_thinning.prt',n_part=c.Nbatches*c.Nparperbatch, sigmas=6, beam_t='FT', seed=np.random.randint(9999))
+        data=dis.get_gauss_distribution(output=c.datadir+'initial_distribution_gauss', input=c.home+"/twiss/twiss_after_thinning.prt",n_part=c.Nbatches*c.Nparperbatch, sigmas=6, beam_t='FT', seed=np.random.randint(9999))
         print 'Initial particles distributions created!'
 
-        if not os.path.exists(c.tracksdir):
-                os.makedirs(c.tracksdir)
-        if not os.path.exists(c.lossdir):
-                os.makedirs(c.lossdir)
-        if not os.path.exists(c.jobsdir):
-                os.makedirs(c.jobsdir)
+        #Create datastructure
+        if not os.path.exists("tracks"):
+                os.mkdir("tracks")
+        if not os.path.exists("losses"):
+                os.mkdir("losses")
+        if not os.path.exists("jobs"):
+                os.mkdir("jobs")
 
         for i in range(c.Nbatches):
-            if not os.path.exists(c.tracksdir+str(i)):
-                os.makedirs(c.tracksdir+str(i))
+            if not os.path.exists("tracks/"+str(i)):
+                os.mkdir("tracks/"+str(i))
+            if not os.path.exists("jobs/"+str(i)):
+                os.mkdir("jobs/"+str(i))
 
         #Prepare madx files for batching
-        replacer(c.madxdir+'tracker.madx','homedir',c.home)
-        for nr in range(c.Nbatches):
-            file=c.jobsdir+'batch'+str(nr)+'.madx'
+        copyfile(c.home+"/madx/tracker_template.madx", "tracker.madx")
+        replacer("tracker.madx", 'pyHOMEDIR', c.home)
+        for i in range(c.Nbatches):
+            file="jobs/"+str(i)+"/batch"+str(i)+".madx"
             searchExp='ADAPTTHISPART'
-            replaceExp=writeTracker(nr,data)
+            replaceExp=writeTracker(i,data)
             adapter(file,searchExp,replaceExp)
         print 'Input madx files created!'
 
-        #Actual particle tracking
-        for nrb in range(c.Nbatches):
-            print 'Job '+str(nrb)+' of '+str(c.Nbatches)+', containing '+ str(c.Nparperbatch)+' particles, started.'
+        # Set up pyCollimate
+        if c.pycollimate:
+            for i in range(c.Nbatches):
+                copyfile(c.home+"/input/coll_DB_test.tfs",
+                         "jobs/"+str(i)+"/coll_DB.tfs")
+                copyfile(c.pycolldir+"/track_inside_coll.py",
+                         "jobs/"+str(i)+"/track_inside_coll.py")
+                copyfile(c.pycolldir+"/pycollimate.py",
+                         "jobs/"+str(i)+"/pycollimate.py")
 
-            if(c.LXplus):
+        #Actual particle tracking
+        for i in range(c.Nbatches):
+            print 'Starting job '+str(i)+' of '+str(c.Nbatches)+', containing '+ str(c.Nparperbatch)+' particles.'
+            os.chdir(c.datadir+"jobs/"+str(i))
+
+            if(c.lsf):
                 if c.pycollimate:
-                    subprocess.Popen("bsub -q "+whichQueue()+" "+c.pycolldir+"madxColl "+c.jobsdir+"batch"+str(nrb)+".madx", stdout=LOG, shell=True).wait()
+                    subprocess.Popen("bsub -q "+whichQueue()+" "+c.pycolldir+"madxColl "+c.datadir+"jobs/"+str(i)+"/batch"+str(i)+".madx", stdout=LOG, shell=True).wait()
                 else:
-                    subprocess.Popen("bsub -q "+whichQueue()+" /afs/cern.ch/user/m/mad/bin/madx_dev "+c.jobsdir+"batch"+str(nrb)+".madx", stdout=LOG, shell=True).wait()
+                    subprocess.Popen("bsub -q "+whichQueue()+" /afs/cern.ch/user/m/mad/bin/madx_dev "+c.datadir+"jobs/"+str(i)+"/batch"+str(i)+".madx", stdout=LOG, shell=True).wait()
                 print("Job submitted!")
             elif c.pycollimate:
-                subprocess.Popen(c.pycolldir+"madxColl<"+c.jobsdir+"batch"+str(nrb)+".madx", stdout=LOG, shell=True).wait()
+                subprocess.Popen(c.pycolldir+"madxColl<"+c.datadir+"jobs/"+str(i)+"/batch"+str(i)+".madx", stdout=LOG, shell=True).wait()
             else:
-                subprocess.Popen("/afs/cern.ch/user/m/mad/bin/madx<"+c.jobsdir+"batch"+str(nrb)+".madx", stdout=LOG, shell=True).communicate()
+                subprocess.Popen("/afs/cern.ch/user/m/mad/bin/madx_dev<"+c.datadir+"jobs/"+str(i)+"/batch"+str(i)+".madx", stdout=LOG, shell=True).communicate()
     print("Done!")
+
 
 def main():
     """Set parameters for the simulation and let it be batched.
@@ -298,7 +296,6 @@ def main():
     onerun()
 
 
-
 def tester():
     """Test of the main program functionality.
 
@@ -306,17 +303,18 @@ def tester():
     should think about replacing this with our (still to be defined)
     test-case(s).
     """
-    print 'test'
+    print "Running tester()"
 
     c.createTwiss=True
     c.trackingBool=True
-    c.LXplus=False
+    c.lsf=False
 
-    c.SetGeneral(f_Nturns=3,f_Nbatches=1,f_Nparperbatch=50,f_turnmultiplicity=10000)
+    c.SetGeneral(f_Nturns=10,f_Nbatches=2,f_Nparperbatch=50,f_turnmultiplicity=10000)
     c.SetBools(f_ripple=False,f_dataripple=False, f_writetrack=True,f_pycollimate=True)
     # c.setripplefile('ripple0')
-    c.SetDirs(f_name='ATEST_fra')
+    c.SetDirs(f_name='ATEST')
     onerun()
+
 
 tester()
 # main()
