@@ -1,1 +1,3 @@
 *.pyc
+.csync_journal.db
+.owncloudsync.log

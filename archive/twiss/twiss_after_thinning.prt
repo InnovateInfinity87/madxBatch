@@ -41,8 +41,8 @@
 @ SYNCH_5          %le                   0
 @ TITLE            %08s "no-title"
 @ ORIGIN           %16s "5.02.13 Linux 64"
-@ DATE             %08s "02/03/17"
-@ TIME             %08s "17.29.46"
+@ DATE             %08s "12/04/17"
+@ TIME             %08s "13.57.13"
 * NAME                                S               BETX               ALFX                  X                 DX                 PX                DPX                  Y                 DY                 PY                DPY               BETY               ALFY 
 $ %s                                %le                %le                %le                %le                %le                %le                %le                %le                %le                %le                %le                %le                %le 
  "SPS$START"                          0        103.7762645        -2.36047639                  0        1.407160562                  0      0.03203238356                  0                  0                  0                 -0        20.44692582       0.5460190342

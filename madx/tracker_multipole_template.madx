@@ -1,0 +1,347 @@
+!-----------------------------------------------------------------------
+! Tracking for SPS slow extraction with simplified decapole configuration
+!
+! L.S. Stoel - linda.susanne.stoel@cern.ch
+!
+!-----------------------------------------------------------------------
+
+OPTION, INFO, WARN, -ECHO;
+OPTION, RBARC=FALSE; ! The length of a rectangular magnet is the dist-
+                     ! ance between the polefaces and not the arc length
+
+
+!-----------------------------------------------------------------------
+! Nominal settings for SFTPRO in SPS (2016)
+!-----------------------------------------------------------------------
+
+! Tune (on-resonance)
+qh_res = 80.0 / 3.0; ! = 26.666...
+qv = 26.58;
+
+! Normalized chroma measured without bump, without extraction sextupoles
+qh = 26.62;
+dqh_norm = -0.770;
+dqv_norm =  0.465;
+
+! Extraction sextupoles (for knob=1)
+extr_sext = -0.11992;
+
+! Knob values
+knob_extr_sext = 1.0;
+knob_extr_bump = 0.945;
+
+! Tune range for tracking
+qh_start = 26.62;
+qh_end = 26.68;
+
+! Using pycollimate?
+use_pycoll = pyPYCOLL;
+
+
+/**********************************************************************/
+!-----------------------------------------------------------------------
+! Call files for correct initialization of SPS.
+! TODO: 2015 files don't work due to conflict between tcpc and crystal1?
+!-----------------------------------------------------------------------
+
+CALL, FILE = '/afs/cern.ch/eng/sps/2014/beams/cngs_extraction.beamx';
+!CALL, FILE = 'pyHOMEDIR/input/na_extraction.beamx';
+CALL, FILE = 'pyHOMEDIR/input/sps.ele';
+CALL, FILE = 'pyHOMEDIR/input/aperturedb_1.dbx';
+CALL, FILE = '/afs/cern.ch/eng/sps/2014/aperture/aperturedb_2.dbx';
+CALL, FILE = '/afs/cern.ch/eng/sps/2014/sequence/sps.seq';
+CALL, FILE = 'pyHOMEDIR/input/aperturedb_3.dbx';
+CALL, FILE = '/afs/cern.ch/eng/sps/2014/strength/ft_noqs_ext.str';
+OPTION, -ECHO;
+CALL, FILE = 'pyHOMEDIR/input/elements.str';
+
+! Initial values changed in matching later
+klsda =      -0.0853222228;
+klsdb =      -0.1628238122;
+klsfa =      0.07660956178;
+klsfb =     -0.04949411915;
+
+!-----------------------------------------------------------------------
+! Install markers relevant to the crystal MDs
+! (Crystals + new TCSM)
+!-----------------------------------------------------------------------
+
+tcsm.new: MARKER;
+crystal1.ua9: MARKER;
+crystal2.ua9: MARKER;
+crystal3.ua9: MARKER;
+crystal4.ua9: MARKER;
+crystal5.ua9: MARKER;
+crystal_lss4.ua9: MARKER;
+
+! TODO: removes bshv and tecs?
+SEQEDIT, SEQUENCE = sps;
+ FLATTEN;
+! REMOVE, ELEMENT = TCSM.51934;
+ REMOVE, ELEMENT = bshv.51795;
+ REMOVE, ELEMENT = tecs.51797;
+ REMOVE, ELEMENT = tecs.51799;
+ INSTALL, ELEMENT = tcsm.new, AT = 5158.5722;
+ INSTALL, ELEMENT = crystal1.ua9, AT = 5178.1685;
+ INSTALL, ELEMENT = crystal2.ua9, AT = 5179.4295;
+ INSTALL, ELEMENT = crystal3.ua9, AT = 5179.9245;
+ INSTALL, ELEMENT = crystal4.ua9, AT = 5180.8295;
+ INSTALL, ELEMENT = crystal5.ua9, AT = 5181.3245;
+ INSTALL, ELEMENT = crystal_lss4.ua9, AT = 4031; !check?
+ FLATTEN;
+ENDEDIT;
+
+USE, SEQUENCE = sps;
+
+!-----------------------------------------------------------------------
+! Set extraction sextupoles
+!-----------------------------------------------------------------------
+
+klse10602 := extr_sext * knob_extr_sext;
+klse22402 := extr_sext * knob_extr_sext;
+klse40602 := extr_sext * knob_extr_sext;
+klse52402 := extr_sext * knob_extr_sext;
+
+
+!-----------------------------------------------------------------------
+! Build sliceable extraction bump
+!-----------------------------------------------------------------------
+
+! Redefine bumpers as RBEND instead of KICKER
+MPSH_rb.21202: RBEND, L = .714, angle=0.0;
+MPLH_rb.21431: RBEND, L = 2.06, angle=0.0;
+MPNH_rb.21732: RBEND, L = 2.04, angle=0.0;
+MPLH_rb.21995: RBEND, L = 2.06, angle=0.0;
+MPLH_rb.22195: RBEND, L = 2.06, angle=0.0;
+
+! Replace old bumpers by new
+SEQEDIT, SEQUENCE = sps;
+ FLATTEN;
+ REPLACE, ELEMENT = MPSH.21202, BY = MPSH_rb.21202;
+ REPLACE, ELEMENT = MPLH.21431, BY = MPLH_rb.21431;
+ REPLACE, ELEMENT = MPNH.21732, BY = MPNH_rb.21732;
+ REPLACE, ELEMENT = MPLH.21995, BY = MPLH_rb.21995;
+ REPLACE, ELEMENT = MPLH.22195, BY = MPLH_rb.22195;
+ FLATTEN;
+ENDEDIT;
+USE, SEQUENCE = sps;
+
+
+/**********************************************************************/
+!-----------------------------------------------------------------------
+! Thinning of the sequence, remove zs aperture if in pycollimate
+!-----------------------------------------------------------------------
+
+SELECT, FLAG = makethin, CLEAR;
+SELECT, FLAG = makethin, CLASS = quadrupole, SLICE = 4;
+SELECT, FLAG = makethin, CLASS = rbend, SLICE = 4;
+SELECT, FLAG = makethin, CLASS = sextupole, SLICE = 1;
+
+MAKETHIN, SEQUENCE = sps, STYLE = teapot;
+USE, SEQUENCE = sps;
+
+IF (use_pycoll==1){
+AP.UP.ZS21633_M: MARKER;
+AP.DO.ZS21633_M: MARKER;
+AP.UP.ZS21638_M: MARKER;
+AP.DO.ZS21638_M: MARKER;
+AP.UP.ZS21655_M: MARKER;
+AP.DO.ZS21655_M: MARKER;
+AP.UP.ZS21671_M: MARKER;
+AP.DO.ZS21671_M: MARKER;
+AP.UP.ZS21676_M: MARKER;
+AP.DO.ZS21676_M: MARKER;
+ZS.61676_M: MARKER;
+
+ SEQEDIT, SEQUENCE = sps;
+  FLATTEN;
+  REPLACE, ELEMENT = AP.UP.ZS21633, BY = AP.UP.ZS21633_M;
+  REPLACE, ELEMENT = AP.DO.ZS21633, BY = AP.DO.ZS21633_M;
+  REPLACE, ELEMENT = AP.UP.ZS21638, BY = AP.UP.ZS21638_M;
+  REPLACE, ELEMENT = AP.DO.ZS21638, BY = AP.DO.ZS21638_M;
+  REPLACE, ELEMENT = AP.UP.ZS21655, BY = AP.UP.ZS21655_M;
+  REPLACE, ELEMENT = AP.DO.ZS21655, BY = AP.DO.ZS21655_M;
+  REPLACE, ELEMENT = AP.UP.ZS21671, BY = AP.UP.ZS21671_M;
+  REPLACE, ELEMENT = AP.DO.ZS21671, BY = AP.DO.ZS21671_M;
+  REPLACE, ELEMENT = AP.UP.ZS21676, BY = AP.UP.ZS21676_M;
+  REPLACE, ELEMENT = AP.DO.ZS21676, BY = AP.DO.ZS21676_M;
+  REPLACE, ELEMENT = ZS.61676, BY = ZS.61676_M;
+  FLATTEN;
+ ENDEDIT;
+ USE, SEQUENCE = sps;
+}
+
+
+/**********************************************************************/
+!-----------------------------------------------------------------------
+! Match tune chroma to measurement
+!-----------------------------------------------------------------------
+knob_extr_sext_val = knob_extr_sext;
+knob_extr_sext = 0;
+CALL, FILE='pySLOWEXDIR/cmd/matchtune.cmdx';
+CALL, FILE='pySLOWEXDIR/cmd/matchchroma.cmdx';
+knob_extr_sext = knob_extr_sext_val;
+
+
+/**********************************************************************/
+!-----------------------------------------------------------------------
+! Changes that can be done on the thin sequence should be done here. In
+! this case, installing 3 multipoles to be used instead of the
+! extraction sextupoles.
+!-----------------------------------------------------------------------
+knob_extr_sext = 0.0;
+lme.k2 = pyK2;
+lme.k4 = pyK4;
+
+lme1 : MULTIPOLE, KNL={0,0,lme.k2/3,0,lme.k4/3};
+lme2 : MULTIPOLE, KNL={0,0,lme.k2/3,0,lme.k4/3};
+lme3 : MULTIPOLE, KNL={0,0,lme.k2/3,0,lme.k4/3};
+
+SEQEDIT, SEQUENCE = sps;
+ FLATTEN;
+ INSTALL, ELEMENT = lme1, AT = 1491.33956;
+ INSTALL, ELEMENT = lme2, AT = 1569.36617;
+ INSTALL, ELEMENT = lme3, AT = 1647.95812;
+ FLATTEN;
+ENDEDIT;
+USE, SEQUENCE = sps;
+
+
+/**********************************************************************/
+!-----------------------------------------------------------------------
+! Set bump and misalignments
+!-----------------------------------------------------------------------
+knob_extr_bump_thin = knob_extr_bump / 4.0;
+
+SELECT, FLAG=error, CLEAR;
+SELECT, FLAG=error, PATTERN="MPSH_rb\.21202.*";
+EFCOMP, ORDER:=0, DKN=7.6765e-5 * knob_extr_bump_thin;
+
+SELECT, FLAG=error, CLEAR;
+SELECT, FLAG=error, PATTERN="MPLH_rb\.21431.*";
+EFCOMP, ORDER:=0, DKN=-0.49e-3 * knob_extr_bump_thin;
+
+SELECT, FLAG=error, CLEAR;
+SELECT, FLAG=error, PATTERN="MPNH_rb\.21732.*";
+EFCOMP, ORDER:=0, DKN=-0.33309e-3 * knob_extr_bump_thin;
+
+SELECT, FLAG=error, CLEAR;
+SELECT, FLAG=error, PATTERN="MPLH_rb\.21995.*";
+EFCOMP, ORDER:=0, DKN=-0.2503e-3 * knob_extr_bump_thin;
+
+SELECT, FLAG=error, CLEAR;
+SELECT, FLAG=error, PATTERN="MPLH_rb\.22195.*";
+EFCOMP, ORDER:=0, DKN=.35585e-3 * knob_extr_bump_thin;
+
+!================================
+! Misa in beam dump ! TODO right?
+!================================
+SELECT, FLAG = ERROR, CLEAR;
+SELECT, FLAG= ERROR, PATTERN= "TIDH.11795";
+EALIGN, DX= -0.00425, DY= -0.00611;
+
+SELECT, FLAG = ERROR, CLEAR;
+SELECT, FLAG= ERROR, PATTERN= "TIDV.11892";
+EALIGN, DY= -0.00194;
+
+!================================
+! Misa in Sextant 2
+!================================
+misa_knob = 0e-3; ! TODO: still useful??
+
+SELECT, FLAG = ERROR, CLEAR;
+SELECT, FLAG= ERROR, PATTERN= "MBB.21530";
+EALIGN, DX= 0.0 + misa_knob, DTHETA=798.7e-6;
+
+SELECT, FLAG = ERROR, CLEAR;
+SELECT, FLAG= ERROR, PATTERN= "MBB.21550";
+EALIGN, DX= 5.0e-3 + misa_knob, DTHETA=798.7e-6;
+
+SELECT, FLAG = ERROR, CLEAR;
+SELECT, FLAG= ERROR, PATTERN= "MBA.21570";
+EALIGN, DX= 10.0e-3 + misa_knob, DTHETA=159.7e-6;
+
+SELECT, FLAG = ERROR, CLEAR;
+SELECT, FLAG= ERROR, PATTERN= "MBA.21590";
+EALIGN, DX= 11.0e-3 + misa_knob, DTHETA=0.0;
+
+SELECT, FLAG = ERROR, CLEAR;
+SELECT, FLAG= ERROR, PATTERN= "VVSB.21601";
+EALIGN, DX= 11.0e-3 + misa_knob, DTHETA=0.0;
+
+
+/**********************************************************************/
+!-----------------------------------------------------------------------
+! In case this is for input twiss only: generate the thin twiss and exit
+!-----------------------------------------------------------------------
+
+/*pyTWISS
+qh = qh_res;
+CALL, FILE='pySLOWEXDIR/cmd/matchtune.cmdx';
+
+SELECT, FLAG=TWISS, CLEAR;
+SELECT, FLAG=TWISS, COLUMN=NAME,S,BETX,ALFX,X,DX,PX,DPX,Y,DY,PY,DPY,BETY,ALFY,APER_1,APER_2,APER_3,APER_4;
+TWISS;
+WRITE, TABLE=TWISS, FILE='pyDATADIR/thin_twiss.tfs';
+EXIT;
+pyTWISS*/
+
+
+/**********************************************************************/
+!-----------------------------------------------------------------------
+! Tracking code is completed by the python files
+!-----------------------------------------------------------------------
+
+qh = qh_end;
+CALL, FILE='pySLOWEXDIR/cmd/matchtune.cmdx';
+kqf1_end = kqf1;
+kqd_end = kqd;
+
+qh = qh_start;
+CALL, FILE='pySLOWEXDIR/cmd/matchtune.cmdx';
+kqf1_start = kqf1;
+kqd_start = kqd;
+
+VALUE, kqf1_end,kqd_end,kqf1_start,kqd_start;
+
+ADAPTTHISPART
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

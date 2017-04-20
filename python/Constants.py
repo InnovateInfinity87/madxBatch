@@ -33,6 +33,7 @@ expperiod=0 #turns 0-> pure sine
 dataripple=True
 ripplefile="ripple"
 
+monitor=False
 
 user = os.environ["USER"]
 home = sys.path[0]
@@ -44,6 +45,8 @@ name="name"
 datadir=outputdir+name+"/"
 
 pycolldir = home+'/../pycollimate/'
+
+trackertemplate = home+"/madx/tracker_template.madx"
 
 
 

@@ -194,13 +194,18 @@ def onerun():
 
         # Set up pyCollimate
         if c.pycollimate:
-            for i in range(c.Nbatches):
-                copyfile(c.home+"/input/coll_DB_test.tfs",
-                         "jobs/"+str(i)+"/coll_DB.tfs")
-                copyfile(c.pycolldir+"/track_inside_coll.py",
-                         "jobs/"+str(i)+"/track_inside_coll.py")
-                copyfile(c.pycolldir+"/pycollimate.py",
-                         "jobs/"+str(i)+"/pycollimate.py")
+            if c.lsf:
+                filestolsf = ("-f '"+c.home+"/input/coll_DB_test.tfs > coll_DB_test.tfs' "+
+                              "-f '"+c.pycolldir+"track_inside_coll.py > track_inside_coll.py' "+
+                              "-f '"+c.pycolldir+"/pycollimate.py > pycollimate.py'")
+            else:
+                for i in range(c.Nbatches):
+                    copyfile(c.home+"/input/coll_DB_test.tfs",
+                             "jobs/"+str(i)+"/coll_DB.tfs")
+                    copyfile(c.pycolldir+"/track_inside_coll.py",
+                             "jobs/"+str(i)+"/track_inside_coll.py")
+                    copyfile(c.pycolldir+"/pycollimate.py",
+                             "jobs/"+str(i)+"/pycollimate.py")
 
         #Actual particle tracking
         for i in range(c.Nbatches):
@@ -209,7 +214,7 @@ def onerun():
 
             if(c.lsf):
                 if c.pycollimate:
-                    subprocess.Popen("bsub -q "+whichQueue()+" "+c.pycolldir+"madxColl "+c.datadir+"jobs/"+str(i)+"/batch"+str(i)+".madx", stdout=LOG, shell=True).wait()
+                    subprocess.Popen("bsub "+filestolsf+" -q "+whichQueue()+" "+c.pycolldir+"madxColl "+c.datadir+"jobs/"+str(i)+"/batch"+str(i)+".madx", stdout=LOG, shell=True).wait()
                 else:
                     subprocess.Popen("bsub -q "+whichQueue()+" /afs/cern.ch/user/m/mad/bin/madx_dev "+c.datadir+"jobs/"+str(i)+"/batch"+str(i)+".madx", stdout=LOG, shell=True).wait()
                 print("Job submitted!")
@@ -307,7 +312,7 @@ def tester():
 
     c.createTwiss=True
     c.trackingBool=True
-    c.lsf=False
+    c.lsf=True
 
     c.SetGeneral(f_Nturns=10,f_Nbatches=2,f_Nparperbatch=50,f_turnmultiplicity=10000)
     c.SetBools(f_ripple=False,f_dataripple=False, f_writetrack=True,f_pycollimate=True)
