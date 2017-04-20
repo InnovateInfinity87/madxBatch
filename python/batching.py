@@ -34,7 +34,7 @@ class Settings:
                 outputdir = '/afs/cern.ch/work/'+user[0]+'/'+user+'/public/madxBatchData/'
 
         self.name = name
-        self.datadir = outputdir+name+"/"        
+        self.datadir = outputdir+name+"/"
         self.home = '/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1])
         self.pycolldir = self.home+'/../pycollimate/'
         self.slowexdir = self.home+'/../slowExtractionMADX'
