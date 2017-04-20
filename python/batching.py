@@ -321,7 +321,7 @@ def tester():
     """
     print "Running tester()"
 
-    settings=Settings('pycolltest', disk='afsprivate')
+    settings=Settings('pycolltest_small', disk='afsprivate')
 
     settings.trackingbool=True
     #settings.trackertemplate=settings.home+"/madx/tracker_multipole_template.madx"
@@ -332,7 +332,7 @@ def tester():
     #settings.elements=['AP.UP.ZS21633','TPST.21760','AP.UP.MST21774']
     settings.elements=['AP.UP.ZS21633_M','TPST.21760','AP.UP.MST21774']
 
-    settings.nturns=1000#204565
+    settings.nturns=10#204565
     settings.nbatches=1
     settings.nparperbatch=10
     settings.ffile=1
