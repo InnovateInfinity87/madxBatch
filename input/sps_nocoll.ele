@@ -2,8 +2,7 @@
   *
   * SPS Ring version STUDY in MAD X SEQUENCE format
   * Generated the 12-SEP-2014 09:26:19 from LHCLAYOUT@EDMSDB Database
-  * Adapted for pycollimate: collimators are INSTRUMENT unless needed,
-  *     ZS is RCOLLIMATOR
+  * Adapted for pycollimate: collimators are INSTRUMENT unless needed
   *
   ***********************************************************************************/
 
@@ -34,7 +33,7 @@ MPSH      : HKICKER     , L := .714;      ! Bumper magnet, pulsed, short, horizo
 MSE       : HKICKER     , L := 2.38;      ! Septum magnet, extractor
 MST       : HKICKER     , L := 2.38;      ! Septum magnet, thin
 ZKHA      : HKICKER     , L := 1;         ! Electrostatic kicker, horizontal, enlarged (RF group)
-ZS        : RCOLLIMATOR     , L := 3.13;      ! Electrostatic septum
+ZS        : HKICKER     , L := 3.13;      ! Electrostatic septum
 //---------------------- HMONITOR       ---------------------------------------------
 AERB      : HMONITOR    , L := .685;      ! RF pick-up electrode, radial, type B
 BDH       : HMONITOR    , L := 2.32;      ! Beam damper horizontal (RF equipment)
