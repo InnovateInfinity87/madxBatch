@@ -53,69 +53,64 @@ seqedit, sequence=sps;
 
 
 Select, flag=seqedit, pattern="^ZS.21633$";
-ap.UP.ZS21633:AP,APERTYPE=RECTANGLE,APERTURE={67.9/1000,0.046/2};
-ap.DO.ZS21633:AP,APERTYPE=RECTANGLE,APERTURE={63.8/1000,0.046/2};
-
-!!ap.UP.ZS21633:AP,APERTYPE=RECTANGLE,APERTURE={67.7/1000,0.046/2};
-!!ap.DO.ZS21633:AP,APERTYPE=RECTANGLE,APERTURE={63.34/1000,0.046/2};
-
-
+ap.UP.ZS21633:AP,APERTYPE=RECTANGLE,APERTURE={67.95/1000,0.046/2};
+ap.DO.ZS21633:AP,APERTYPE=RECTANGLE,APERTURE={63.73/1000,0.046/2};
 Install, element=ap.do.ZS21633, at:=ZS->l/2, from=selected;
 Install, element=ap.up.ZS21633, at:=-ZS->l/2, from=selected;
 Select, flag=seqedit, clear = true;
 
 Select, flag=seqedit, pattern="^ZS.21638$";
-ap.UP.ZS21638:AP,APERTYPE=RECTANGLE,APERTURE={62.73/1000,0.046/2};
-ap.DO.ZS21638:AP,APERTYPE=RECTANGLE,APERTURE={58.62/1000,0.046/2};
+ap.UP.ZS21638:AP,APERTYPE=RECTANGLE,APERTURE={62.63/1000,0.046/2};
+ap.DO.ZS21638:AP,APERTYPE=RECTANGLE,APERTURE={58.41/1000,0.046/2};
 Install, element=ap.do.ZS21638, at:=ZS->l/2, from=selected;
 Install, element=ap.up.ZS21638, at:=-ZS->l/2, from=selected;
 Select, flag=seqedit, clear = true;
 
 Select, flag=seqedit, pattern="^ZS.21655$";
-ap.UP.ZS21655:AP,APERTYPE=RECTANGLE,APERTURE={57.55/1000,0.046/2};
-ap.DO.ZS21655:AP,APERTYPE=RECTANGLE,APERTURE={53.45/1000,0.046/2};
+ap.UP.ZS21655:AP,APERTYPE=RECTANGLE,APERTURE={57.31/1000,0.046/2};
+ap.DO.ZS21655:AP,APERTYPE=RECTANGLE,APERTURE={53.09/1000,0.046/2};
 Install, element=ap.do.ZS21655, at:=ZS->l/2, from=selected;
 Install, element=ap.up.ZS21655, at:=-ZS->l/2, from=selected;
 Select, flag=seqedit, clear = true;
 
 Select, flag=seqedit, pattern="^ZS.21671$";
-ap.UP.ZS21671:AP,APERTYPE=RECTANGLE,APERTURE={52.38/1000,0.046/2};
-ap.DO.ZS21671:AP,APERTYPE=RECTANGLE,APERTURE={48.27/1000,0.046/2};
+ap.UP.ZS21671:AP,APERTYPE=RECTANGLE,APERTURE={51.99/1000,0.046/2};
+ap.DO.ZS21671:AP,APERTYPE=RECTANGLE,APERTURE={47.77/1000,0.046/2};
 Install, element=ap.do.ZS21671, at:=ZS->l/2, from=selected;
 Install, element=ap.up.ZS21671, at:=-ZS->l/2, from=selected;
 Select, flag=seqedit, clear = true;
 
 Select, flag=seqedit, pattern="^ZS.21676$";
-ap.UP.ZS21676:AP,APERTYPE=RECTANGLE,APERTURE={47.20/1000,0.046/2};
-ap.DO.ZS21676:AP,APERTYPE=RECTANGLE,APERTURE={43.10/1000,0.046/2};
+ap.UP.ZS21676:AP,APERTYPE=RECTANGLE,APERTURE={46.67/1000,0.046/2};
+ap.DO.ZS21676:AP,APERTYPE=RECTANGLE,APERTURE={42.45/1000,0.046/2};
 Install, element=ap.do.ZS21676, at:=ZS->l/2, from=selected;
 Install, element=ap.up.ZS21676, at:=-ZS->l/2, from=selected;
 Select, flag=seqedit, clear = true;
 
 
-Select, flag=seqedit, pattern="^TPST.21759$";
-ap.UP.TPST21759:AP,APERTYPE=RECTANGLE,APERTURE={39.40/1000,0.078};
-ap.DO.TPST21759:AP,APERTYPE=RECTANGLE,APERTURE={40.46/1000,0.078};
-Install, element=ap.do.TPST21759, at:=TPST->l/2, from=selected;
-Install, element=ap.up.TPST21759, at:=-TPST->l/2, from=selected;
+Select, flag=seqedit, pattern="^TPST.21760$";
+ap.UP.TPST21760:AP,APERTYPE=RECTANGLE,APERTURE={37.59/1000,0.078};
+ap.DO.TPST21760:AP,APERTYPE=RECTANGLE,APERTURE={38.99/1000,0.078};
+Install, element=ap.do.TPST21760, at:=TPST->l/2, from=selected;
+Install, element=ap.up.TPST21760, at:=-TPST->l/2, from=selected;
 Select, flag=seqedit, clear = true;
 
 Select, flag=seqedit, pattern="^MST.21774$";
-ap.UP.MST21774:AP,APERTYPE=RECTANGLE,APERTURE={40.79/1000,0.078};
-ap.DO.MST21774:AP,APERTYPE=RECTANGLE,APERTURE={41.98/1000,0.078};
+ap.UP.MST21774:AP,APERTYPE=RECTANGLE,APERTURE={39.41/1000,0.078};
+ap.DO.MST21774:AP,APERTYPE=RECTANGLE,APERTURE={40.98/1000,0.078};
 Install, element=ap.do.MST21774, at:=MST->l/2, from=selected;
 Install, element=ap.up.MST21774, at:=-MST->l/2, from=selected;
 Select, flag=seqedit, clear = true;
 
 Select, flag=seqedit, pattern="^MST.21779$";
-ap.UP.MST21779:AP,APERTYPE=RECTANGLE,APERTURE={42.40/1000,0.078};
-ap.DO.MST21779:AP,APERTYPE=RECTANGLE,APERTURE={43.59/1000,0.078};
+ap.UP.MST21779:AP,APERTYPE=RECTANGLE,APERTURE={41.52/1000,0.078};
+ap.DO.MST21779:AP,APERTYPE=RECTANGLE,APERTURE={43.09/1000,0.078};
 Install, element=ap.do.MST21779, at:=MST->l/2, from=selected;
 Install, element=ap.up.MST21779, at:=-MST->l/2, from=selected;
 Select, flag=seqedit, clear = true;
 
 Select, flag=seqedit, pattern="^MST.21794$";
-ap.UP.MST21794:AP,APERTYPE=RECTANGLE,APERTURE={44.01/1000,0.078};
+ap.UP.MST21794:AP,APERTYPE=RECTANGLE,APERTURE={43.63/1000,0.078};
 ap.DO.MST21794:AP,APERTYPE=RECTANGLE,APERTURE={45.20/1000,0.078};
 Install, element=ap.do.MST21794, at:=MST->l/2, from=selected;
 Install, element=ap.up.MST21794, at:=-MST->l/2, from=selected;
@@ -124,36 +119,36 @@ Select, flag=seqedit, clear = true;
 
 
 Select, flag=seqedit, pattern="^MSE.21832$";
-ap.UP.MSE21832:AP, APERTYPE=RECTANGLE, APERTURE={52.70/1000,0.078};
-ap.DO.MSE21832:AP, APERTYPE=RECTANGLE, APERTURE={51.67/1000,0.078};
+ap.UP.MSE21832:AP, APERTYPE=RECTANGLE, APERTURE={48.25/1000,0.078};
+ap.DO.MSE21832:AP, APERTYPE=RECTANGLE, APERTURE={47.48/1000,0.078};
 Install, element=ap.do.MSE21832, at:=MSE->l/2, from=selected;
 Install, element=ap.up.MSE21832, at:=-MSE->l/2, from=selected;
 Select, flag=seqedit, clear = true;
 
 Select, flag=seqedit, pattern="^MSE.21837$";
-ap.UP.MSE21837:AP,APERTYPE=RECTANGLE,APERTURE={51.84/1000,0.078};
-ap.DO.MSE21837:AP,APERTYPE=RECTANGLE,APERTURE={53.72/1000,0.078};
+ap.UP.MSE21837:AP,APERTYPE=RECTANGLE,APERTURE={47.77/1000,0.078};
+ap.DO.MSE21837:AP,APERTYPE=RECTANGLE,APERTURE={49.91/1000,0.078};
 Install, element=ap.do.MSE21837, at:=MSE->l/2, from=selected;
 Install, element=ap.up.MSE21837, at:=-MSE->l/2, from=selected;
 Select, flag=seqedit, clear = true;
 
 Select, flag=seqedit, pattern="^MSE.21852$";
-ap.UP.MSE21852:AP,APERTYPE=RECTANGLE,APERTURE={55.11/1000,0.078};
-ap.DO.MSE21852:AP,APERTYPE=RECTANGLE,APERTURE={59.89/1000,0.078};
+ap.UP.MSE21852:AP,APERTYPE=RECTANGLE,APERTURE={51.42/1000,0.078};
+ap.DO.MSE21852:AP,APERTYPE=RECTANGLE,APERTURE={56.47/1000,0.078};
 Install, element=ap.do.MSE21852, at:=MSE->l/2, from=selected;
 Install, element=ap.up.MSE21852, at:=-MSE->l/2, from=selected;
 Select, flag=seqedit, clear = true;
 
 Select, flag=seqedit, pattern="^MSE.21857$";
-ap.UP.MSE21857:AP,APERTYPE=RECTANGLE,APERTURE={62.50/1000,0.078};
-ap.DO.MSE21857:AP,APERTYPE=RECTANGLE,APERTURE={70.19/1000,0.078};
+ap.UP.MSE21857:AP,APERTYPE=RECTANGLE,APERTURE={59.18/1000,0.078};
+ap.DO.MSE21857:AP,APERTYPE=RECTANGLE,APERTURE={67.14/1000,0.078};
 Install, element=ap.do.MSE21857, at:=MSE->l/2, from=selected;
 Install, element=ap.up.MSE21857, at:=-MSE->l/2, from=selected;
 Select, flag=seqedit, clear = true;
 
 Select, flag=seqedit, pattern="^MSE.21872$";
-ap.UP.MSE21872:AP,APERTYPE=RECTANGLE,APERTURE={74.00/1000,0.078};
-ap.DO.MSE21872:AP,APERTYPE=RECTANGLE,APERTURE={84.60/1000,0.078};
+ap.UP.MSE21872:AP,APERTYPE=RECTANGLE,APERTURE={71.07/1000,0.078};
+ap.DO.MSE21872:AP,APERTYPE=RECTANGLE,APERTURE={81.93/1000,0.078};
 Install, element=ap.do.MSE21872, at:=MSE->l/2, from=selected;
 Install, element=ap.up.MSE21872, at:=-MSE->l/2, from=selected;
 Select, flag=seqedit, clear = true;
