@@ -14,8 +14,8 @@ import fileinput
 import subprocess
 from shutil import copyfile
 
-import python.make_ps_distribution as dis
-from python.localsub import localsub
+import make_ps_distribution as dis
+from localsub import localsub
 
 class Settings:
     """Settings for the batched simulations"""
@@ -35,7 +35,7 @@ class Settings:
 
         self.name = name
         self.datadir = outputdir+name+"/"        
-        self.home = sys.path[0]
+        self.home = '/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1])
         self.pycolldir = self.home+'/../pycollimate/'
         self.slowexdir = self.home+'/../slowExtractionMADX'
         self.slowexfiles = (self.home+'/input/sps.ele, '+
@@ -242,7 +242,8 @@ def submit_job(settings):
                                         input=settings.datadir+"/thin_twiss.tfs",
                                         n_part=settings.nbatches*settings.nparperbatch,
                                         sigmas=6, beam_t='FT',
-                                        seed=settings.seed)
+                                        seed=settings.seed,
+                                        file_head=settings.home+"/input/distributionheader.txt")
         print 'Initial particles distributions created!'
 
         #Create datastructure
@@ -323,7 +324,7 @@ def tester():
     settings=Settings('pycolltest', disk='afsprivate')
 
     settings.trackingbool=True
-    settings.trackertemplate=settings.home+"/madx/tracker_nominal_template3b.madx"
+    #settings.trackertemplate=settings.home+"/madx/tracker_multipole_template.madx"
     settings.local=False
     settings.monitor=False
     settings.seed = 0

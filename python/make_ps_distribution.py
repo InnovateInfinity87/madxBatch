@@ -3,7 +3,6 @@ from scipy.stats import truncnorm as trandn
 from prettytable import PrettyTable
 import linecache
 import random
-import Constants as c
 
 def string_to_float(seq):
         for x in seq:
@@ -13,7 +12,7 @@ def string_to_float(seq):
                 yield x
 
 def get_gauss_distribution(output='initial_distribution_', input='sequence_totrack.tfs', sigmas=3,
-                            beam_t='LHC', n_part=100, seed=123):
+                            beam_t='LHC', n_part=100, seed=123, file_head='../input/distributionheader.txt'):
 
     filename_out = output
     twiss_file = input
@@ -110,7 +109,6 @@ def get_gauss_distribution(output='initial_distribution_', input='sequence_totra
     y = y0 + n_y + (dy * ddp)
     py = py0 + (trandn(-1 * n_sigma, n_sigma, scale=sy).rvs(n) - alfy * n_y) / bety + (dpy * ddp)
 
-    file_head = c.home+"/input/distributionheader.txt"
     head = []
     with open(file_head, 'r') as ff:
         for i in xrange(6):
@@ -132,7 +130,7 @@ def get_gauss_distribution(output='initial_distribution_', input='sequence_totra
 
 
 
-def get_halo_distribution(output='initial_distribution_halo_', input='sequence_totrack.tfs', n_halo=5, beam_t='LHC', n_part=100, seed=123):
+def get_halo_distribution(output='initial_distribution_halo_', input='sequence_totrack.tfs', n_halo=5, beam_t='LHC', n_part=100, seed=123, file_head='../input/distributionheader.txt'):
 
     filename_out = output
 
@@ -226,7 +224,6 @@ def get_halo_distribution(output='initial_distribution_halo_', input='sequence_t
     y1 = y0 + n_halo * np.sqrt(bety * emit_y) * np.cos(psiy) + (dy * ddp_t)
     py1 = py0 - (n_halo * np.sqrt(emit_y / bety) * (np.sin(psiy) + alfy * np.cos(psiy))) + (dpy * ddp_t)
 
-    file_head = c.inputdir+'distributionheader.txt'
     head = []
     with open(file_head, 'r') as ff:
         for i in xrange(6):
@@ -249,7 +246,7 @@ def get_halo_distribution(output='initial_distribution_halo_', input='sequence_t
     return x1, px1, y1, py1,pt
 
 
-def get_fat_halo(output='initial_distribution_f_halo_', input='sequence_totrack.tfs', n_halo=(4, 5), beam_t='LHC', n_part=100, seed=123):
+def get_fat_halo(output='initial_distribution_f_halo_', input='sequence_totrack.tfs', n_halo=(4, 5), beam_t='LHC', n_part=100, seed=123, file_head='../input/distributionheader.txt'):
 
     filename_out = output
 
@@ -348,7 +345,6 @@ def get_fat_halo(output='initial_distribution_f_halo_', input='sequence_totrack.
     y1 = y0 + width * np.sqrt(bety * emit_y) * np.cos(psiy) + (dy * ddp_t)
     py1 = py0 - (width * np.sqrt(emit_y / bety) * (np.sin(psiy) + alfy * np.cos(psiy))) + (dpy * ddp_t)
 
-    file_head = c.inputdir+'distributionheader.txt'
     head = []
     with open(file_head, 'r') as ff:
         for i in xrange(6):
