@@ -1,3 +1,3 @@
 #!/bin/bash
 
-./MADXEXE<PROCID.madx
+./MADXEXE<$1.madx

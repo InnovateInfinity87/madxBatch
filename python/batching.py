@@ -200,7 +200,7 @@ def load_particles(i,data,settings):
                       "PT = "+str(data[4][j])+";\n")
     with open("jobs/"+str(i)+".madx", 'w') as madxjob:
         for line in fileinput.input('tracker.madx', inplace=0):
-            line.startswith("pyLOADPARTICLES"):
+            if "pyLOADPARTICLES" in line:
                 line = particles
             madxjob.write(line)
 
@@ -318,28 +318,26 @@ def submit_job(settings):
         os.chmod("tracks/unpacker.sh", st.st_mode | stat.S_IEXEC)
 
         #Prepare job files for each batch
+        copyfile(settings.home+"/other/job.sh", "jobs/start.sh")
+        if settings.pycollimate:
+            replacer("jobs/start.sh", 'MADXEXE', "madxColl")
+        else:
+            replacer("jobs/start.sh", 'MADXEXE', "madx_dev")
         for i in range(settings.nbatches):
             outfile="jobs/"+str(i)+".madx"
             searchExp='ADAPTTHISPART'
             replaceExp=writeTracker(i,data,settings)
             customize_tracker(outfile,searchExp,replaceExp)
-            jobname = "jobs/"+str(i)+".sh"
-            copyfile(settings.home+"/other/job.sh", jobname)
-            replacer(jobname, 'PROCID', str(i))
-            if settings.pycollimate:
-                replacer(jobname, 'MADXEXE', "madxColl")
-            else:
-                replacer(jobname, 'MADXEXE', "madx_dev")
         os.remove("tracker.madx")
         print 'Job files created!'
 
         #Write submit file
         with open(settings.name+".sub",'w') as subfile:
-            subfile.write("executable = jobs/$(ProcId).sh\n")
+            subfile.write("executable = jobs/start.sh\n")
             if settings.pycollimate:
                 subfile.write('requirements = (OpSysAndVer =?= "CentOS7")\n')
                 subfile.write("transfer_input_files = "+
-                              "jobs/$(ProcId).madx, jobs/$(ProcId).sh, "+
+                              "jobs/$(ProcId).madx, "+
                               settings.pycolldir+"madxColl, "+
                               settings.pycolldir+"track_inside_coll.py, "+
                               settings.pycolldir+"pycollimate.py, "+
@@ -348,9 +346,10 @@ def submit_job(settings):
                               settings.slowexfiles+"\n")
             else:
                 subfile.write("transfer_input_files = "+
-                              "jobs/$(ProcId).madx, jobs/$(ProcId).sh, "+
+                              "jobs/$(ProcId).madx, "+
                               "/afs/cern.ch/user/m/mad/bin/madx_dev, "+
                               settings.slowexfiles+"\n")
+            subfile.write('arguments = "$(ProcId)"\n')
             subfile.write("initialdir = "+settings.datadir+"\n")
             subfile.write("output = output/$(ProcId).out\n")
             subfile.write("error = error/$(ProcId).err\n")
@@ -381,7 +380,7 @@ def tester():
     """
     print "Running tester()"
 
-    settings=Settings('manytest', disk='afsprivate')
+    settings=Settings('testchanges', disk='afsprivate')
 
     settings.trackingbool=True
     #settings.trackertemplate=settings.home+"/madx/tracker_multipole_template.madx"
@@ -393,7 +392,7 @@ def tester():
     settings.elements=['AP.UP.ZS21633_M','TPST.21760','AP.UP.MST21774']
 
     settings.nturns=10#204565
-    settings.nbatches=1001
+    settings.nbatches=2
     settings.nparperbatch=10
     settings.ffile=1
 
