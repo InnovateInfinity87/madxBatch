@@ -19,7 +19,7 @@ from localsub import localsub
 
 class Settings:
     """Settings for the batched simulations"""
-    def __init__(self, name, outputdir=None, disk='eos'):
+    def __init__(self, name, outputdir=None, studygroup='', disk='eos'):
         if not disk in ['eos', 'afsprivate', 'afspublic']:
             print("Disk setting not valid. valid options are 'eos'/'afsprivate'"+
                   "/'afspublic'. Defaulting to eos, unless desired outputdir was given.")
@@ -27,14 +27,14 @@ class Settings:
         if outputdir==None:
             user = os.environ["USER"]
             if disk=='eos':
-                outputdir = '/eos/user/'+user[0]+'/'+user+'/madxBatchData/'
+                outputdir = '/eos/user/'+user[0]+'/'+user+'/madxBatchData/'+studygroup
             elif disk=='afsprivate':
-                outputdir = '/afs/cern.ch/work/'+user[0]+'/'+user+'/private/madxBatchData/'
+                outputdir = '/afs/cern.ch/work/'+user[0]+'/'+user+'/private/madxBatchData/'+studygroup
             else:
-                outputdir = '/afs/cern.ch/work/'+user[0]+'/'+user+'/public/madxBatchData/'
+                outputdir = '/afs/cern.ch/work/'+user[0]+'/'+user+'/public/madxBatchData/'+studygroup
 
         self.name = name
-        self.datadir = outputdir+name+"/"
+        self.datadir = outputdir+"/"+name+"/"
         self.home = '/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1])
         self.pycolldir = self.home+'/../pycollimate/'
         self.slowexdir = self.home+'/../slowExtractionMADX'
@@ -69,8 +69,14 @@ class Settings:
     def set_name(self, name):
         self.name = name
         if not self._custom_datadir:
-            outputdir = '/'.join(self.datadir.split('/')[:-2])+'/'
-            self.datadir = outputdir+name+"/"
+            outputdir = '/'.join(self.datadir.split('/')[:-2])
+            self.datadir = outputdir+'/'+name+"/"
+        
+    def set_studygroup(self, studygroup):
+        if not self._custom_datadir:
+            temp = self.datadir.split('/')
+            temp[-3] = studygroup
+            self.datadir = '/'.join(temp)+'/'
 
     def set_datadir(self, dir):
         self.datadir = dir
@@ -132,11 +138,10 @@ def replacer(filename,searchExp,replaceExp):
     with replaceExp, overwriting the original file.
     """
     for line in fileinput.input(filename, inplace=1):
-        if searchExp in line:
-            line = line.replace(searchExp,replaceExp)
+        line = line.replace(searchExp,replaceExp)
         sys.stdout.write(line)
 
-
+# To be deleted
 def customize_tracker(filename,searchExp,replaceExp):
     """Creates a new file adapted from the tracker.madx template."""
     with open(filename, 'w') as out:
@@ -146,6 +151,61 @@ def customize_tracker(filename,searchExp,replaceExp):
             out.write(line)
 
 
+def track_lin(settings):
+    """Default linear tracking for MAD-X."""
+    track = ("m_f = (kqf1_start - kqf1_end) / (1 - "+str(settings.nturns)+");\n"+
+             "m_d = (kqd_start -  kqd_end ) / (1 - "+str(settings.nturns)+");\n\n"+
+
+             "n_f = kqf1_start - m_f;\n"+
+             "n_d = kqd_start - m_d;\n\n"+
+        
+             "SYSTEM, 'mkdir "+str(k)+"';\n\n"+
+        
+             "tr$macro(turn): MACRO = {\n"+
+             "kqf1 = m_f * turn + n_f;\n"+
+             "kqd = m_d * turn + n_d;\n"+
+             "};\n\n"+
+
+             "OPTION, -WARN;\n"+
+             "TRACK, ONEPASS, APERTURE, RECLOSS, "+
+                  "FILE='"+str(k)+"/track.batch"+str(k)+"', UPDATE;\n\n")
+
+    track += "pyLOADPARTICLES\n"
+    for place in settings.elements:
+        track += "OBSERVE, PLACE = "+place+';\n';
+    line += ("RUN, TURNS="+str(settings.nturns)+", "+
+                 "MAXAPER={0.1,0.01,0.1,0.01,"+str(0.03*settings.nturns)+",0.1}, "+
+                 "FFILE="+str(settings.ffile)+";\n\n"+
+
+             "ENDTRACK;\n"+
+             "OPTION, WARN;\n\n")
+
+    if(settings.saveloss):
+        line+="WRITE, TABLE = trackloss, FILE = 'losses.tfs';\n\n"
+
+    line += "SYSTEM, 'tar -czf tracks.tar.gz "+str(k)+"';"
+
+    return line
+
+
+def load_particles(i,data,settings):
+    """Creates a new madx file with particles loaded into the template."""
+    particles = ""
+    for j in range(i*settings.nparperbatch,(i+1)*settings.nparperbatch):
+        particles += ("START, X ="+str(data[0][j])+", "+
+                      "PX = "+str(data[1][j])+", "+
+                      "Y = "+str(data[2][j])+", "+
+                      "PY = "+str(data[3][j])+", "+
+                      "T = "+str(0)+", "+
+                      "PT = "+str(data[4][j])+";\n")
+    with open("jobs/"+str(i)+".madx", 'w') as madxjob:
+        for line in fileinput.input('tracker.madx', inplace=0):
+            line.startswith("pyLOADPARTICLES"):
+                line = particles
+            madxjob.write(line)
+
+
+# To be deleted
 def writeTracker(k,data,settings):
     """Creates the text to replace ADAPTTHISPART in tracker.madx."""
     line = ("m_f = (kqf1_start - kqf1_end) / (1 - "+str(settings.nturns)+");\n"+
@@ -224,7 +284,7 @@ def submit_job(settings):
         copyfile("tracker.madx", "table.madx")
         replacer("table.madx", '/*pyTWISS', '')
         replacer("table.madx", 'pyTWISS*/', '')
-        print "Creating Twiss tables"
+        print "Creating Twiss table"
         if settings.pycollimate:
             subprocess.Popen(settings.pycolldir+"madxColl<table.madx", stdout=log, shell=True).wait()
         else:
@@ -236,7 +296,7 @@ def submit_job(settings):
         copyfile(settings.twissfile, settings.datadir+"/thin_twiss.tfs")
 
     if(settings.trackingbool):
-        #Generate initial particle distributions
+        #Generate initial particle distribution
         #TODO: Non-random input
         data=dis.get_gauss_distribution(output=settings.datadir+'initial_distribution',
                                         input=settings.datadir+"/thin_twiss.tfs",
@@ -244,7 +304,7 @@ def submit_job(settings):
                                         sigmas=6, beam_t='FT',
                                         seed=settings.seed,
                                         file_head=settings.home+"/input/distributionheader.txt")
-        print 'Initial particles distributions created!'
+        print 'Initial particle distribution created!'
 
         #Create datastructure
         os.mkdir("tracks")
@@ -321,11 +381,11 @@ def tester():
     """
     print "Running tester()"
 
-    settings=Settings('localtest', disk='afsprivate')
+    settings=Settings('manytest', disk='afsprivate')
 
     settings.trackingbool=True
     #settings.trackertemplate=settings.home+"/madx/tracker_multipole_template.madx"
-    settings.local=True
+    settings.local=False
     settings.monitor=False
     settings.seed = 0
 
@@ -333,11 +393,11 @@ def tester():
     settings.elements=['AP.UP.ZS21633_M','TPST.21760','AP.UP.MST21774']
 
     settings.nturns=10#204565
-    settings.nbatches=1
+    settings.nbatches=1001
     settings.nparperbatch=10
     settings.ffile=1
 
-    settings.pycollimate=True
+    settings.pycollimate=False
 
     submit_job(settings)
 
