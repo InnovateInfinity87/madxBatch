@@ -321,11 +321,11 @@ def tester():
     """
     print "Running tester()"
 
-    settings=Settings('pycolltest_small', disk='afsprivate')
+    settings=Settings('localtest', disk='afsprivate')
 
     settings.trackingbool=True
     #settings.trackertemplate=settings.home+"/madx/tracker_multipole_template.madx"
-    settings.local=False
+    settings.local=True
     settings.monitor=False
     settings.seed = 0
 

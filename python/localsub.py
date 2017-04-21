@@ -92,29 +92,31 @@ def runsub(subfile):
         log.write("submitting job "+str(i)+" to fake remote\n")
 
         #Copy needed input to fake remote
-        shutil.copyfile(locsub["executable"],"fakeremote/executable")
+        shutil.copy(locsub["executable"],"fakeremote/executable")
         if "input" in locsub:
-            shutil.copyfile(locsub["input"],"fakeremote/input")
+            shutil.copy(locsub["input"],"fakeremote/input")
         if "transfer_input_files" in locsub:
             for fname in locsub["transfer_input_files"].split(","):
-                shutil.copyfile(fname.strip(),"fakeremote/"+fname.split("/")[-1].strip())
+                shutil.copy(fname.strip(),"fakeremote/"+fname.split("/")[-1].strip())
 
         #Go to the fake remote and execute the job
         os.chdir("fakeremote")
         with open("out.out", 'w') as out, open("err.err", 'w') as err:
-            subprocess.check_call("chmod 700 ./executable", shell=True)
+            subprocess.check_call("chmod 755 ./executable", shell=True)
             if "input" in locsub:
                 try:
                     subprocess.check_call("./executable<input", stdout=out, shell=True)
                 except subprocess.CalledProcessError as e:
                     err.write(str(e.output))
                     err.write("\n")
+                    return
             else:
                 try:
                     subprocess.check_call("./executable", stdout=out, shell=True)
                 except subprocess.CalledProcessError as e:
                     err.write(str(e.output))
                     err.write("\n")
+                    return
 
         #Exit the fake remote, copy output back to 'local' and destroy the remote
         os.chdir("..")
