@@ -141,73 +141,16 @@ def replacer(filename,searchExp,replaceExp):
         line = line.replace(searchExp,replaceExp)
         sys.stdout.write(line)
 
-# To be deleted
 def customize_tracker(filename,searchExp,replaceExp):
     """Creates a new file adapted from the tracker.madx template."""
     with open(filename, 'w') as out:
         for line in fileinput.input('tracker.madx', inplace=0):
-            if searchExp in line:
-                line = line.replace(searchExp,replaceExp)
+            line = line.replace(searchExp,replaceExp)
             out.write(line)
 
 
-def track_lin(settings):
-    """Default linear tracking for MAD-X."""
-    track = ("m_f = (kqf1_start - kqf1_end) / (1 - "+str(settings.nturns)+");\n"+
-             "m_d = (kqd_start -  kqd_end ) / (1 - "+str(settings.nturns)+");\n\n"+
-
-             "n_f = kqf1_start - m_f;\n"+
-             "n_d = kqd_start - m_d;\n\n"+
-        
-             "SYSTEM, 'mkdir "+str(k)+"';\n\n"+
-        
-             "tr$macro(turn): MACRO = {\n"+
-             "kqf1 = m_f * turn + n_f;\n"+
-             "kqd = m_d * turn + n_d;\n"+
-             "};\n\n"+
-
-             "OPTION, -WARN;\n"+
-             "TRACK, ONEPASS, APERTURE, RECLOSS, "+
-                  "FILE='"+str(k)+"/track.batch"+str(k)+"', UPDATE;\n\n")
-
-    track += "pyLOADPARTICLES\n"
-    for place in settings.elements:
-        track += "OBSERVE, PLACE = "+place+';\n';
-    line += ("RUN, TURNS="+str(settings.nturns)+", "+
-                 "MAXAPER={0.1,0.01,0.1,0.01,"+str(0.03*settings.nturns)+",0.1}, "+
-                 "FFILE="+str(settings.ffile)+";\n\n"+
-
-             "ENDTRACK;\n"+
-             "OPTION, WARN;\n\n")
-
-    if(settings.saveloss):
-        line+="WRITE, TABLE = trackloss, FILE = 'losses.tfs';\n\n"
-
-    line += "SYSTEM, 'tar -czf tracks.tar.gz "+str(k)+"';"
-
-    return line
-
-
-def load_particles(i,data,settings):
-    """Creates a new madx file with particles loaded into the template."""
-    particles = ""
-    for j in range(i*settings.nparperbatch,(i+1)*settings.nparperbatch):
-        particles += ("START, X ="+str(data[0][j])+", "+
-                      "PX = "+str(data[1][j])+", "+
-                      "Y = "+str(data[2][j])+", "+
-                      "PY = "+str(data[3][j])+", "+
-                      "T = "+str(0)+", "+
-                      "PT = "+str(data[4][j])+";\n")
-    with open("jobs/"+str(i)+".madx", 'w') as madxjob:
-        for line in fileinput.input('tracker.madx', inplace=0):
-            if "pyLOADPARTICLES" in line:
-                line = particles
-            madxjob.write(line)
-
-
-# To be deleted
-def writeTracker(k,data,settings):
-    """Creates the text to replace ADAPTTHISPART in tracker.madx."""
+def track_lin(k,data,settings):
+    """Creates the text to replace pyTRACKER in tracker.madx. (nominal case)"""
     line = ("m_f = (kqf1_start - kqf1_end) / (1 - "+str(settings.nturns)+");\n"+
             "m_d = (kqd_start -  kqd_end ) / (1 - "+str(settings.nturns)+");\n\n"+
 
@@ -325,8 +268,8 @@ def submit_job(settings):
             replacer("jobs/start.sh", 'MADXEXE', "madx_dev")
         for i in range(settings.nbatches):
             outfile="jobs/"+str(i)+".madx"
-            searchExp='ADAPTTHISPART'
-            replaceExp=writeTracker(i,data,settings)
+            searchExp='pyTRACKER'
+            replaceExp=track_lin(i,data,settings)
             customize_tracker(outfile,searchExp,replaceExp)
         os.remove("tracker.madx")
         print 'Job files created!'
