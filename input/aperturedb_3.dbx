@@ -54,34 +54,34 @@ seqedit, sequence=sps;
 
 Select, flag=seqedit, pattern="^ZS.21633$";
 ap.UP.ZS21633:AP,APERTYPE=RECTANGLE,APERTURE={67.95/1000,0.046/2};
-ap.DO.ZS21633:AP,APERTYPE=RECTANGLE,APERTURE={63.73/1000,0.046/2};
+ap.DO.ZS21633:AP,APERTYPE=RECTANGLE,APERTURE={63.70/1000,0.046/2};
 Install, element=ap.do.ZS21633, at:=ZS->l/2, from=selected;
 Install, element=ap.up.ZS21633, at:=-ZS->l/2, from=selected;
 Select, flag=seqedit, clear = true;
 
 Select, flag=seqedit, pattern="^ZS.21638$";
-ap.UP.ZS21638:AP,APERTYPE=RECTANGLE,APERTURE={62.63/1000,0.046/2};
-ap.DO.ZS21638:AP,APERTYPE=RECTANGLE,APERTURE={58.41/1000,0.046/2};
+ap.UP.ZS21638:AP,APERTYPE=RECTANGLE,APERTURE={62.64/1000,0.046/2};
+ap.DO.ZS21638:AP,APERTYPE=RECTANGLE,APERTURE={58.39/1000,0.046/2};
 Install, element=ap.do.ZS21638, at:=ZS->l/2, from=selected;
 Install, element=ap.up.ZS21638, at:=-ZS->l/2, from=selected;
 Select, flag=seqedit, clear = true;
 
 Select, flag=seqedit, pattern="^ZS.21655$";
-ap.UP.ZS21655:AP,APERTYPE=RECTANGLE,APERTURE={57.31/1000,0.046/2};
-ap.DO.ZS21655:AP,APERTYPE=RECTANGLE,APERTURE={53.09/1000,0.046/2};
+ap.UP.ZS21655:AP,APERTYPE=RECTANGLE,APERTURE={57.33/1000,0.046/2};
+ap.DO.ZS21655:AP,APERTYPE=RECTANGLE,APERTURE={53.07/1000,0.046/2};
 Install, element=ap.do.ZS21655, at:=ZS->l/2, from=selected;
 Install, element=ap.up.ZS21655, at:=-ZS->l/2, from=selected;
 Select, flag=seqedit, clear = true;
 
 Select, flag=seqedit, pattern="^ZS.21671$";
-ap.UP.ZS21671:AP,APERTYPE=RECTANGLE,APERTURE={51.99/1000,0.046/2};
-ap.DO.ZS21671:AP,APERTYPE=RECTANGLE,APERTURE={47.77/1000,0.046/2};
+ap.UP.ZS21671:AP,APERTYPE=RECTANGLE,APERTURE={52.01/1000,0.046/2};
+ap.DO.ZS21671:AP,APERTYPE=RECTANGLE,APERTURE={47.76/1000,0.046/2};
 Install, element=ap.do.ZS21671, at:=ZS->l/2, from=selected;
 Install, element=ap.up.ZS21671, at:=-ZS->l/2, from=selected;
 Select, flag=seqedit, clear = true;
 
 Select, flag=seqedit, pattern="^ZS.21676$";
-ap.UP.ZS21676:AP,APERTYPE=RECTANGLE,APERTURE={46.67/1000,0.046/2};
+ap.UP.ZS21676:AP,APERTYPE=RECTANGLE,APERTURE={46.70/1000,0.046/2};
 ap.DO.ZS21676:AP,APERTYPE=RECTANGLE,APERTURE={42.45/1000,0.046/2};
 Install, element=ap.do.ZS21676, at:=ZS->l/2, from=selected;
 Install, element=ap.up.ZS21676, at:=-ZS->l/2, from=selected;

@@ -323,11 +323,12 @@ def tester():
     """
     print "Running tester()"
 
-    settings=Settings('testchanges', disk='afsprivate')
+    settings=Settings('testchanges', disk='eos')
 
     settings.trackingbool=True
     #settings.trackertemplate=settings.home+"/madx/tracker_multipole_template.madx"
-    settings.local=False
+    #settings.trackertemplate=settings.home+"/madx/tracker_nominal_template_v2.madx"
+    settings.local=True
     settings.monitor=False
     settings.seed = 0
 

@@ -52,7 +52,7 @@ def runsub(subfile):
             subfile[key] = subfile[key].replace("$(ClusterId)","fake")
             if key not in ["queue", "initialdir", "input", "output", "error",
                            "log", "transfer_input_files", "transfer_output_files",
-                           "transfer_output_remaps", "executable"]:
+                           "transfer_output_remaps", "executable", "arguments"]:
                 print("WARNING: keyword "+key+" is currently not supported in local mode.")
 
     for i in range(queue):
@@ -103,16 +103,20 @@ def runsub(subfile):
         os.chdir("fakeremote")
         with open("out.out", 'w') as out, open("err.err", 'w') as err:
             subprocess.check_call("chmod 755 ./executable", shell=True)
+            if "arguments" in locsub:
+                arguments = locsub["arguments"][1:-1]
+            else:
+                arguments = ""
             if "input" in locsub:
                 try:
-                    subprocess.check_call("./executable<input", stdout=out, shell=True)
+                    subprocess.check_call("./executable "+arguments+" < input", stdout=out, shell=True)
                 except subprocess.CalledProcessError as e:
                     err.write(str(e.output))
                     err.write("\n")
                     return
             else:
                 try:
-                    subprocess.check_call("./executable", stdout=out, shell=True)
+                    subprocess.check_call("./executable "+arguments, stdout=out, shell=True)
                 except subprocess.CalledProcessError as e:
                     err.write(str(e.output))
                     err.write("\n")
