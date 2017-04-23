@@ -147,6 +147,8 @@ def customize_tracker(filename,searchExp,replaceExp):
         for line in fileinput.input('tracker.madx', inplace=0):
             line = line.replace(searchExp,replaceExp)
             out.write(line)
+        out.flush()
+        os.fsync(out.fileno())
 
 
 def track_lin(k,data,settings):
