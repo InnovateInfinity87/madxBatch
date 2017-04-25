@@ -60,6 +60,7 @@ class Settings:
 
         self.trackingbool = True
         self.saveloss = True
+        self.dynamicbump=False
         self.pycollimate = True
 
         self.monitor = False
@@ -98,32 +99,32 @@ def flavour(nturns, parperbatch,pycollimate):
     #TODO: benchmark for better estimate
     n = nturns*parperbatch
     if pycollimate:
-        #if n > 72e7:
-        #    f = "nextweek"
-        #elif n > 24e7:
-        #    f = "testmatch"
-        #elif n > 8e7:
-        #    f = "tomorrow"
-        #elif n > 2e7:
-        #    f = "workday"
-        #elif n > 1e7:
-        #    f = "longlunch"
-        #elif n > 4e6:
-        #    f = "microcentury"
-        #else:
+        if n > 144e4:
+            f = "nextweek"
+        elif n > 48e4:
+            f = "testmatch"
+        elif n > 16e4:
+            f = "tomorrow"
+        elif n > 4e4:
+            f = "workday"
+        elif n > 2e4:
+            f = "longlunch"
+        elif n > 0.66e4:
+            f = "microcentury"
+        else:
             f = "espresso"
     else:
-        if n > 1.62e8:
+        if n > 48e6:
             f = "nextweek"
-        elif n > 5.4e7:
+        elif n > 16e6:
             f = "testmatch"
-        elif n > 1.8e7:
+        elif n > 5.33e6:
             f = "tomorrow"
-        elif n > 6.75e6:
+        elif n > 1.33e6:
             f = "workday"
-        elif n > 2.25e6:
+        elif n > 0.66e6:
             f = "longlunch"
-        elif n > 0.75e6:
+        elif n > 0.22e6:
             f = "microcentury"
         else:
             f = "espresso"
@@ -159,27 +160,41 @@ def track_lin(k,data,settings):
             "n_f = kqf1_start - m_f;\n"+
             "n_d = kqd_start - m_d;\n\n"+
         
-            "SYSTEM, 'mkdir "+str(k)+"';\n\n"+
-        
-            "tr$macro(turn): MACRO = {\n"+
-            "kqf1 = m_f * turn + n_f;\n"+
-            "kqd = m_d * turn + n_d;\n"+
-            "};\n\n"+
+            "SYSTEM, 'mkdir "+str(k)+"';\n\n")
 
-            "OPTION, -WARN;\n"+
-            "TRACK, ONEPASS, APERTURE, RECLOSS, "+
+    if settings.dynamicbump:
+        line += (orthogonal_bumps()+"\n\n"+
+
+                "x_knob_start = 406*dpp_start + (-0.0765*dpp_start*1e3);\n"+
+                "px_knob_start = (-20.667*dpp_start) + (-0.0022*start*1e3);\n"+
+                "EXEC, x_obump(x_knob_start);\n"+
+                "EXEC, px_obump(px_knob_start);\n"+
+                "dpp_inc = (dpp_end-dpp_start)/"+str(settings.nturns)+";\n"
+                "x_knob_inc = 406*dpp_inc + (-0.0765*dpp_inc*1e3);\n"+
+                "px_knob_inc = (-20.667*dpp_inc) + (-0.0022*dpp_inc*1e3);\n\n")
+        
+    line += ("tr$macro(turn): MACRO = {\n"+
+             " kqf1 = m_f * turn + n_f;\n"+
+             " kqd = m_d * turn + n_d;\n")
+    if settings.dynamicbump:
+        line += (" EXEC, x_obump(x_knob_inc);\n"+
+                 " EXEC, px_obump(px_knob_inc);\n")
+    line += "};\n\n"
+
+    line += ("OPTION, -WARN;\n"+
+             "TRACK, ONEPASS, APERTURE, RECLOSS, "+
                   "FILE='"+str(k)+"/track.batch"+str(k)+"', UPDATE;\n\n")
 
     for i in range(k*settings.nparperbatch,(k+1)*settings.nparperbatch):
-        line += ("START, X ="+str(data[0][i])+", "+
+        line += (" START, X ="+str(data[0][i])+", "+
                        "PX = "+str(data[1][i])+", "+
                        "Y = "+str(data[2][i])+", "+
                        "PY = "+str(data[3][i])+", "+
                        "T = "+str(0)+", "+
                        "PT = "+str(data[4][i])+";\n")
     for place in settings.elements:
-        line += "OBSERVE, PLACE = "+place+';\n';
-    line += ("RUN, TURNS="+str(settings.nturns)+", "+
+        line += " OBSERVE, PLACE = "+place+';\n';
+    line += (" RUN, TURNS="+str(settings.nturns)+", "+
                  "MAXAPER={0.1,0.01,0.1,0.01,"+str(0.03*settings.nturns)+",0.1}, "+
                  "FFILE="+str(settings.ffile)+";\n\n"+
 
@@ -192,6 +207,48 @@ def track_lin(k,data,settings):
     line += "SYSTEM, 'tar -czf tracks.tar.gz "+str(k)+"';"
 
     return line
+
+
+def orthogonal_bumps():
+    "MAD-X code for the orthogonal bump macros"
+    return ("EOPTION, ADD = TRUE;\n\n"+
+
+            "x_obump(knob_value) : MACRO = {\n"+
+            " SELECT, FLAG=ERROR, CLEAR;\n"+
+            ' SELECT, FLAG=ERROR, PATTERN="MPSH_rb\.21202.*";\n'+
+            " EFCOMP, ORDER:=0, DKN= 2.331301861e-05 * knob_value * (-1/4);\n"+
+            " SELECT, FLAG=ERROR, CLEAR;\n"+
+            ' SELECT, FLAG=ERROR, PATTERN="MPLH_rb\.21431.*";\n'+
+            " EFCOMP, ORDER:=0, DKN= -9.91281169e-06   * knob_value * (-1/4);\n"+
+            " SELECT, FLAG=ERROR, CLEAR;\n"+
+            ' SELECT, FLAG=ERROR, PATTERN="MPNH_rb\.21732.*";\n'+
+            " EFCOMP, ORDER:=0, DKN=  2.98e-05 * knob_value * (-1/4);\n"+
+            " SELECT, FLAG=ERROR, CLEAR;\n"+
+            ' SELECT, FLAG=ERROR, PATTERN="MPLH_rb\.21995.*";\n'+
+            " EFCOMP, ORDER:=0, DKN= -1.923181311e-05 * knob_value * (-1/4);\n"+
+            " SELECT, FLAG=ERROR, CLEAR;\n"+
+            ' SELECT, FLAG=ERROR, PATTERN="MPLH_rb\.22195.*";\n'+
+            " EFCOMP, ORDER:=0, DKN= 2.105219176e-05 * knob_value * (-1/4);\n"+
+            "};\n\n"+
+
+            "px_obump(knob_value) : MACRO = {\n"+
+            " SELECT, FLAG=ERROR, CLEAR;\n"+
+            ' SELECT, FLAG=ERROR, PATTERN="MPSH_rb\.21202.*";\n'+
+            " EFCOMP, ORDER:=0, DKN= 9.929676756e-06 * knob_value * (-1e2/4);\n"+
+            " SELECT, FLAG=ERROR, CLEAR;\n"+
+            ' SELECT, FLAG=ERROR, PATTERN="MPLH_rb\.21431.*";\n'+
+            " EFCOMP, ORDER:=0, DKN= 2.600240449e-07   * knob_value * (-1e2/4);\n"+
+            " SELECT, FLAG=ERROR, CLEAR;\n"+
+            ' SELECT, FLAG=ERROR, PATTERN="MPNH_rb\.21732.*";\n'+
+            " EFCOMP, ORDER:=0, DKN=  2.174863504e-05 * knob_value * (-1e2/4);\n"+
+            " SELECT, FLAG=ERROR, CLEAR;\n"+
+            ' SELECT, FLAG=ERROR, PATTERN="MPLH_rb\.21995.*";\n'+
+            " EFCOMP, ORDER:=0, DKN= -5.128495572e-06 * knob_value * (-1e2/4);\n"+
+            " SELECT, FLAG=ERROR, CLEAR;\n"+
+            ' SELECT, FLAG=ERROR, PATTERN="MPLH_rb\.22195.*";\n'+
+            " EFCOMP, ORDER:=0, DKN= 8.373821994e-06 * knob_value * (-1e2/4);\n"+
+            "};")
+
 
 def submit_job(settings):
     """Creates and submits job cluster for simulation defined by settings.
@@ -325,7 +382,7 @@ def tester():
     """
     print "Running tester()"
 
-    settings=Settings('testchanges', disk='eos')
+    settings=Settings('dynbumptest_s', disk='afspublic')
 
     settings.trackingbool=True
     #settings.trackertemplate=settings.home+"/madx/tracker_multipole_template.madx"
@@ -335,13 +392,15 @@ def tester():
     settings.seed = 0
 
     #settings.elements=['AP.UP.ZS21633','TPST.21760','AP.UP.MST21774']
-    settings.elements=['AP.UP.ZS21633_M','TPST.21760','AP.UP.MST21774']
+    #settings.elements=['AP.UP.ZS21633_M','TPST.21760','AP.UP.MST21774']
+    settings.elements=['AP.UP.ZS21633']
 
-    settings.nturns=10#204565
-    settings.nbatches=2
+    settings.nturns=50#204565
+    settings.nbatches=1#0000
     settings.nparperbatch=10
-    settings.ffile=1
+    settings.ffile=2045
 
+    settings.dynamicbump=True
     settings.pycollimate=False
 
     submit_job(settings)

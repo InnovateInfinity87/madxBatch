@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib.lines import Line2D
 
-_units = {'X': 'm', 'PX': 'rad', 'Y': 'm', 'PY': 'rad', 'T': 'm', 'PT': '1', 'S': 'm', 'E': 'eV'}
-_def_unit_exp = {'X': 0, 'PX': 0, 'Y': 0, 'PY': 0, 'T': 0, 'PT': 0, 'S': 0, 'E': 9}
+_units = {'X': 'm', 'PX': 'rad', 'Y': 'm', 'PY': 'rad', 'T': 'm', 'PT': '1', 'S': 'm', 'E': 'eV', 'TURN': '1'}
+_def_unit_exp = {'X': 0, 'PX': 0, 'Y': 0, 'PY': 0, 'T': 0, 'PT': 0, 'S': 0, 'E': 9, 'TURN':0}
 
 def readtfs(filename, usecols=None, index_col=0):
     header = {}
@@ -60,7 +60,7 @@ def lossplot(lossfolder, lossloc="AP.UP.ZS21633", xax="X", yax="PX", cax="TURN",
     cm = plt.cm.get_cmap('viridis')
     fig, ax = plt.subplots()
     plt.autoscale(enable=True, axis='both', tight=True)
-    plot = ax.scatter(xdata, ydata, c=cdata, cmap = cm)
+    plot = ax.scatter(xdata, ydata, c=cdata, cmap=cm, edgecolor='')
     if xlim is not None:
         ax.set_xlim(xlim)
     if ylim is not None:
@@ -106,6 +106,103 @@ def losschart(lossfolder, lossloc="AP.UP.ZS21633", xax="X", binwidth=5E-4, start
         plt.savefig(save)
 
 
+# TODO: include Francesco's loss calculation?
+def beamstats(lossfolder, lossloc="AP.UP.ZS21633", plane="X", save=None):
+    if plane=='X':
+        xax='X'
+        pax='PX'
+    elif plane=='Y':
+        xax='Y'
+        pax='PY'
+    else:
+        print "plane should be 'X' or'Y'"
+        return
+
+    xdata = []
+    pdata = []
+    totloss = 0
+
+    for lossfile in os.listdir(lossfolder):
+        _, losstable = readtfs(lossfolder+'/'+lossfile)
+        totloss += len(losstable.index)
+        if lossloc is not None:
+            losstable = losstable.loc[losstable['ELEMENT'] == lossloc]
+        xdata += losstable[xax].tolist()
+        pdata += losstable[pax].tolist()
+
+    minx = str(min(xdata))
+    avgx = str(np.mean(xdata))
+    maxx = str(max(xdata))
+    minp = str(min(pdata))
+    avgp = str(np.mean(pdata))
+    maxp = str(max(pdata))
+    stdx = str(np.std(xdata))
+    stdp = str(np.std(pdata))
+    statemit = str(np.sqrt(np.linalg.det(np.cov(xdata,pdata))))
+
+    if lossloc is None:
+        message = "Globally:\n"
+    else:
+        message = "At "+lossloc+":\n"
+
+    message += ("min,max "+xax+": "+minx+", "+maxx+"\n"+
+                "avg,std "+xax+": "+avgx+", "+stdx+"\n"+
+                "min,max "+pax+": "+minp+", "+maxp+"\n"+
+                "avg,std "+pax+": "+avgp+", "+stdp+"\n"+
+                "statistical emittance: "+statemit+"\n"+
+                "(# of particles local/global: "+str(len(xdata))+"/"+str(totloss)+")")
+
+    if save is None:
+        print message
+    else:
+        with open(save, 'w') as out:
+            out.write(message)
+
+
+def wireangle(lossfolder, lossloc="AP.UP.ZS21633", wiremax=0.69, save=None):
+    xax='X'
+    pax='PX'
+
+    xdata = []
+    pdata = []
+
+    for lossfile in os.listdir(lossfolder):
+        _, losstable = readtfs(lossfolder+'/'+lossfile)
+        losstable = losstable.loc[losstable['ELEMENT'] == lossloc]
+        xdata += losstable[xax].tolist()
+        pdata += losstable[pax].tolist()
+
+    wireang = [pdata[i] for i in range(len(pdata)) if xdata[i]<wiremax]
+
+    minp = str(min(wireang))
+    avgp = str(np.mean(wireang))
+    maxp = str(max(wireang))
+    stdp = str(np.std(wireang))
+
+    message = ("Angular spread at "+lossloc+
+               ", for lost particles with x<"+str(wiremax)+":\n"+
+               "min,max "+pax+": "+minp+", "+maxp+"\n"+
+               "avg,std "+pax+": "+avgp+", "+stdp+"\n")
+
+    if save is None:
+        print message
+    else:
+        with open(save, 'w') as out:
+            out.write(message)
+
+def errorcheck(errfolder):
+    failed=[]
+    messages=[]
+
+    for errfile in os.listdir(errfolder):
+        if os.stat(errfolder+'/'+errfile).st_size > 0:
+            failed += [errfile.split('.')[0]]
+            with open(errfolder+'/'+errfile, 'r') as f:
+                firstline = f.readline()
+            if firstline not in messages:
+                messages += [firstline]
+
+    return failed, messages
 
 
 
@@ -127,9 +224,7 @@ def losschart(lossfolder, lossloc="AP.UP.ZS21633", xax="X", binwidth=5E-4, start
 
 
 
-
-
-
+# BELOW IS SOME OLD CODE I MIGHT RE-USE, DO NOT RELY ON IT...
 
 
 class TrackOut:
