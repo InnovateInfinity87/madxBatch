@@ -62,6 +62,7 @@ class Settings:
         self.saveloss = True
         self.dynamicbump=False
         self.pycollimate = True
+        self.septadb = settings.home+"/input/septa_DB_nominal.tfs"
 
         self.monitor = False
         
@@ -343,7 +344,7 @@ def submit_job(settings):
                               settings.pycolldir+"madxColl, "+
                               settings.pycolldir+"track_inside_coll.py, "+
                               settings.pycolldir+"pycollimate.py, "+
-                              settings.home+"/input/septa_DB_nominal.tfs, "+
+                              settings.septadb+", "+
                               settings.home+"/other/matplotlibrc, "+
                               settings.slowexfiles+"\n")
             else:
