@@ -62,7 +62,7 @@ class Settings:
         self.saveloss = True
         self.dynamicbump=False
         self.pycollimate = True
-        self.septadb = settings.home+"/input/septa_DB_nominal.tfs"
+        self.septadb = self.home+"/input/septa_DB_nominal.tfs"
 
         self.monitor = False
         
