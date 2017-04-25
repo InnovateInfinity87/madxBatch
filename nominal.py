@@ -46,7 +46,7 @@ settings.ffile=500
 submit_job(settings)
 
 #Without pycollimate, with dynamic bump
-settings=Settings('nominal_nopc_db', studygroup="nominal", disk='afspublic')
+settings.set_name('nominal_nopc_db')
 
 settings.dynamicbump=True
 settings.pycollimate=False

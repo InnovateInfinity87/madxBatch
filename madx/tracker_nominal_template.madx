@@ -34,8 +34,8 @@ knob_extr_bump = 0.945;
 ! Tune range for tracking
 dpp_start = -0.0015;
 dpp_end = 0.0015;
-qh_start = 80/3 - dpp_start*chroma_res;
-qh_end = 80/3 - dpp_end*chroma_res;
+qh_start := 80/3 - dpp_start*chroma_res;
+qh_end := 80/3 - dpp_end*chroma_res;
 
 ! Using pycollimate?
 use_pycoll = pyPYCOLL;
@@ -258,7 +258,8 @@ EALIGN, DX= 11.0e-3 + misa_knob, DTHETA=0.0;
 
 /**********************************************************************/
 !-----------------------------------------------------------------------
-! In case this is for input twiss only: generate the thin twiss and exit
+! Generate a thin twiss and save the chroma at resonance
+! In case this is for input twiss only: save the twiss and exit
 !-----------------------------------------------------------------------
 
 qh = qh_res;
@@ -268,12 +269,12 @@ SELECT, FLAG=TWISS, CLEAR;
 SELECT, FLAG=TWISS, COLUMN=NAME,S,BETX,ALFX,X,DX,PX,DPX,Y,DY,PY,DPY,BETY,ALFY,APER_1,APER_2,APER_3,APER_4;
 TWISS;
 
+chroma_res = TABLE(SUMM,DQ1);
+
 /*pyTWISS
 WRITE, TABLE=TWISS, FILE='pyDATADIR/thin_twiss.tfs';
 EXIT;
 pyTWISS*/
-
-chroma_res = TABLE(SUMM,DQ1);
 
 
 /**********************************************************************/

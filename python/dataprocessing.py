@@ -193,16 +193,21 @@ def wireangle(lossfolder, lossloc="AP.UP.ZS21633", wiremax=0.69, save=None):
 def errorcheck(errfolder):
     failed=[]
     messages=[]
+    missout=[]
 
     for errfile in os.listdir(errfolder):
+        jobid = errfile.split(".")[0]
         if os.stat(errfolder+'/'+errfile).st_size > 0:
-            failed += [errfile.split('.')[0]]
+            failed += [jobid]
             with open(errfolder+'/'+errfile, 'r') as f:
                 firstline = f.readline()
             if firstline not in messages:
                 messages += [firstline]
+        else:
+            if os.stat(errfolder+"/../output/"+jobid+".out").st_size==0:
+                missout += [jobid]
 
-    return failed, messages
+    return failed, messages, missout
 
 
 

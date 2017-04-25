@@ -383,11 +383,10 @@ def tester():
     """
     print "Running tester()"
 
-    settings=Settings('dynbumptest_s', disk='afspublic')
+    settings=Settings('multipoletest', disk='afsprivate')
 
-    settings.trackingbool=True
-    #settings.trackertemplate=settings.home+"/madx/tracker_multipole_template.madx"
-    #settings.trackertemplate=settings.home+"/madx/tracker_nominal_template_v2.madx"
+    settings.trackingbool=False
+    settings.trackertemplate=settings.home+"/madx/tracker_multipole_template.madx"
     settings.local=True
     settings.monitor=False
     settings.seed = 0
