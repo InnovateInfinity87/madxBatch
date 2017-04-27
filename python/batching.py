@@ -59,10 +59,12 @@ class Settings:
         self.elements=[]
 
         self.trackingbool = True
-        self.saveloss = True
         self.dynamicbump=False
         self.pycollimate = True
         self.septadb = self.home+"/input/septa_DB_nominal.tfs"
+
+        self.saveloss = True
+        self.saveout = False
 
         self.monitor = False
         
@@ -168,8 +170,7 @@ def track_lin(k,data,settings):
 
                 "x_knob_start = 406*dpp_start + (-0.0765*dpp_start*1e3);\n"+
                 "px_knob_start = (-20.667*dpp_start) + (-0.0022*start*1e3);\n"+
-                "EXEC, x_obump(x_knob_start);\n"+
-                "EXEC, px_obump(px_knob_start);\n"+
+                "EXEC, obump(x_knob_start, px_knob_start);\n"+
                 "dpp_inc = (dpp_end-dpp_start)/"+str(settings.nturns)+";\n"
                 "x_knob_inc = 406*dpp_inc + (-0.0765*dpp_inc*1e3);\n"+
                 "px_knob_inc = (-20.667*dpp_inc) + (-0.0022*dpp_inc*1e3);\n\n")
@@ -178,8 +179,7 @@ def track_lin(k,data,settings):
              " kqf1 = m_f * turn + n_f;\n"+
              " kqd = m_d * turn + n_d;\n")
     if settings.dynamicbump:
-        line += (" EXEC, x_obump(x_knob_inc);\n"+
-                 " EXEC, px_obump(px_knob_inc);\n")
+        line += (" EXEC, obump(x_knob_inc, px_knob_inc);\n")
     line += "};\n\n"
 
     line += ("OPTION, -WARN;\n"+
@@ -211,43 +211,25 @@ def track_lin(k,data,settings):
 
 
 def orthogonal_bumps():
-    "MAD-X code for the orthogonal bump macros"
+    "MAD-X code for the orthogonal bump macro"
     return ("EOPTION, ADD = TRUE;\n\n"+
 
-            "x_obump(knob_value) : MACRO = {\n"+
+            "obump(x_knob_value, px_knob_value) : MACRO = {\n"+
             " SELECT, FLAG=ERROR, CLEAR;\n"+
-            ' SELECT, FLAG=ERROR, PATTERN="MPSH_rb\.21202.*";\n'+
-            " EFCOMP, ORDER:=0, DKN= 2.331301861e-05 * knob_value * (-1/4);\n"+
+            ' SELECT, FLAG=ERROR, RANGE=MPSH_rb.21202..1/MPSH_rb.21202..4;\n'+
+            " EFCOMP, ORDER:=0, DKN= 2.331301861e-05 * x_knob_value * (-1/4) + 9.929676756e-06 * px_knob_value * (-1e2/4);\n"+
             " SELECT, FLAG=ERROR, CLEAR;\n"+
-            ' SELECT, FLAG=ERROR, PATTERN="MPLH_rb\.21431.*";\n'+
-            " EFCOMP, ORDER:=0, DKN= -9.91281169e-06   * knob_value * (-1/4);\n"+
+            ' SELECT, FLAG=ERROR, RANGE=MPLH_rb.21431..1/MPLH_rb.21431..4;\n'+
+            " EFCOMP, ORDER:=0, DKN= -9.91281169e-06   * x_knob_value * (-1/4) + 2.600240449e-07   * px_knob_value * (-1e2/4);\n"+
             " SELECT, FLAG=ERROR, CLEAR;\n"+
-            ' SELECT, FLAG=ERROR, PATTERN="MPNH_rb\.21732.*";\n'+
-            " EFCOMP, ORDER:=0, DKN=  2.98e-05 * knob_value * (-1/4);\n"+
+            ' SELECT, FLAG=ERROR, RANGE=MPNH_rb.21732..1/MPNH_rb.21732..4;\n'+
+            " EFCOMP, ORDER:=0, DKN=  2.98e-05 * x_knob_value * (-1/4) + 2.174863504e-05 * px_knob_value * (-1e2/4);\n"+
             " SELECT, FLAG=ERROR, CLEAR;\n"+
-            ' SELECT, FLAG=ERROR, PATTERN="MPLH_rb\.21995.*";\n'+
-            " EFCOMP, ORDER:=0, DKN= -1.923181311e-05 * knob_value * (-1/4);\n"+
+            ' SELECT, FLAG=ERROR, RANGE=MPLH_rb.21995..1/MPLH_rb.21995..4;\n'+
+            " EFCOMP, ORDER:=0, DKN= -1.923181311e-05 * x_knob_value * (-1/4) + (-5.128495572e-06) * px_knob_value * (-1e2/4);\n"+
             " SELECT, FLAG=ERROR, CLEAR;\n"+
-            ' SELECT, FLAG=ERROR, PATTERN="MPLH_rb\.22195.*";\n'+
-            " EFCOMP, ORDER:=0, DKN= 2.105219176e-05 * knob_value * (-1/4);\n"+
-            "};\n\n"+
-
-            "px_obump(knob_value) : MACRO = {\n"+
-            " SELECT, FLAG=ERROR, CLEAR;\n"+
-            ' SELECT, FLAG=ERROR, PATTERN="MPSH_rb\.21202.*";\n'+
-            " EFCOMP, ORDER:=0, DKN= 9.929676756e-06 * knob_value * (-1e2/4);\n"+
-            " SELECT, FLAG=ERROR, CLEAR;\n"+
-            ' SELECT, FLAG=ERROR, PATTERN="MPLH_rb\.21431.*";\n'+
-            " EFCOMP, ORDER:=0, DKN= 2.600240449e-07   * knob_value * (-1e2/4);\n"+
-            " SELECT, FLAG=ERROR, CLEAR;\n"+
-            ' SELECT, FLAG=ERROR, PATTERN="MPNH_rb\.21732.*";\n'+
-            " EFCOMP, ORDER:=0, DKN=  2.174863504e-05 * knob_value * (-1e2/4);\n"+
-            " SELECT, FLAG=ERROR, CLEAR;\n"+
-            ' SELECT, FLAG=ERROR, PATTERN="MPLH_rb\.21995.*";\n'+
-            " EFCOMP, ORDER:=0, DKN= -5.128495572e-06 * knob_value * (-1e2/4);\n"+
-            " SELECT, FLAG=ERROR, CLEAR;\n"+
-            ' SELECT, FLAG=ERROR, PATTERN="MPLH_rb\.22195.*";\n'+
-            " EFCOMP, ORDER:=0, DKN= 8.373821994e-06 * knob_value * (-1e2/4);\n"+
+            ' SELECT, FLAG=ERROR, RANGE=MPLH_rb.22195..1/MPLH_rb.22195..4;\n'+
+            " EFCOMP, ORDER:=0, DKN= 2.105219176e-05 * x_knob_value * (-1/4) + 8.373821994e-06 * px_knob_value * (-1e2/4);\n"+
             "};")
 
 
@@ -354,7 +336,8 @@ def submit_job(settings):
                               settings.slowexfiles+"\n")
             subfile.write('arguments = "$(ProcId)"\n')
             subfile.write("initialdir = "+settings.datadir+"\n")
-            subfile.write("output = output/$(ProcId).out\n")
+            if settings.saveout:
+                subfile.write("output = output/$(ProcId).out\n")
             subfile.write("error = error/$(ProcId).err\n")
             subfile.write("log = log.txt\n")
             subfile.write('transfer_output_remaps = "'+
