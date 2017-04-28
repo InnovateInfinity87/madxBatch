@@ -30,6 +30,9 @@ def readtfs(filename, usecols=None, index_col=0):
                         names = colnames, usecols = usecols,
                         index_col = index_col)
 
+    # Take care of lossloc bug in madxColl...
+    table['ELEMENT'] = table['ELEMENT'].apply(lambda x: str(x).split()[0])
+
     return header, table
 
 
@@ -46,13 +49,18 @@ def lossplot(lossfolder, lossloc="AP.UP.ZS21633", xax="X", yax="PX", cax="TURN",
     ydata = []
     cdata = []
 
+    empty = 0
+
     for lossfile in os.listdir(lossfolder):
-        _, losstable = readtfs(lossfolder+'/'+lossfile)
-        if lossloc is not None:
-            losstable = losstable.loc[losstable['ELEMENT'] == lossloc]
-        xdata += losstable[xax].tolist()
-        ydata += losstable[yax].tolist()
-        cdata += losstable[cax].tolist()
+        if os.stat(lossfolder+'/'+lossfile).st_size > 0:
+            _, losstable = readtfs(lossfolder+'/'+lossfile)
+            if lossloc is not None:
+                losstable = losstable.loc[losstable['ELEMENT'] == lossloc]
+            xdata += losstable[xax].tolist()
+            ydata += losstable[yax].tolist()
+            cdata += losstable[cax].tolist()
+        else:
+            empty += 1
 
     xunit = _units[xax]
     yunit = _units[yax]
@@ -84,7 +92,7 @@ def losschart(lossfolder, lossloc="AP.UP.ZS21633", xax="X", binwidth=5E-4, start
     for lossfile in os.listdir(lossfolder):
         _, losstable = readtfs(lossfolder+'/'+lossfile)
         if lossloc is not None:
-            losstable = losstable.loc[losstable['ELEMENT'] == lossloc]
+            losstable = losstable.loc[losstable['ELEMENT'].split()[0] == lossloc]
         data += losstable[xax].tolist()
 
     xunit = _units[xax]
@@ -193,7 +201,6 @@ def wireangle(lossfolder, lossloc="AP.UP.ZS21633", wiremax=0.69, save=None):
 def errorcheck(errfolder):
     failed=[]
     messages=[]
-    missout=[]
 
     for errfile in os.listdir(errfolder):
         jobid = errfile.split(".")[0]
@@ -203,11 +210,8 @@ def errorcheck(errfolder):
                 firstline = f.readline()
             if firstline not in messages:
                 messages += [firstline]
-        else:
-            if os.stat(errfolder+"/../output/"+jobid+".out").st_size==0:
-                missout += [jobid]
 
-    return failed, messages, missout
+    return failed, messages
 
 
 

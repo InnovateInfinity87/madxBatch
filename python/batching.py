@@ -366,25 +366,25 @@ def tester():
     """
     print "Running tester()"
 
-    settings=Settings('multipoletest', disk='afsprivate')
+    settings=Settings('m', studygroup='pycollspeed', disk='afsprivate')
 
-    settings.trackingbool=False
+    settings.trackingbool=True
     settings.trackertemplate=settings.home+"/madx/tracker_multipole_template.madx"
-    settings.local=True
+    settings.local=False
     settings.monitor=False
     settings.seed = 0
 
     #settings.elements=['AP.UP.ZS21633','TPST.21760','AP.UP.MST21774']
-    #settings.elements=['AP.UP.ZS21633_M','TPST.21760','AP.UP.MST21774']
-    settings.elements=['AP.UP.ZS21633']
+    settings.elements=['AP.UP.ZS21633_M','TPST.21760','AP.UP.MST21774']
+    #settings.elements=['AP.UP.ZS21633']
 
-    settings.nturns=50#204565
-    settings.nbatches=1#0000
-    settings.nparperbatch=10
-    settings.ffile=2045
+    settings.nturns=10000
+    settings.nbatches=5
+    settings.nparperbatch=500
+    settings.ffile=100
 
     settings.dynamicbump=True
-    settings.pycollimate=False
+    settings.pycollimate=True
 
     submit_job(settings)
 
