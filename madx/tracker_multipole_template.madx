@@ -152,7 +152,7 @@ IF (use_pycoll==1){
  AP.UP.ZS21671_M: MARKER;
  AP.DO.ZS21671_M: MARKER;
  AP.UP.ZS21676_M: MARKER;
- AP.DO.ZS21676_M: MARKER;
+ AP.DO.ZS21676_M: AP,APERTYPE=RECTANGLE,APERTURE={0.08+0.02/2,0.078};
  ZS.61676_M: MARKER;
  ZS.21633_M: MARKER;
  ZS.21638_M: MARKER;
@@ -203,15 +203,22 @@ knob_extr_sext = 0.0;
 lme.k2 = pyK2;
 lme.k4 = pyK4;
 
-lme1 : MULTIPOLE, KNL={0,0,lme.k2/3,0,lme.k4/3};
-lme2 : MULTIPOLE, KNL={0,0,lme.k2/3,0,lme.k4/3};
-lme3 : MULTIPOLE, KNL={0,0,lme.k2/3,0,lme.k4/3};
+betmod1 = 100.0/91.24384724;
+betmod2 = 100.0/100.3528588;
+betmod3 = 100.0/98.50880289;
+
+lme1 : MULTIPOLE, KNL={0,0,lme.k2/3*betmod1^1.5,0,lme.k4/3*betmod1^2.5};
+lme2 : MULTIPOLE, KNL={0,0,lme.k2/3*betmod2^1.5,0,lme.k4/3*betmod1^2.5};
+lme3 : MULTIPOLE, KNL={0,0,lme.k2/3*betmod3^1.5,0,lme.k4/3*betmod1^2.5};
 
 SEQEDIT, SEQUENCE = sps;
  FLATTEN;
- INSTALL, ELEMENT = lme1, AT = 1491.33956;
- INSTALL, ELEMENT = lme2, AT = 1569.36617;
- INSTALL, ELEMENT = lme3, AT = 1647.95812;
+ !INSTALL, ELEMENT = lme1, AT = 1393.21414;
+ !INSTALL, ELEMENT = lme2, AT = 1490.81165;
+ !INSTALL, ELEMENT = lme3, AT = 1570.37819;
+ INSTALL, ELEMENT = lme1, AT = 3910.372;
+ INSTALL, ELEMENT = lme2, AT = 708.553;
+ INSTALL, ELEMENT = lme3, AT = 5632.874;
  FLATTEN;
 ENDEDIT;
 USE, SEQUENCE = sps;
@@ -279,6 +286,11 @@ SELECT, FLAG = ERROR, CLEAR;
 SELECT, FLAG= ERROR, PATTERN= "VVSB.21601";
 EALIGN, DX= 11.0e-3 + misa_knob, DTHETA=0.0;
 
+!================================
+! Aperture alignment extraction channel
+!================================
+CALL, FILE = 'pyHOMEDIR/input/align_extraction.cmdx';
+
 
 /**********************************************************************/
 !-----------------------------------------------------------------------
@@ -290,7 +302,7 @@ qh = qh_res;
 CALL, FILE='pySLOWEXDIR/cmd/matchtune.cmdx';
 
 SELECT, FLAG=TWISS, CLEAR;
-SELECT, FLAG=TWISS, COLUMN=NAME,S,BETX,ALFX,X,DX,PX,DPX,Y,DY,PY,DPY,BETY,ALFY,APER_1,APER_2,APER_3,APER_4;
+SELECT, FLAG=TWISS, COLUMN=NAME,S,BETX,ALFX,X,DX,PX,DPX,MUX,BETY,ALFY,Y,DY,PY,DPY,MUY,APER_1,APER_2,APER_3,APER_4;
 TWISS;
 
 chroma_res = TABLE(SUMM,DQ1);

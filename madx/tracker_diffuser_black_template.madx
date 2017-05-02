@@ -131,6 +131,26 @@ USE, SEQUENCE = sps;
 
 /**********************************************************************/
 !-----------------------------------------------------------------------
+! Changes that must be done on the thick sequence should be done here. In
+! this case, removing the BPCE.21606 and installing the diffuser.
+!-----------------------------------------------------------------------
+qfa_start: MARKER;
+diffuser: RCOLLIMATOR, L=0.003,APERTYPE=RECTANGLE,APERTURE={0.069,0.078};
+
+VALUE, QFA->L;
+
+SEQEDIT, SEQUENCE = sps;
+ FLATTEN;
+ INSTALL, ELEMENT = qfa_start, AT = -QFA->L/2, FROM = QFA.21610;
+ REMOVE, ELEMENT = BPCE.21606;
+ INSTALL, ELEMENT = diffuser, AT = -0.470+diffuser->L/2, FROM = qfa_start;
+ FLATTEN;
+ENDEDIT;
+USE, SEQUENCE = sps;
+
+
+/**********************************************************************/
+!-----------------------------------------------------------------------
 ! Thinning of the sequence, remove zs aperture if in pycollimate
 !-----------------------------------------------------------------------
 
@@ -259,6 +279,7 @@ EALIGN, DX= 11.0e-3 + misa_knob, DTHETA=0.0;
 ! Aperture alignment extraction channel
 !================================
 CALL, FILE = 'pyHOMEDIR/input/align_extraction.cmdx';
+
 
 /**********************************************************************/
 !-----------------------------------------------------------------------

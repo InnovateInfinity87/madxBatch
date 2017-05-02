@@ -55,6 +55,7 @@ class Settings:
         self.nbatches=1000
         self.nparperbatch=100
         self.ffile=100 #ffile MADX
+        self.flavour=None
 
         self.elements=[]
 
@@ -62,6 +63,7 @@ class Settings:
         self.dynamicbump=False
         self.pycollimate = True
         self.septadb = self.home+"/input/septa_DB_nominal.tfs"
+        self.septadbreplace = None
 
         self.saveloss = True
         self.saveout = False
@@ -302,6 +304,12 @@ def submit_job(settings):
         st = os.stat("tracks/unpacker.sh")
         os.chmod("tracks/unpacker.sh", st.st_mode | stat.S_IEXEC)
 
+        #Customize septa db if needed
+        if settings.septadbreplace is not None:
+            copyfile(settings.septadb, "septa_DB_custom.tfs")
+            for key, replacement in settings.septadbreplace.iteritems():
+                replacer("septa_DB_custom.tfs", key, replacement)
+
         #Prepare job files for each batch
         copyfile(settings.home+"/other/job.sh", "jobs/start.sh")
         if settings.pycollimate:
@@ -326,7 +334,7 @@ def submit_job(settings):
                               settings.pycolldir+"madxColl, "+
                               settings.pycolldir+"track_inside_coll.py, "+
                               settings.pycolldir+"pycollimate.py, "+
-                              settings.septadb+", "+
+                              (settings.septadb if (settings.septadbreplace is None) else "septa_DB_custom.tfs")+", "+
                               settings.home+"/other/matplotlibrc, "+
                               settings.slowexfiles+"\n")
             else:
@@ -343,7 +351,10 @@ def submit_job(settings):
             subfile.write('transfer_output_remaps = "'+
                           'tracks.tar.gz=tracks/$(ProcId).tar.gz; '+
                           'losses.tfs=losses/$(ProcId).tfs"\n')
-            subfile.write("+JobFlavour = '"+flavour(settings.nturns, settings.nparperbatch, settings.pycollimate)+"'\n")
+            if settings.flavour is None:
+                subfile.write("+JobFlavour = '"+flavour(settings.nturns, settings.nparperbatch, settings.pycollimate)+"'\n")
+            else:
+                subfile.write("+JobFlavour = '"+settings.flavour+"'\n")
             subfile.write("\nqueue "+str(settings.nbatches))
         print 'Submit file created!'
 
@@ -366,25 +377,26 @@ def tester():
     """
     print "Running tester()"
 
-    settings=Settings('m', studygroup='pycollspeed', disk='afsprivate')
+    settings=Settings('6900', studygroup='difftest', disk='afspublic')
 
     settings.trackingbool=True
-    settings.trackertemplate=settings.home+"/madx/tracker_multipole_template.madx"
+    settings.trackertemplate=settings.home+"/madx/tracker_diffuser_template.madx"
     settings.local=False
     settings.monitor=False
     settings.seed = 0
 
-    #settings.elements=['AP.UP.ZS21633','TPST.21760','AP.UP.MST21774']
-    settings.elements=['AP.UP.ZS21633_M','TPST.21760','AP.UP.MST21774']
-    #settings.elements=['AP.UP.ZS21633']
+    settings.elements=["QFA_START",'AP.UP.ZS21633']#,'AP.DO.ZS21676','AP.UP.TPST21760']
+    #settings.elements=['AP.UP.ZS21633_M']#,'AP.DO.ZS21676_M','AP.UP.TPST21760']#,'TCE.21695']
 
     settings.nturns=10000
-    settings.nbatches=5
-    settings.nparperbatch=500
-    settings.ffile=100
+    settings.nbatches=1000
+    settings.nparperbatch=20
+    settings.ffile=1
 
     settings.dynamicbump=True
     settings.pycollimate=True
+
+    settings.flavour=None
 
     submit_job(settings)
 

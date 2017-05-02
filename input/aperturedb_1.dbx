@@ -3,7 +3,7 @@
 !--------------------------------------------------------------------------
 ! SPS Aperture Data Base
 ! G.Arduini - last modified 1/6/2006
-!
+! (uncommented collimator apertures for tracking)
 !--------------------------------------------------------------------------
 
 AP: MARKER;
