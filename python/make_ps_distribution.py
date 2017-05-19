@@ -12,7 +12,7 @@ def string_to_float(seq):
                 yield x
 
 def get_gauss_distribution(output='initial_distribution_', input='sequence_totrack.tfs', sigmas=3,
-                            beam_t='LHC', n_part=100, seed=123, file_head='../input/distributionheader.txt'):
+                            beam_t='LHC', n_part=100, seed=123, file_head='../input/distributionheader.txt', dppmax=None):
 
     filename_out = output
     twiss_file = input
@@ -66,7 +66,11 @@ def get_gauss_distribution(output='initial_distribution_', input='sequence_totra
     n_sigma = sigmas
 
     emit_n = beam['emit_n']  # [mm.mrad]
-    dpp_t = beam['dpp_t']
+
+    if dppmax is None:
+        dpp_t = beam['dpp_t']
+    else:
+        dpp_t = dppmax
 
     n = n_part
 

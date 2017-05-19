@@ -1,5 +1,5 @@
 !-----------------------------------------------------------------------
-! Nominal tracking for SPS slow extraction
+! Modified tracking for SPS slow extraction - 3x(sextupole+decapole)
 !
 ! F.M. Velotti - francesco.maria.velotti@cern.ch
 ! L.S. Stoel - linda.susanne.stoel@cern.ch
@@ -32,8 +32,8 @@ knob_extr_sext = 1.0;
 knob_extr_bump = 0.945;
 
 ! Tune range for tracking
-dpp_start = -0.0015;
-dpp_end = 0.0015;
+dpp_start = -1.0*pyDPPMAX;
+dpp_end = pyDPPMAX;
 qh_start := 80/3 - dpp_start*chroma_res;
 qh_end := 80/3 - dpp_end*chroma_res;
 
@@ -200,24 +200,28 @@ knob_extr_sext = knob_extr_sext_val;
 ! extraction sextupoles.
 !-----------------------------------------------------------------------
 knob_extr_sext = 0.0;
-lme.k2 = pyK2;
-lme.k4 = pyK4;
+!dpp_start = -0.0020;
+dppmod=1.0;
+!dppmod :=  1.0+dpp_start+(dpp_end-dpp_start)/pyNTURNS*tr$turni;
 
-betmod1 = 100.0/91.24384724;
-betmod2 = 100.0/100.3528588;
-betmod3 = 100.0/98.50880289;
+knob_extr_bump = pyEXTRBUMP;
 
-lme1 : MULTIPOLE, KNL={0,0,lme.k2/3*betmod1^1.5,0,lme.k4/3*betmod1^2.5};
-lme2 : MULTIPOLE, KNL={0,0,lme.k2/3*betmod2^1.5,0,lme.k4/3*betmod1^2.5};
-lme3 : MULTIPOLE, KNL={0,0,lme.k2/3*betmod3^1.5,0,lme.k4/3*betmod1^2.5};
+lme.k2 := pyK2*dppmod;
+lme.k4 := pyK4*dppmod;
+
+betmod1 = 100.0/pyBET1;
+betmod2 = 100.0/pyBET2;
+betmod3 = 100.0/pyBET3;
+
+lme1 : MULTIPOLE, KNL:={0,0,lme.k2/3*betmod1^1.5,0,lme.k4/3*betmod1^2.5};
+lme2 : MULTIPOLE, KNL:={0,0,lme.k2/3*betmod2^1.5,0,lme.k4/3*betmod1^2.5};
+lme3 : MULTIPOLE, KNL:={0,0,lme.k2/3*betmod3^1.5,0,lme.k4/3*betmod1^2.5};
 
 SEQEDIT, SEQUENCE = sps;
  FLATTEN;
- !INSTALL, ELEMENT = lme1, AT = 1393.21414;
- !INSTALL, ELEMENT = lme2, AT = 1490.81165;
- !INSTALL, ELEMENT = lme3, AT = 1570.37819;
- INSTALL, ELEMENT = lme1, AT = 3910.372;
- INSTALL, ELEMENT = lme2, AT = 708.553;
+ !INSTALL, ELEMENT = lme2, AT = 708.553;
+ INSTALL, ELEMENT = lme1, AT = 3646.986;
+ INSTALL, ELEMENT = lme2, AT = 2178.129;
  INSTALL, ELEMENT = lme3, AT = 5632.874;
  FLATTEN;
 ENDEDIT;

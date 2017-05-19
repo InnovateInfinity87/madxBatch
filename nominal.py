@@ -19,14 +19,14 @@ settings.nbatches=1000
 settings.nparperbatch=100
 settings.ffile=2045
 
-#submit_job(settings)
+submit_job(settings)
 
 #And with faster sweep
 settings.set_name('nominal_nopc_nodb_fast')
 settings.nturns=50000
 settings.ffile=500
 
-#submit_job(settings)
+submit_job(settings)
 
 #With pycollimate, without dynamic bump
 settings.set_name('nominal_pc_nodb')
@@ -35,8 +35,8 @@ settings.pycollimate=True
 settings.elements=['AP.UP.ZS21633_M','AP.DO.ZS21676_M','TPST.21760']
 
 settings.nturns=204565
-settings.nbatches=1000
-settings.nparperbatch=100
+settings.nbatches=100
+settings.nparperbatch=1000
 settings.ffile=2045
 
 #submit_job(settings)
@@ -45,6 +45,7 @@ settings.ffile=2045
 settings.set_name('nominal_pc_nodb_fast')
 settings.nturns=50000
 settings.ffile=500
+settings.flavour="tomorrow"
 
 submit_job(settings)
 
@@ -62,15 +63,14 @@ settings.nbatches=1000
 settings.nparperbatch=100
 settings.ffile=2045
 
-#submit_job(settings)
+submit_job(settings)
 
 #And with faster sweep
 settings.set_name('nominal_nopc_db_fast')
 settings.nturns=50000
 settings.ffile=500
-settings.flavour="tomorrow"
 
-#submit_job(settings)
+submit_job(settings)
 
 #With pycollimate, with dynamic bump
 settings.set_name('nominal_pc_db')
@@ -79,8 +79,8 @@ settings.pycollimate=True
 settings.elements=['AP.UP.ZS21633_M','AP.DO.ZS21676_M','TPST.21760']
 
 settings.nturns=204565
-settings.nbatches=1000
-settings.nparperbatch=100
+settings.nbatches=100
+settings.nparperbatch=1000
 settings.ffile=2045
 
 #submit_job(settings)

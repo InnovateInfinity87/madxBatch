@@ -41,9 +41,11 @@ if __name__ == "__main__":
     datproc.lossstats(lossfolder)
     print ""
     datproc.wireangle(lossfolder)
+    print ""
+    datproc.emittance(lossfolder, ap=[0.06815, 0.08815])
     datproc.lossplot(lossfolder, save=plotfolder+"/beam_"+name+".png")
     datproc.lossplot(lossfolder, xax='TURN', yax='PT', cax='PX', save=plotfolder+"/sweep_"+name+".png")
     datproc.trackplot(trackfolder, obsloc="obs0002", cax="TURN", tpt=9, save=plotfolder+"/zs_tracks_"+name+".png")
 
-    datproc.losshistscatter(lossfolder, lossloc=lossloc, xlim=[0.06815,0.08815], ylim=[-1.2E-3, -1.8E-3], xbin=0.001, ybin=0.00005, log=False, save=plotfolder+"/losshist_"+name+".png")
+    datproc.losshistscatter(lossfolder, lossloc=lossloc, xlim=[0.06815,0.08315], ylim=[-1.8E-3, -1.35E-3], xbin=0.0002, ybin=0.00001, log=False, monochrom=True, save=plotfolder+"/losshist_"+name+".png")
    

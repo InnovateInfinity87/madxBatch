@@ -130,12 +130,13 @@ def lossstats(lossfolder):
     data = {}
 
     for lossfile in os.listdir(lossfolder):
-        _, losstable = readtfs(lossfolder+'/'+lossfile)
-        for location in losstable['ELEMENT'].tolist():
-            try:
-                data[location]+=1
-            except KeyError:
-                data[location]=1
+        if os.stat(lossfolder+'/'+lossfile).st_size > 0:
+            _, losstable = readtfs(lossfolder+'/'+lossfile)
+            for location in losstable['ELEMENT'].tolist():
+                try:
+                    data[location]+=1
+                except KeyError:
+                    data[location]=1
 
     print "Start loss stats:"
     for location in sorted(data, key=data.get, reverse=True):
@@ -280,10 +281,11 @@ def wireangle(lossfolder, lossloc="AP.UP.ZS21633", wiremax=0.69, save=None):
     pdata = []
 
     for lossfile in os.listdir(lossfolder):
-        _, losstable = readtfs(lossfolder+'/'+lossfile)
-        losstable = losstable.loc[losstable['ELEMENT'] == lossloc]
-        xdata += losstable[xax].tolist()
-        pdata += losstable[pax].tolist()
+        if os.stat(lossfolder+'/'+lossfile).st_size > 0:
+            _, losstable = readtfs(lossfolder+'/'+lossfile)
+            losstable = losstable.loc[losstable['ELEMENT'] == lossloc]
+            xdata += losstable[xax].tolist()
+            pdata += losstable[pax].tolist()
 
     wireang = [pdata[i] for i in range(len(pdata)) if xdata[i]<wiremax]
 
@@ -296,6 +298,35 @@ def wireangle(lossfolder, lossloc="AP.UP.ZS21633", wiremax=0.69, save=None):
                ", for lost particles with x<"+str(wiremax)+":\n"+
                "min,max "+pax+": "+minp+", "+maxp+"\n"+
                "avg,std "+pax+": "+avgp+", "+stdp+"\n")
+
+    if save is None:
+        print message
+    else:
+        with open(save, 'w') as out:
+            out.write(message)
+
+def emittance(lossfolder, lossloc="AP.UP.ZS21633", ap=[0.06815, 0.08815], save=None):
+    xax='X'
+    pax='PX'
+
+    xdata = []
+    pdata = []
+
+    for lossfile in os.listdir(lossfolder):
+        if os.stat(lossfolder+'/'+lossfile).st_size > 0:
+            _, losstable = readtfs(lossfolder+'/'+lossfile)
+            losstable = losstable.loc[losstable['ELEMENT'] == lossloc]
+            xdata += losstable[xax].tolist()
+            pdata += losstable[pax].tolist()
+
+    exbeam = [i for i in range(len(xdata)) if (xdata[i]>ap[0] and xdata[i]<ap[1])]
+    xdata = [xdata[i] for i in exbeam]
+    pdata = [pdata[i] for i in exbeam]
+
+    statemit = str(np.sqrt(np.linalg.det(np.cov(xdata,pdata))))
+
+    message = ("For particles within the aperture at "+lossloc+":\n"+
+               "the statistical emittance is "+statemit+"\n")
 
     if save is None:
         print message
@@ -469,6 +500,7 @@ def fullplot(folder, lossloc="AP.UP.ZS21633", obsloc="obs0002", xax="X", yax="PX
 def losshistscatter(lossfolder, lossloc="AP.UP.ZS21633",
                     xax="X", yax="PX", cax="TURN",
                     xlim=None, ylim=None, clim=None,
+                    monochrom=False,
                     xbin=None, ybin=None,
                     log=False, extra=None, save=None):
     if xax=='S':
@@ -519,7 +551,10 @@ def losshistscatter(lossfolder, lossloc="AP.UP.ZS21633",
 
     axHistx.xaxis.set_major_formatter(NullFormatter())
     axHisty.yaxis.set_major_formatter(NullFormatter())
-    axScatter.scatter(xdata, ydata, c=cdata, cmap=cm, vmin=clim[0], vmax=clim[1], edgecolor='')
+    if monochrom:
+        axScatter.scatter(xdata, ydata, edgecolor='')
+    else:
+        axScatter.scatter(xdata, ydata, c=cdata, cmap=cm, vmin=clim[0], vmax=clim[1], edgecolor='')
 
     if extra is not None:
         for line in extra:

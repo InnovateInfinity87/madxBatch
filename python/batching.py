@@ -19,19 +19,27 @@ from localsub import localsub
 
 class Settings:
     """Settings for the batched simulations"""
-    def __init__(self, name, outputdir=None, studygroup='', disk='eos'):
-        if not disk in ['eos', 'afsprivate', 'afspublic']:
-            print("Disk setting not valid. valid options are 'eos'/'afsprivate'"+
-                  "/'afspublic'. Defaulting to eos, unless desired outputdir was given.")
-            disk='eos'
+    def __init__(self, name, outputdir=None, studygroup='', disk=None):
         if outputdir==None:
+            if not disk in ['afsprivate', 'afspublic', 'afsproject']:
+                print("Disk setting not valid. Valid options are afsprivate'"+
+                      "/'afspublic'/'afsproject'. Defaulting to afsprivate."+
+                      "(EOS is not yet supported.)")
             user = os.environ["USER"]
-            if disk=='eos':
-                outputdir = '/eos/user/'+user[0]+'/'+user+'/madxBatchData/'+studygroup
-            elif disk=='afsprivate':
-                outputdir = '/afs/cern.ch/work/'+user[0]+'/'+user+'/private/madxBatchData/'+studygroup
-            else:
+            if disk=='afsproject':
+                outputdir = '/afs/cern.ch/project/sloex/'+studygroup
+                if not os.path.exists(outputdir):
+                    print("ERROR: To submit via afsproject a valid studygroup must be given. "+
+                          "Take a look at the folder structure in /afs/cern.ch/project/sloex "+
+                          "to find an appropriate one or contact the admins to make one. Exiting.")
+                    exit()
+            elif disk=='afspublic':
                 outputdir = '/afs/cern.ch/work/'+user[0]+'/'+user+'/public/madxBatchData/'+studygroup
+            else:
+                outputdir = '/afs/cern.ch/work/'+user[0]+'/'+user+'/private/madxBatchData/'+studygroup
+        else:
+            if disk is not None:
+                print "Disk setting is not used because outputdir was specified."
 
         self.name = name
         self.datadir = outputdir+"/"+name+"/"
@@ -45,6 +53,7 @@ class Settings:
                             self.slowexdir+'/cmd/matchchroma.cmdx')
 
         self.trackertemplate = self.home+"/madx/tracker_nominal_template.madx"
+        self.trackerrep = track_lin
         self.myreplace = {}
         self.twissfile = None
         self.local = False
@@ -55,6 +64,8 @@ class Settings:
         self.nbatches=1000
         self.nparperbatch=100
         self.ffile=100 #ffile MADX
+        self.dppmax=None
+
         self.flavour=None
 
         self.elements=[]
@@ -290,7 +301,8 @@ def submit_job(settings):
                                         n_part=settings.nbatches*settings.nparperbatch,
                                         sigmas=6, beam_t='FT',
                                         seed=settings.seed,
-                                        file_head=settings.home+"/input/distributionheader.txt")
+                                        file_head=settings.home+"/input/distributionheader.txt",
+                                        dppmax=settings.dppmax)
         print 'Initial particle distribution created!'
 
         #Create datastructure
@@ -319,7 +331,7 @@ def submit_job(settings):
         for i in range(settings.nbatches):
             outfile="jobs/"+str(i)+".madx"
             searchExp='pyTRACKER'
-            replaceExp=track_lin(i,data,settings)
+            replaceExp=settings.trackerrep(i,data,settings)
             customize_tracker(outfile,searchExp,replaceExp)
         os.remove("tracker.madx")
         print 'Job files created!'
