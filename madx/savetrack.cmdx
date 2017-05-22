@@ -1,0 +1,17 @@
+savetrack(mv_nrows, mv_tabin, mv_fileout): MACRO {
+ EN := TABLE(mv_tabin, E);
+ SELECT, FLAG=mv_tabin, COLUMN=NUMBER,TURN,X,PX,Y,PY,T,PT,S,EN;
+
+ mv_tablen = TABLE(mv_tabin, TABLELENGTH);
+ IF (mv_nrows>tablen){mv_i=-1*mv_tablen;}
+ ELSE {mv_i=-1*mv_nrows;}
+
+ CREATE, TABLE=trackend, COLUMN=NUMBER,TURN,X,PX,Y,PY,T,PT,S,EN;
+ WHILE (mv_i<0) {
+  SETVARS, TABLE=mv_tabin, ROW=mv_i;
+  FILL, TABLE=trackend;
+  mv_i=mv_i+1;
+ }
+ WRITE, TABLE=trackend, FILE=mv_fileout;
+ DELETE, TABLE=trackend;
+};
