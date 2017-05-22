@@ -22,7 +22,7 @@ if __name__ == "__main__":
     if name=="":
         name = folder.split("/")[-2]
 
-    plotfolder = folder+"/../plots/name"
+    plotfolder = folder+"/../plots/"+name
 
     if not os.path.exists(plotfolder):
         os.makedirs(plotfolder)

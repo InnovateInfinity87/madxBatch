@@ -209,7 +209,7 @@ def track_lin(k,data,settings):
     for place in settings.elements:
         line += " OBSERVE, PLACE = "+place+';\n';
     line += (" RUN, TURNS="+str(settings.nturns)+", "+
-                 "MAXAPER={0.1,0.01,0.1,0.01,"+str(0.03*settings.nturns)+",0.1}, "+
+                 "MAXAPER={0.5,0.05,0.5,0.05,"+str(0.03*settings.nturns)+",0.1}, "+
                  "FFILE="+str(settings.ffile)+";\n\n"+
 
              "ENDTRACK;\n"+
