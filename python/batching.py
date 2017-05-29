@@ -225,7 +225,7 @@ def track_lin(k,data,settings):
 
 def track_sliced(k,data,settings):
     """Creates the text to replace pyTRACKER in tracker.madx. (sliced nominal case)"""
-    dpp = settings.slices[k/len(settings.slices)]
+    dpp = str(settings.slices[k/len(settings.slices)])
 
     line = ""
 
@@ -358,7 +358,7 @@ def submit_job(settings):
         else:
             data=dis.get_gauss_distribution(output=settings.datadir+'initial_distribution',
                                             input=settings.datadir+"/thin_twiss.tfs",
-                                            n_part=settings.nbatches*settings.nparperbatch*settings.slices,
+                                            n_part=settings.nbatches*settings.nparperbatch*nslices,
                                             sigmas=6, beam_t='FT',
                                             seed=settings.seed,
                                             file_head=settings.home+"/input/distributionheader.txt",
@@ -427,7 +427,7 @@ def submit_job(settings):
                 subfile.write("+JobFlavour = '"+flavour(settings.nturns, settings.nparperbatch, settings.pycollimate)+"'\n")
             else:
                 subfile.write("+JobFlavour = '"+settings.flavour+"'\n")
-            subfile.write("\nqueue "+str(settings.nbatches))
+            subfile.write("\nqueue "+str(settings.nbatches*nslices))
         print 'Submit file created!'
 
         #Submit job
