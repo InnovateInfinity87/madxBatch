@@ -19,14 +19,14 @@ settings.nbatches=1000
 settings.nparperbatch=100
 settings.ffile=2045
 
-submit_job(settings)
+#submit_job(settings)
 
 #And with faster sweep
 settings.set_name('nopc_nodb_fast')
 settings.nturns=50000
 settings.ffile=500
 
-submit_job(settings)
+#submit_job(settings)
 
 #With pycollimate, without dynamic bump
 settings.set_name('pc_nodb')
@@ -40,7 +40,7 @@ settings.nparperbatch=1000
 settings.ffile=2045
 settings.flavour="testmatch"
 
-submit_job(settings)
+#submit_job(settings)
 
 #And with faster sweep
 settings.set_name('pc_nodb_fast')
@@ -48,7 +48,7 @@ settings.nturns=50000
 settings.ffile=500
 settings.flavour="tomorrow"
 
-submit_job(settings)
+#submit_job(settings)
 
 #Without pycollimate, with dynamic bump
 settings.set_name('nopc_db')
@@ -64,14 +64,14 @@ settings.nbatches=1000
 settings.nparperbatch=100
 settings.ffile=2045
 
-submit_job(settings)
+#submit_job(settings)
 
 #And with faster sweep
 settings.set_name('nopc_db_fast')
 settings.nturns=50000
 settings.ffile=500
 
-submit_job(settings)
+#submit_job(settings)
 
 #With pycollimate, with dynamic bump
 settings.set_name('pc_db')
@@ -85,7 +85,7 @@ settings.nparperbatch=1000
 settings.ffile=2045
 settings.flavour="testmatch"
 
-submit_job(settings)
+#submit_job(settings)
 
 #And with faster sweep
 settings.set_name('pc_db_fast')
@@ -93,4 +93,4 @@ settings.nturns=50000
 settings.ffile=500
 settings.flavour="tomorrow"
 
-submit_job(settings)
+#submit_job(settings)

@@ -65,6 +65,7 @@ class Settings:
         self.nparperbatch=100
         self.ffile=100 #ffile MADX
         self.dppmax=None
+        self.slices=None
 
         self.flavour=None
 
@@ -182,7 +183,7 @@ def track_lin(k,data,settings):
         line += (orthogonal_bumps()+"\n\n"+
 
                 "x_knob_start = 406*dpp_start + (-0.0765*dpp_start*1e3);\n"+
-                "px_knob_start = (-20.667*dpp_start) + (-0.0022*start*1e3);\n"+
+                "px_knob_start = (-20.667*dpp_start) + (-0.0022*dpp_start*1e3);\n"+
                 "EXEC, obump(x_knob_start, px_knob_start);\n"+
                 "dpp_inc = (dpp_end-dpp_start)/"+str(settings.nturns)+";\n"
                 "x_knob_inc = 406*dpp_inc + (-0.0765*dpp_inc*1e3);\n"+
@@ -206,6 +207,50 @@ def track_lin(k,data,settings):
                        "PY = "+str(data[3][i])+", "+
                        "T = "+str(0)+", "+
                        "PT = "+str(data[4][i])+";\n")
+    for place in settings.elements:
+        line += " OBSERVE, PLACE = "+place+';\n';
+    line += (" RUN, TURNS="+str(settings.nturns)+", "+
+                 "MAXAPER={0.5,0.05,0.5,0.05,"+str(0.03*settings.nturns)+",0.1}, "+
+                 "FFILE="+str(settings.ffile)+";\n\n"+
+
+             "ENDTRACK;\n"+
+             "OPTION, WARN;\n\n")
+
+    if(settings.saveloss):
+        line+="WRITE, TABLE = trackloss, FILE = 'losses.tfs';\n\n"
+
+    line += "SYSTEM, 'tar -czf tracks.tar.gz "+str(k)+"';"
+
+    return line
+
+def track_sliced(k,data,settings):
+    """Creates the text to replace pyTRACKER in tracker.madx. (sliced nominal case)"""
+    dpp = settings.slices[k/len(settings.slices)]
+
+    line = ""
+
+    if settings.dynamicbump:
+        line += (orthogonal_bumps()+"\n\n"+
+
+                "x_knob = 406*"+dpp+" + (-0.0765*"+dpp+"*1e3);\n"+
+                "px_knob = (-20.667*"+dpp+") + (-0.0022*"+dpp+"*1e3);\n"+
+                "EXEC, obump(x_knob, px_knob);\n\n")
+
+    line += ("dpp_matchtune = "+dpp+";\n"+
+             "qh = qh_res;\n"+
+             "CALL, FILE='pySLOWEXDIR/cmd/matchtune_offmom.cmdx';\n\n")
+
+    line += ("OPTION, -WARN;\n"+
+             "TRACK, ONEPASS, APERTURE, RECLOSS, "+
+                  "FILE='"+str(k)+"/track.batch"+str(k)+"', UPDATE;\n\n")
+
+    for i in range(k*settings.nparperbatch,(k+1)*settings.nparperbatch):
+        line += (" START, X ="+str(data[0][i])+", "+
+                       "PX = "+str(data[1][i])+", "+
+                       "Y = "+str(data[2][i])+", "+
+                       "PY = "+str(data[3][i])+", "+
+                       "T = "+str(0)+", "+
+                       "PT = "+dpp+";\n")
     for place in settings.elements:
         line += " OBSERVE, PLACE = "+place+';\n';
     line += (" RUN, TURNS="+str(settings.nturns)+", "+
@@ -258,6 +303,12 @@ def submit_job(settings):
       template options added.
     - The generated twiss table should be generated in output, not input.
     """
+    if settings.slices is not None:
+        nslices=len(settings.slices)
+        if settings.trackerrep==track_lin:
+            settings.trackerrep=track_sliced
+            
+
     if os.path.exists(settings.datadir):
         settings.datadir = settings.datadir[:-1]+'_/'
         i = 1
@@ -296,13 +347,22 @@ def submit_job(settings):
     if(settings.trackingbool):
         #Generate initial particle distribution
         #TODO: Non-random input
-        data=dis.get_gauss_distribution(output=settings.datadir+'initial_distribution',
-                                        input=settings.datadir+"/thin_twiss.tfs",
-                                        n_part=settings.nbatches*settings.nparperbatch,
-                                        sigmas=6, beam_t='FT',
-                                        seed=settings.seed,
-                                        file_head=settings.home+"/input/distributionheader.txt",
-                                        dppmax=settings.dppmax)
+        if settings.slices is None:
+            data=dis.get_gauss_distribution(output=settings.datadir+'initial_distribution',
+                                            input=settings.datadir+"/thin_twiss.tfs",
+                                            n_part=settings.nbatches*settings.nparperbatch,
+                                            sigmas=6, beam_t='FT',
+                                            seed=settings.seed,
+                                            file_head=settings.home+"/input/distributionheader.txt",
+                                            dppmax=settings.dppmax)
+        else:
+            data=dis.get_gauss_distribution(output=settings.datadir+'initial_distribution',
+                                            input=settings.datadir+"/thin_twiss.tfs",
+                                            n_part=settings.nbatches*settings.nparperbatch*settings.slices,
+                                            sigmas=6, beam_t='FT',
+                                            seed=settings.seed,
+                                            file_head=settings.home+"/input/distributionheader.txt",
+                                            dppmax=0)
         print 'Initial particle distribution created!'
 
         #Create datastructure
@@ -328,7 +388,7 @@ def submit_job(settings):
             replacer("jobs/start.sh", 'MADXEXE', "madxColl")
         else:
             replacer("jobs/start.sh", 'MADXEXE', "madx_dev")
-        for i in range(settings.nbatches):
+        for i in range(settings.nbatches*nslices):
             outfile="jobs/"+str(i)+".madx"
             searchExp='pyTRACKER'
             replaceExp=settings.trackerrep(i,data,settings)

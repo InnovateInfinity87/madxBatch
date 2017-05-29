@@ -3,7 +3,7 @@ savetrack(mv_nrows, mv_tabin, mv_fileout): MACRO {
  SELECT, FLAG=mv_tabin, COLUMN=NUMBER,TURN,X,PX,Y,PY,T,PT,S,EN;
 
  mv_tablen = TABLE(mv_tabin, TABLELENGTH);
- IF (mv_nrows>tablen){mv_i=-1*mv_tablen;}
+ IF (mv_nrows>mv_tablen){mv_i=-1*mv_tablen;}
  ELSE {mv_i=-1*mv_nrows;}
 
  CREATE, TABLE=trackend, COLUMN=NUMBER,TURN,X,PX,Y,PY,T,PT,S,EN;

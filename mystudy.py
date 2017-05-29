@@ -7,8 +7,8 @@ Example SPS slow extraction study: decapole folding
 from python.batching import Settings, submit_job
 
 replacements = [{'pyK2': '-0.37', 'pyK4': '0.0', 'pyEXTRBUMP': None},
-                {'pyK2': '-0.73', 'pyK4': '5018.3', 'pyEXTRBUMP': None},
-                {'pyK2': '-1.02', 'pyK4': '7640.7', 'pyEXTRBUMP': 0.032}]
+                {'pyK2': '-0.73', 'pyK4': '5018.3193', 'pyEXTRBUMP': None},
+                {'pyK2': '-1.02', 'pyK4': '7640.6976', 'pyEXTRBUMP': 0.032}]
 
 for seed in range(1):
     for i, replace in enumerate(replacements):

@@ -296,6 +296,4 @@ CALL, FILE='pySLOWEXDIR/cmd/matchtune.cmdx';
 kqf1_start = kqf1;
 kqd_start = kqd;
 
-VALUE, kqf1_end,kqd_end,kqf1_start,kqd_start;
-
 pyTRACKER

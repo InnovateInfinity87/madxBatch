@@ -12,6 +12,7 @@ mpl.use('Agg') #To use plotting routines on machines without display
 import python.dataprocessing as datproc
 
 pycoll=False
+monochrom=False
 
 if __name__ == "__main__":
     folder = sys.argv[1]
@@ -45,7 +46,7 @@ if __name__ == "__main__":
     datproc.emittance(lossfolder, ap=[0.06815, 0.08815])
     datproc.lossplot(lossfolder, save=plotfolder+"/beam_"+name+".png")
     datproc.lossplot(lossfolder, xax='TURN', yax='PT', cax='PX', save=plotfolder+"/sweep_"+name+".png")
-    datproc.trackplot(trackfolder, obsloc="obs0002", cax="TURN", tpt=9, save=plotfolder+"/zs_tracks_"+name+".png")
+    datproc.trackplot(trackfolder, obsloc="obs0002", cax="PT", tpt=9, save=plotfolder+"/zs_tracks_"+name+".png")
 
-    datproc.losshistscatter(lossfolder, lossloc=lossloc, xlim=[0.06815,0.08315], ylim=[-1.8E-3, -1.35E-3], xbin=0.0002, ybin=0.00001, log=False, monochrom=True, save=plotfolder+"/losshist_"+name+".png")
+    datproc.losshistscatter(lossfolder, lossloc=lossloc, xlim=[0.06815,0.08315], ylim=[-1.8E-3, -1.35E-3], xbin=0.0002, ybin=0.00001, log=False, monochrom=monochrom, save=plotfolder+"/losshist_"+name+".png")
    

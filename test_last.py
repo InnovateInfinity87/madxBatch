@@ -54,9 +54,9 @@ def track_test(k,data,settings):
 
     line+="CALL, FILE='"+settings.home+"/madx/savetrack.cmdx';\n"
 
-    for obsnum in range(settings.elements+1):
+    for obsnum in range(len(settings.elements)+1):
         for partnum in range(settings.nparperbatch):
-            temp = "obs"+str(obsnum).zfill(4)+".p"+str(partnum).zfill(4)
+            temp = "obs"+str(obsnum+1).zfill(4)+".p"+str(partnum+1).zfill(4)
             line+="EXEC, savetrack(50, track."+temp+", '"+str(k)+"/"+temp+"');\n"
     line+="\n"
 
@@ -73,6 +73,7 @@ def track_test(k,data,settings):
 settings=Settings('pc_tracks', studygroup='test', disk='afsproject')
 
 settings.trackerrep = track_test
+settings.saveout = False
 settings.seed = 0
 
 settings.elements=['AP.UP.ZS21633_M','AP.DO.ZS21676_M','TPST.21760']
