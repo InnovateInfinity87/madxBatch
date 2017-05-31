@@ -225,9 +225,9 @@ def track_lin(k,data,settings):
 
 def track_sliced(k,data,settings):
     """Creates the text to replace pyTRACKER in tracker.madx. (sliced nominal case)"""
-    dpp = str(settings.slices[k/len(settings.slices)])
+    dpp = str(settings.slices[k/settings.nbatches])
 
-    line = ""
+    line = "SYSTEM, 'mkdir "+str(k)+"';\n\n"
 
     if settings.dynamicbump:
         line += (orthogonal_bumps()+"\n\n"+
@@ -238,11 +238,11 @@ def track_sliced(k,data,settings):
 
     line += ("dpp_matchtune = "+dpp+";\n"+
              "qh = qh_res;\n"+
-             "CALL, FILE='pySLOWEXDIR/cmd/matchtune_offmom.cmdx';\n\n")
+             "CALL, FILE='"+settings.slowexdir+"/cmd/matchtune_offmom.cmdx';\n\n")
 
     line += ("OPTION, -WARN;\n"+
              "TRACK, ONEPASS, APERTURE, RECLOSS, "+
-                  "FILE='"+str(k)+"/track.batch"+str(k)+"', UPDATE;\n\n")
+                  "FILE='"+str(k)+"/track.batch"+str(k)+"';\n\n")
 
     for i in range(k*settings.nparperbatch,(k+1)*settings.nparperbatch):
         line += (" START, X ="+str(data[0][i])+", "+
@@ -304,9 +304,11 @@ def submit_job(settings):
     - The generated twiss table should be generated in output, not input.
     """
     if settings.slices is not None:
-        nslices=len(settings.slices)
+        nslices = len(settings.slices)
         if settings.trackerrep==track_lin:
-            settings.trackerrep=track_sliced
+            settings.trackerrep = track_sliced
+    else:
+        nslices = 1
             
 
     if os.path.exists(settings.datadir):

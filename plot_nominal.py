@@ -11,8 +11,6 @@ import matplotlib as mpl
 mpl.use('Agg') #To use plotting routines on machines without display
 import python.dataprocessing as datproc
 
-pycoll=False
-
 if __name__ == "__main__":
     folder = sys.argv[1]
     lossfolder = folder+'/losses'
@@ -27,10 +25,10 @@ if __name__ == "__main__":
     if not os.path.exists(plotfolder):
         os.makedirs(plotfolder)
 
-    if "_nopc_" in name:
-        pycoll=False
-    else:
+    if "_pc" in name:
         pycoll=True
+    else:
+        pycoll=False
 
     if pycoll:
         lossloc = "AP.UP.TPST21760"
