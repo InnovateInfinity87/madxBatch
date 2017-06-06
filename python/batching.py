@@ -13,6 +13,8 @@ import sys
 import fileinput
 import subprocess
 from shutil import copyfile
+import scipy.stats as stats
+import math
 
 import make_ps_distribution as dis
 from localsub import localsub
@@ -66,6 +68,7 @@ class Settings:
         self.ffile=100 #ffile MADX
         self.dppmax=None
         self.slices=None
+        self.slicewidth=2.5E-4
 
         self.flavour=None
 
@@ -232,8 +235,8 @@ def track_sliced(k,data,settings):
     if settings.dynamicbump:
         line += (orthogonal_bumps()+"\n\n"+
 
-                "x_knob = 406*"+dpp+" + (-0.0765*"+dpp+"*1e3);\n"+
-                "px_knob = (-20.667*"+dpp+") + (-0.0022*"+dpp+"*1e3);\n"+
+                "x_knob = 406*("+dpp+") + (-0.0765*("+dpp+")*1e3);\n"+
+                "px_knob = (-20.667*("+dpp+")) + (-0.0022*("+dpp+")*1e3);\n"+
                 "EXEC, obump(x_knob, px_knob);\n\n")
 
     line += ("dpp_matchtune = "+dpp+";\n"+
@@ -245,6 +248,8 @@ def track_sliced(k,data,settings):
                   "FILE='"+str(k)+"/track.batch"+str(k)+"';\n\n")
 
     for i in range(k*settings.nparperbatch,(k+1)*settings.nparperbatch):
+        if settings.slicewidth is not None:
+            dpp = str(settings.slices[k/settings.nbatches]+settings.slicewidth*stats.truncnorm.rvs(-1, 1))
         line += (" START, X ="+str(data[0][i])+", "+
                        "PX = "+str(data[1][i])+", "+
                        "Y = "+str(data[2][i])+", "+

@@ -6,91 +6,70 @@ Nominal SPS slow extraction with and without scattering
 """
 from python.batching import Settings, submit_job
 
-#Simulate without pycollimate, without dynamic bump
-settings=Settings('nopc_nodb', studygroup="nominal", disk='afsproject')
+bl = [True, False]
 
-settings.pycollimate=False
-settings.elements=['AP.UP.ZS21633','AP.DO.ZS21676','TPST.21760']
+# Simulations with sweep
+for pc, db, fast in [(x,y,z) for x in bl for y in bl for z in bl]:
+    if pc and not fast:
+        break
 
-settings.seed = 0
+    name = "pc" if pc else "nopc"
+    name += "_db" if db else "_nodb"
+    name += "_fast" if fast else ""
 
-settings.nturns=204565
-settings.nbatches=1000
-settings.nparperbatch=100
-settings.ffile=2045
+    settings=Settings(name, studygroup="nominal", disk='afsproject')
+    settings.seed = 0
+    settings.pycollimate = pc
+    settings.dynamicbump = db
 
-#submit_job(settings)
+    if fast:
+        settings.nturns = 204565
+        settings.ffile = 2045
+        if pc and db:
+            settings.flavour = "tomorrow"
+    else:
+        settings.nturns = 50000
+        settings.ffile = 500
+        #if pc and db:
+        #    settings.flavour = "testmatch"
 
-#And with faster sweep
-settings.set_name('nopc_nodb_fast')
-settings.nturns=50000
-settings.ffile=500
+    if pc:
+        settings.elements = ['AP.UP.ZS21633_M','AP.DO.ZS21676_M','TPST.21760']
+        settings.nbatches = 100
+        settings.nparperbatch = 1000
+    else:
+        settings.elements = ['AP.UP.ZS21633','AP.DO.ZS21676','TPST.21760']
+        settings.nbatches = 500
+        settings.nparperbatch = 200
 
-#submit_job(settings)
+    submit_job(settings)
 
-#With pycollimate, without dynamic bump
-settings.set_name('pc_nodb')
+# Simulations of momentum slices
+for pc, db, wide in [(x,y,z) for x in bl for y in bl for z in bl]:
+    name = "sliced"
+    name += "_wide" if fast else ""
+    name += "_pc" if pc else "_nopc"
+    name += "_db" if db else "_nodb"
 
-settings.pycollimate=True
-settings.elements=['AP.UP.ZS21633_M','AP.DO.ZS21676_M','TPST.21760']
+    settings=Settings(name, studygroup="nominal", disk='afsproject')
+    settings.seed = 0
+    settings.pycollimate = pc
+    settings.dynamicbump = db
+    settings.slices = [-0.0015,0.0,0.0015]
 
-settings.nturns=204565
-settings.nbatches=100
-settings.nparperbatch=1000
-settings.ffile=2045
-settings.flavour="testmatch"
+    settings.nturns = 300
+    settings.ffile = 1
+    settings.nbatches = 10
+    settings.nparperbatch = 100
 
-#submit_job(settings)
+    if wide:
+        settings.slicewidth = 2.5E-4
+    else:
+        settings.slicewidth = 0.0
 
-#And with faster sweep
-settings.set_name('pc_nodb_fast')
-settings.nturns=50000
-settings.ffile=500
-settings.flavour="tomorrow"
+    if pc:
+        settings.elements = ['AP.UP.ZS21633_M','AP.DO.ZS21676_M','TPST.21760']
+    else:
+        settings.elements = ['AP.UP.ZS21633','AP.DO.ZS21676','TPST.21760']
 
-#submit_job(settings)
-
-#Without pycollimate, with dynamic bump
-settings.set_name('nopc_db')
-
-settings.dynamicbump=True
-settings.pycollimate=False
-settings.elements=['AP.UP.ZS21633','AP.DO.ZS21676','TPST.21760']
-
-settings.seed = 0
-
-settings.nturns=204565
-settings.nbatches=1000
-settings.nparperbatch=100
-settings.ffile=2045
-
-#submit_job(settings)
-
-#And with faster sweep
-settings.set_name('nopc_db_fast')
-settings.nturns=50000
-settings.ffile=500
-
-#submit_job(settings)
-
-#With pycollimate, with dynamic bump
-settings.set_name('pc_db')
-
-settings.pycollimate=True
-settings.elements=['AP.UP.ZS21633_M','AP.DO.ZS21676_M','TPST.21760']
-
-settings.nturns=204565
-settings.nbatches=100
-settings.nparperbatch=1000
-settings.ffile=2045
-settings.flavour="testmatch"
-
-#submit_job(settings)
-
-#And with faster sweep
-settings.set_name('pc_db_fast')
-settings.nturns=50000
-settings.ffile=500
-settings.flavour="tomorrow"
-
-#submit_job(settings)
+    submit_job(settings)
