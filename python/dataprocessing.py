@@ -197,9 +197,13 @@ def beamstats(lossfolder, lossloc="AP.UP.ZS21633", plane="X", save=None):
             out.write(message)
 
 
-def efficiency(lossfolder, pycoll=False, aperturex=[0,1], aperturey=[0,1]):
+def efficiency(lossfolder, pycoll=False, aperturex=[0,1], aperturey=[0,1],
+               zs_len=1, zs_an=0.1, aperturex2=[0,1], aperturey2=None):
     xax='X'
     yax='Y'
+
+    if aperturey2 is None:
+        aperturey2=aperturey
 
     empty = 0
 
@@ -245,7 +249,9 @@ def efficiency(lossfolder, pycoll=False, aperturex=[0,1], aperturey=[0,1]):
                +str(other)+" lost elsewhere.")
     else:
         extracted = 0
-        zs = 0
+        zs_wire = 0
+        zs_cathode = 0
+        zs_vert = 0
         other = 0
 
         for lossfile in os.listdir(lossfolder):
@@ -253,13 +259,33 @@ def efficiency(lossfolder, pycoll=False, aperturex=[0,1], aperturey=[0,1]):
                 _, losstable = readtfs(lossfolder+'/'+lossfile)
                 for _, particle in losstable.iterrows():
                     if particle['ELEMENT']=="AP.UP.ZS21633":
-                        if (particle["X"]>aperturex[0] and particle["X"]<aperturex[1]
-                            and particle["Y"]>aperturey[0] and particle["Y"]<aperturey[1]):
-                            extracted += 1
+                        quadraticA = zs_an/zs_len/2
+                        quadraticB = (particle["PX"]
+                                      - (aperturex2[0]-aperturex[0])/zs_len)
+                        quadraticC = particle["X"]-aperturex[0]
+                        quadraticD = quadraticB**2 - 4*quadraticA*quadraticC
+                        if quadraticD >= 0:
+                            hitdist = (-1*quadraticB - quadraticD**0.5) / (2*quadraticA)
                         else:
-                            zs +=1
+                            hitdist = 0
+
+                        if particle["Y"]<aperturey[0] or particle["Y"]>aperturey[1]:
+                            zs_vert += 1
+                        elif particle["X"]<aperturex[0]:
+                            zs_wire += 1
+                        elif particle["X"]>aperturex[1]:
+                            zs_cathode +=1
+                        elif (particle["Y"]+zs_len*particle["PY"]<aperturey2[0]
+                              or particle["Y"]+zs_len*particle["PY"]>aperturey2[1]):
+                              zs_vert += 1
+                        elif hitdist>0 and hitdist<zs_len:
+                            zs_wire += 1
+                        elif particle["X"]+(particle["PX"]+zs_an/2)*zs_len>aperturex2[1]:
+                                zs_cathode += 1
+                        else:
+                            extracted += 1
                     elif "ZS" in particle['ELEMENT']:
-                        zs += 1
+                        zs_wire += 1
                     else:
                         other += 1
             else:
@@ -269,7 +295,9 @@ def efficiency(lossfolder, pycoll=False, aperturex=[0,1], aperturey=[0,1]):
             print str(empty)+" empty loss files found"
                     
         print (str(extracted)+" extracted\n"
-               +str(zs)+" lost on the ZS\n"
+               +str(zs_vert)+" lost on the ZS vertical aperture\n"
+               +str(zs_wire)+" lost on the ZS wires\n"
+               +str(zs_cathode)+" lost on the ZS cathode\n"
                +str(other)+" lost elsewhere.")
 
 
