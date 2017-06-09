@@ -50,7 +50,11 @@ if __name__ == "__main__":
         datproc.efficiency(lossfolder, aperturex=[0.06815,0.08815], aperturey=[-0.023,0.023])
         print ""
         datproc.wireangle(lossfolder)
-        datproc.lossplot(lossfolder, ylim=[-0.0018, -0.0013], cax="PT", save=plotfolder+"/beam.png")
+        datproc.lossplot(lossfolder, xlim=[0.0675, 0.084], ylim=[-0.0018, -0.0013], cax="PT", save=plotfolder+"/beam.png")
+        datproc.lossplot(lossfolder, xlim=[0.0675, 0.070], ylim=[-0.00150, -0.00141], cax="PT", save=plotfolder+"/beam_start.png")
+        datproc.lossplot(lossfolder, xlim=[0.0679, 0.0685], ylim=[-0.001465, -0.00145], cax="PT", save=plotfolder+"/beam_start_zoom.png")
+        datproc.lossplot(lossfolder, xlim=[0.079, 0.083], ylim=[-0.00175, -0.0017], cax="PT", save=plotfolder+"/beam_end.png")
+        datproc.lossplot(lossfolder, xlim=[0.0795, 0.0815], ylim=[-0.00176, -0.0017], cax="PT", save=plotfolder+"/beam_end_zoom.png")
     else:
         datproc.efficiency(lossfolder, pycoll=True, aperturex=[0.04219,0.08219], aperturey=[-0.0100,0.0100])
         print ""

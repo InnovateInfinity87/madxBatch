@@ -325,7 +325,8 @@ def wireangle(lossfolder, lossloc="AP.UP.ZS21633", wiremax=0.69, save=None):
     message = ("Angular spread at "+lossloc+
                ", for lost particles with x<"+str(wiremax)+":\n"+
                "min,max "+pax+": "+minp+", "+maxp+"\n"+
-               "avg,std "+pax+": "+avgp+", "+stdp+"\n")
+               "avg,std "+pax+": "+avgp+", "+stdp+"\n"+
+               "("+str(len(wireang))+" particles)\n")
 
     if save is None:
         print message
@@ -530,7 +531,8 @@ def losshistscatter(lossfolder, lossloc="AP.UP.ZS21633",
                     xlim=None, ylim=None, clim=None,
                     monochrom=False,
                     xbin=None, ybin=None,
-                    log=False, extra=None, save=None):
+                    log=False, extra=None, save=None,
+                    datalim=[[None,None],[None,None],[None,None]]):
     if xax=='S':
         lossloc = None
     if clim is None:
@@ -554,6 +556,18 @@ def losshistscatter(lossfolder, lossloc="AP.UP.ZS21633",
 
     if empty>0:
         print "warning: "+str(empty)+" empty loss files found!"
+
+    selector = [((True if (datalim[0][0] is None) else (datalim[0][0]<=xdata[i])) and
+                 (True if (datalim[0][1] is None) else (xdata[i]<=datalim[0][1])) and
+                 (True if (datalim[1][0] is None) else (datalim[1][0]<=ydata[i])) and
+                 (True if (datalim[1][1] is None) else (ydata[i]<=datalim[1][1])) and
+                 (True if (datalim[2][0] is None) else (datalim[2][0]<=cdata[i])) and
+                 (True if (datalim[2][1] is None) else (cdata[i]<=datalim[2][1])))
+                 for i in range(len(xdata))]
+    xdata = [xdata[i] for i in range(len(selector)) if selector[i]]
+    ydata = [ydata[i] for i in range(len(selector)) if selector[i]]
+    cdata = [cdata[i] for i in range(len(selector)) if selector[i]]
+
 
     xunit = _units[xax]
     yunit = _units[yax]

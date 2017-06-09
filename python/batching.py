@@ -185,12 +185,12 @@ def track_lin(k,data,settings):
     if settings.dynamicbump:
         line += (orthogonal_bumps()+"\n\n"+
 
-                "x_knob_start = 406*dpp_start + (-0.0765*dpp_start*1e3);\n"+
-                "px_knob_start = (-20.667*dpp_start) + (-0.0022*dpp_start*1e3);\n"+
+                "x_knob_start = 729.5*dpp_start;\n"+
+                "px_knob_start = (-42.6*dpp_start);\n"+
                 "EXEC, obump(x_knob_start, px_knob_start);\n"+
                 "dpp_inc = (dpp_end-dpp_start)/"+str(settings.nturns)+";\n"
-                "x_knob_inc = 406*dpp_inc + (-0.0765*dpp_inc*1e3);\n"+
-                "px_knob_inc = (-20.667*dpp_inc) + (-0.0022*dpp_inc*1e3);\n\n")
+                "x_knob_inc = 729.5*dpp_inc;\n"+
+                "px_knob_inc = (-42.6*dpp_inc);\n\n")
         
     line += ("tr$macro(turn): MACRO = {\n"+
              " kqf1 = m_f * turn + n_f;\n"+
@@ -235,8 +235,12 @@ def track_sliced(k,data,settings):
     if settings.dynamicbump:
         line += (orthogonal_bumps()+"\n\n"+
 
-                "x_knob = 406*("+dpp+") + (-0.0765*("+dpp+")*1e3);\n"+
-                "px_knob = (-20.667*("+dpp+")) + (-0.0022*("+dpp+")*1e3);\n"+
+                #"x_knob = 406*("+dpp+") + (-0.0765*("+dpp+")*1e3);\n"+
+                #"px_knob = (-20.667*("+dpp+")) + (-0.0022*("+dpp+")*1e3);\n"+
+                #"x_knob = 329.5*("+dpp+");\n"+
+                #"px_knob = (-22.867*("+dpp+"));\n"+
+                "x_knob = (729.5*("+dpp+"));\n"+
+                "px_knob = (-42.6*("+dpp+"));\n"+
                 "EXEC, obump(x_knob, px_knob);\n\n")
 
     line += ("dpp_matchtune = "+dpp+";\n"+

@@ -67,5 +67,7 @@ if __name__ == "__main__":
         datproc.losshistscatter(lossfolder, lossloc=lossloc, xax='Y', yax='PY', xlim=[-0.04, 0.04], ylim=[-0.002,0.002], xbin=0.001, ybin=0.00005, log=True, save=plotfolder+"/tpst_losshist_v_.png")
         datproc.losshistscatter(lossfolder, lossloc=lossloc, xax='X', yax='Y', xlim=[0.03759, 0.13], ylim=[-0.04, 0.04], xbin=0.001, ybin=0.001, log=True, save=plotfolder+"/tpst_losshist_s.png")
 
+        datproc.lossplot(lossfolder, lossloc="AP.DO.ZS21676_M", xax='X', yax='Y', cax='PT', save=plotfolder+"/zs_do_loss.png")
+
         datproc.lossplot(lossfolder, lossloc=lossloc, xax='TURN', yax='PT', cax='X', save=plotfolder+"/sweep.png")
         datproc.lossplot(lossfolder, lossloc=None, xlim=[1668,1688], xax='S', yax='X', cax='PT', clim=(-0.0015,0.0015), save=plotfolder+"/zs_loss.png")

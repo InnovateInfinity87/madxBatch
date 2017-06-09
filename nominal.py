@@ -23,13 +23,13 @@ for pc, db, fast in [(x,y,z) for x in bl for y in bl for z in bl]:
     settings.dynamicbump = db
 
     if fast:
-        settings.nturns = 204565
-        settings.ffile = 2045
+        settings.nturns = 50000
+        settings.ffile = 500
         if pc and db:
             settings.flavour = "tomorrow"
     else:
-        settings.nturns = 50000
-        settings.ffile = 500
+        settings.nturns = 204565
+        settings.ffile = 2045
         #if pc and db:
         #    settings.flavour = "testmatch"
 
