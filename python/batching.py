@@ -82,7 +82,7 @@ class Settings:
 
         self.saveloss = True
         self.saveout = False
-        self.savetrack = True
+        self.savetracks = True
 
         self.monitor = False
         
