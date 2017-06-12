@@ -47,7 +47,7 @@ if __name__ == "__main__":
   #  datproc.beamstats(lossfolder, lossloc=lossloc)
     print ""
     if not pycoll:
-        datproc.efficiency(lossfolder, aperturex=[0.06815,0.08815], aperturey=[-0.023,0.023])
+        datproc.efficiency(lossfolder, aperturex=[0.06815,0.08815], aperturey=[-0.023,0.023], zs_len=18.77, zs_an=4.1635E-4)
         print ""
         datproc.wireangle(lossfolder)
         datproc.lossplot(lossfolder, xlim=[0.0675, 0.084], ylim=[-0.0018, -0.0013], cax="PT", save=plotfolder+"/beam.png")

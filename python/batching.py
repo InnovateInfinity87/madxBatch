@@ -82,6 +82,7 @@ class Settings:
 
         self.saveloss = True
         self.saveout = False
+        self.savetrack = True
 
         self.monitor = False
         
@@ -432,7 +433,7 @@ def submit_job(settings):
             subfile.write("error = error/$(ProcId).err\n")
             subfile.write("log = log.txt\n")
             subfile.write('transfer_output_remaps = "'+
-                          'tracks.tar.gz=tracks/$(ProcId).tar.gz; '+
+                          ('tracks.tar.gz=tracks/$(ProcId).tar.gz; ' if settings.savetracks else '')+
                           'losses.tfs=losses/$(ProcId).tfs"\n')
             if settings.flavour is None:
                 subfile.write("+JobFlavour = '"+flavour(settings.nturns, settings.nparperbatch, settings.pycollimate)+"'\n")

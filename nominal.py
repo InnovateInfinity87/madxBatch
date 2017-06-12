@@ -9,7 +9,7 @@ from python.batching import Settings, submit_job
 bl = [True, False]
 
 # Simulations with sweep
-for pc, db, fast in [(x,y,z) for x in bl for y in bl for z in bl]:
+for pc, db, fast in [(True,False,True)]:#[(x,y,z) for x in bl for y in bl for z in bl]:
     if pc and not fast:
         break
 
@@ -45,7 +45,7 @@ for pc, db, fast in [(x,y,z) for x in bl for y in bl for z in bl]:
     submit_job(settings)
 
 # Simulations of momentum slices
-for pc, db, wide in [(x,y,z) for x in bl for y in bl for z in bl]:
+'''for pc, db, wide in [(x,y,z) for x in bl for y in bl for z in bl]:
     name = "sliced"
     name += "_wide" if fast else ""
     name += "_pc" if pc else "_nopc"
@@ -72,4 +72,4 @@ for pc, db, wide in [(x,y,z) for x in bl for y in bl for z in bl]:
     else:
         settings.elements = ['AP.UP.ZS21633','AP.DO.ZS21676','TPST.21760']
 
-    submit_job(settings)
+    submit_job(settings)'''

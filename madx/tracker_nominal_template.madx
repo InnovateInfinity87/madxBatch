@@ -46,6 +46,8 @@ use_pycoll = pyPYCOLL;
 ! Call files for correct initialization of SPS.
 ! TODO: 2015 files don't work due to conflict between tcpc and crystal1?
 !-----------------------------------------------------------------------
+zswireup = 0.06795;
+zswiredo = 0.04245;
 
 CALL, FILE = '/afs/cern.ch/eng/sps/2014/beams/cngs_extraction.beamx';
 CALL, FILE = 'pyHOMEDIR/input/sps.ele';
