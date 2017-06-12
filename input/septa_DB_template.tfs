@@ -1,3 +1,0 @@
-       Element     Aper_up [m]      Aper_down [m] Thickness [m]  Length [m]  Material  Error_up (Bool, std [m])  Error_down (Bool, std[m])   kick   side
- "ZS.21655"    0.06795  0.04245  200e-6     18.77     W75RE25                 False 0.0                  False 0.0    4.1635E-4    left
- "DIFFUSER"    diffpos diffpos  220e-6     0.003     W75RE25_FULL                 False 0.0                  False 0.0    0.0    left
