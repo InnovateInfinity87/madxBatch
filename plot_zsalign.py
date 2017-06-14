@@ -11,6 +11,8 @@ import matplotlib as mpl
 mpl.use('Agg') #To use plotting routines on machines without display
 import python.dataprocessing as datproc
 
+thickness = 100E-6
+
 if __name__ == "__main__":
     folder = sys.argv[1]
     lossfolder = folder+'/losses'
@@ -30,8 +32,9 @@ if __name__ == "__main__":
     else:
         lossloc = "AP.UP.ZS21633"
 
-    zsdo = float(name[3:8])/1E6 + 0.0002
+    zsup = 0.06795 + thickness
+    zsdo = float(name.split("_")[1])/1E6 + thickness
 
-    datproc.efficiency(lossfolder, aperturex=[0.06815,0.08815], aperturey=[-0.023,0.023], zs_len=18.77, zs_an=4.1635E-4, aperturex2=[zsdo,zsdo+0.02])
+    datproc.efficiency(lossfolder, aperturex=[zsup, zsup+0.02], aperturey=[-0.023,0.023], zs_len=18.77, zs_an=4.1635E-4, aperturex2=[zsdo,zsdo+0.02])
     print ""
     datproc.lossstats(lossfolder)

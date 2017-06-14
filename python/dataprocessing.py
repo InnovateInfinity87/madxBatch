@@ -176,7 +176,8 @@ def beamstats(lossfolder, lossloc="AP.UP.ZS21633", plane="X", save=None):
     maxp = str(max(pdata))
     stdx = str(np.std(xdata))
     stdp = str(np.std(pdata))
-    statemit = str(np.sqrt(np.linalg.det(np.cov(xdata,pdata))))
+    covmat = np.cov(xdata,pdata)
+    statemit = np.sqrt(np.linalg.det(covmat))
 
     if lossloc is None:
         message = "Globally:\n"
@@ -187,7 +188,8 @@ def beamstats(lossfolder, lossloc="AP.UP.ZS21633", plane="X", save=None):
                 "avg,std "+xax+": "+avgx+", "+stdx+"\n"+
                 "min,max "+pax+": "+minp+", "+maxp+"\n"+
                 "avg,std "+pax+": "+avgp+", "+stdp+"\n"+
-                "statistical emittance: "+statemit+"\n"+
+                "statistical emittance: "+str(statemit)+"\n"+
+                "stat alpha,beta,gamma: "+str([-1*covmat[0,1]/statemit, covmat[0,0]/statemit, covmat[1,1]/statemit])+"\n"+
                 "(# of particles local/global: "+str(len(xdata))+"/"+str(totloss)+")")
 
     if save is None:
@@ -246,7 +248,8 @@ def efficiency(lossfolder, pycoll=False, aperturex=[0,1], aperturey=[0,1],
                +str(zs_app)+" lost on the ZS aperture\n"
                +str(tce)+" lost on the TCE\n"
                +str(tpst)+" lost on the TPST\n"
-               +str(other)+" lost elsewhere.")
+               +str(other)+" lost elsewhere.\n"
+               +"(Total: "+str(extracted+zs_wire+zs_app+tce+tpst+other)+" particles.")
     else:
         extracted = 0
         zs_wire = 0
@@ -298,7 +301,8 @@ def efficiency(lossfolder, pycoll=False, aperturex=[0,1], aperturey=[0,1],
                +str(zs_vert)+" lost on the ZS vertical aperture\n"
                +str(zs_wire)+" lost on the ZS wires\n"
                +str(zs_cathode)+" lost on the ZS cathode\n"
-               +str(other)+" lost elsewhere.")
+               +str(other)+" lost elsewhere.\n"
+               +"(Total: "+str(extracted+zs_vert+zs_wire+zs_cathode)+" particles.")
 
 
 def wireangle(lossfolder, lossloc="AP.UP.ZS21633", wiremax=0.69, save=None):

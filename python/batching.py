@@ -436,9 +436,9 @@ def submit_job(settings):
                           ('tracks.tar.gz=tracks/$(ProcId).tar.gz; ' if settings.savetracks else '')+
                           'losses.tfs=losses/$(ProcId).tfs"\n')
             if settings.flavour is None:
-                subfile.write("+JobFlavour = '"+flavour(settings.nturns, settings.nparperbatch, settings.pycollimate)+"'\n")
+                subfile.write('+JobFlavour = "'+flavour(settings.nturns, settings.nparperbatch, settings.pycollimate)+'"\n')
             else:
-                subfile.write("+JobFlavour = '"+settings.flavour+"'\n")
+                subfile.write('+JobFlavour = "'+settings.flavour+'"\n')
             subfile.write("\nqueue "+str(settings.nbatches*nslices))
         print 'Submit file created!'
 
