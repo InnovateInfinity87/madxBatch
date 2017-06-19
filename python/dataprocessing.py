@@ -367,7 +367,7 @@ def emittance(lossfolder, lossloc="AP.UP.ZS21633", ap=[0.06815, 0.08815], save=N
         with open(save, 'w') as out:
             out.write(message)
 
-def errorcheck(errfolder):
+def errorcheck(errfolder, checkloss=True):
     failed=[]
     messages=[]
 
@@ -379,6 +379,10 @@ def errorcheck(errfolder):
                 firstline = f.readline()
             if firstline not in messages:
                 messages += [firstline]
+        elif checkloss==True and not os.path.exists(errfolder+"/../losses/"+jobid+".tfs"):
+            failed += [jobid]
+            if "Missing lossfile" not in messages:
+                messages += ["Missing lossfile"]
 
     return failed, messages
 
