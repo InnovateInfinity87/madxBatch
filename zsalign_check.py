@@ -6,11 +6,10 @@ Example SPS slow extraction study: downstream zs scan
 """
 from python.batching import Settings, submit_job
 
-#pos = [41250, 41300, 41350, 41400]
-#pos = [41000, 41050, 41100]
-pos = [40950, 41150]
-pc = False
-db = True
+pos = [40600, 40800, 41000, 41200, 41400, 41600, 41800, 42000, 42200, 42400, 42600, 42800, 43000]
+#pos = [41250, 41300, 41350, 41450, 41500, 41550, 41650, 41700, 41750]
+pc = True
+db = False
 
 for zsdown in pos:
     name = "scandown_"+str(zsdown)+"_sweep"
@@ -29,6 +28,7 @@ for zsdown in pos:
         settings.elements=['AP.UP.ZS21633_M','AP.DO.ZS21676_M','TPST.21760']
         settings.nbatches = 100
         settings.nparperbatch = 1000
+        settings.flavour = "tomorrow"
     else:
         settings.pycollimate=False
         settings.elements=['AP.UP.ZS21633','AP.DO.ZS21676','AP.UP.TPST21760']
@@ -44,8 +44,5 @@ for zsdown in pos:
         settings.dynamicbump=True
     else:
         settings.dynamicbump=False
-
-    if pc and db:
-        settings.flavour = "tomorrow"
 
     submit_job(settings)

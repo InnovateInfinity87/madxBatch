@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
+import re
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib.lines import Line2D
@@ -126,22 +127,60 @@ def losschart(lossfolder, lossloc="AP.UP.ZS21633", xax="X", binwidth=5E-4, start
 
 
 # TODO: normalize y, change scale x, label y
-def lossstats(lossfolder):
+def lossstats(lossfolder, region=None):
     data = {}
 
     for lossfile in os.listdir(lossfolder):
         if os.stat(lossfolder+'/'+lossfile).st_size > 0:
             _, losstable = readtfs(lossfolder+'/'+lossfile)
+            if region is not None:
+                losstable = losstable.loc[losstable['S']>=region[0] and losstable['S']<=region[1]]
             for location in losstable['ELEMENT'].tolist():
                 try:
-                    data[location]+=1
+                    data[location] += 1
                 except KeyError:
-                    data[location]=1
+                    data[location] = 1
 
     print "Start loss stats:"
     for location in sorted(data, key=data.get, reverse=True):
         print location, data[location]
     print "End loss stats."
+    return data
+
+def lossmap(lossfolder, region=None, save=None):
+    #TODO FINISH
+    rawdata = lossstats(lossfolder)
+    data = {}
+    positions = {}
+    _, twissfile = readtfs(lossfolder+"/../thin_twiss.tfs")
+
+    for location in rawdata:
+        # Reduce sliced elements to one
+        if re.match(r'\.\.[0-9]*$', location):
+            newloc = "..".join(location.split("..")[:-1])
+            try:
+                data[newloc] += rawdata[location]
+            except KeyError:
+                data[newloc] = rawdata[location]
+        else:
+            try:
+                data[location] += rawdata[location]
+            except KeyError:
+                data[location] = rawdata[location]
+    for location in data:
+        positions[location] = twissfile["S"][twissfile["ELEMENT"]==location]
+
+    labels = sorted(positions, positions.get)
+    lossvals = [data[location] for location in labels]
+    xvals = range(1, len(labels)+1)
+
+    plt.plot(xvals, lossvals, 'ko')
+    plt.xticks(xvals, labels, rotation=80)
+    print positions, "\n", data
+    #plt.show()
+
+    
+                
 
 
 # TODO: include Francesco's loss calculation?
@@ -200,7 +239,7 @@ def beamstats(lossfolder, lossloc="AP.UP.ZS21633", plane="X", save=None):
 
 
 def efficiency(lossfolder, pycoll=False, aperturex=[0,1], aperturey=[0,1],
-               zs_len=1, zs_an=0.1, aperturex2=[0,1], aperturey2=None):
+               zs_len=1, zs_an=0.1, aperturex2=[0,1], aperturey2=None, report=True):
     xax='X'
     yax='Y'
 
@@ -210,12 +249,7 @@ def efficiency(lossfolder, pycoll=False, aperturex=[0,1], aperturey=[0,1],
     empty = 0
 
     if pycoll:
-        extracted = 0
-        tpst = 0
-        tce = 0
-        zs_wire = 0
-        zs_app = 0
-        other = 0
+        losses = {'extracted': 0, 'zs_wire': 0, 'zs_app': 0, 'tce': 0, 'tpst': 0, 'other': 0}
 
         for lossfile in os.listdir(lossfolder):
             if os.stat(lossfolder+'/'+lossfile).st_size > 0:
@@ -224,38 +258,35 @@ def efficiency(lossfolder, pycoll=False, aperturex=[0,1], aperturey=[0,1],
                     if particle['ELEMENT']=="AP.UP.TPST21760":
                         if (particle["X"]>aperturex[0] and particle["X"]<aperturex[1]
                             and particle["Y"]>aperturey[0] and particle["Y"]<aperturey[1]):
-                            extracted += 1
+                            losses['extracted'] += 1
                         else:
-                            tpst +=1
+                            losses['tpst'] += 1
                     elif "TPST" in particle['ELEMENT']:
-                        tpst += 1
+                        losses['tpst'] += 1
                     elif "TCE" in particle['ELEMENT']:
-                        tce += 1
+                        losses['tce'] += 1
                     elif particle['ELEMENT']==("ZS.21655"):
-                        zs_wire += 1
+                        losses['zs_wire'] += 1
                     elif "ZS" in particle['ELEMENT']:
-                        zs_app += 1
+                        losses['zs_app'] += 1
                     else:
-                        other += 1
+                        losses['other'] += 1
             else:
                 empty += 1
 
         if empty > 0:
             print str(empty)+" empty loss files found"
-                    
-        print (str(extracted)+" extracted\n"
-               +str(zs_wire)+" lost on the ZS wires\n"
-               +str(zs_app)+" lost on the ZS aperture\n"
-               +str(tce)+" lost on the TCE\n"
-               +str(tpst)+" lost on the TPST\n"
-               +str(other)+" lost elsewhere.\n"
-               +"(Total: "+str(extracted+zs_wire+zs_app+tce+tpst+other)+" particles.")
+
+        if report:
+            print (str(losses['extracted'])+" extracted\n"
+                   +str(losses['zs_wire'])+" lost on the ZS wires\n"
+                   +str(losses['zs_app'])+" lost on the ZS aperture\n"
+                   +str(losses['tce'])+" lost on the TCE\n"
+                   +str(losses['tpst'])+" lost on the TPST\n"
+                   +str(losses['other'])+" lost elsewhere.\n"
+                   +"(Total: "+str(sum(losses.values()))+" particles.)")
     else:
-        extracted = 0
-        zs_wire = 0
-        zs_cathode = 0
-        zs_vert = 0
-        other = 0
+        losses = {'extracted': 0, 'zs_wire': 0, 'zs_cath': 0, 'zs_vert': 0, 'other': 0}
 
         for lossfile in os.listdir(lossfolder):
             if os.stat(lossfolder+'/'+lossfile).st_size > 0:
@@ -273,36 +304,39 @@ def efficiency(lossfolder, pycoll=False, aperturex=[0,1], aperturey=[0,1],
                             hitdist = 0
 
                         if particle["Y"]<aperturey[0] or particle["Y"]>aperturey[1]:
-                            zs_vert += 1
+                            losses['zs_vert'] += 1
                         elif particle["X"]<aperturex[0]:
-                            zs_wire += 1
+                            losses['zs_wire'] += 1
                         elif particle["X"]>aperturex[1]:
-                            zs_cathode +=1
+                            losses['zs_cath'] +=1
                         elif (particle["Y"]+zs_len*particle["PY"]<aperturey2[0]
                               or particle["Y"]+zs_len*particle["PY"]>aperturey2[1]):
-                              zs_vert += 1
+                            losses['zs_vert'] += 1
                         elif hitdist>0 and hitdist<zs_len:
-                            zs_wire += 1
+                            losses['zs_wire'] += 1
                         elif particle["X"]+(particle["PX"]+zs_an/2)*zs_len>aperturex2[1]:
-                                zs_cathode += 1
+                            losses['zs_cath'] += 1
                         else:
-                            extracted += 1
+                            losses['extracted'] += 1
                     elif "ZS" in particle['ELEMENT']:
-                        zs_wire += 1
+                        losses['zs_wire'] += 1
                     else:
-                        other += 1
+                        losses['other'] += 1
             else:
                 empty += 1
 
         if empty > 0:
             print str(empty)+" empty loss files found"
-                    
-        print (str(extracted)+" extracted\n"
-               +str(zs_vert)+" lost on the ZS vertical aperture\n"
-               +str(zs_wire)+" lost on the ZS wires\n"
-               +str(zs_cathode)+" lost on the ZS cathode\n"
-               +str(other)+" lost elsewhere.\n"
-               +"(Total: "+str(extracted+zs_vert+zs_wire+zs_cathode)+" particles.")
+
+        if report:
+            print (str(losses['extracted'])+" extracted\n"
+                   +str(losses['zs_vert'])+" lost on the ZS vertical aperture\n"
+                   +str(losses['zs_wire'])+" lost on the ZS wires\n"
+                   +str(losses['zs_cath'])+" lost on the ZS cathode\n"
+                   +str(losses['other'])+" lost elsewhere.\n"
+                   +"(Total: "+str(sum(losses.values()))+" particles.)")
+
+    return losses
 
 
 def wireangle(lossfolder, lossloc="AP.UP.ZS21633", wiremax=0.69, save=None):
@@ -642,12 +676,8 @@ def losshistscatter(lossfolder, lossloc="AP.UP.ZS21633",
     axScatter.set_xlabel(xax+' ['+xunit+']')
     axScatter.set_ylabel(yax+' ['+yunit+']')
 
-    if log:
-        axHistx.set_ylabel(r'$\log(\%)$')
-        axHisty.set_xlabel(r'$\log(\%)$')
-    else:
-        axHistx.set_ylabel(r'$\%$')
-        axHisty.set_xlabel(r'$\%$')
+    axHistx.set_ylabel(r'$\%$')
+    axHisty.set_xlabel(r'$\%$')
 
     #plt.colorbar(axScatter) # Does this work??
 
