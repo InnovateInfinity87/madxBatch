@@ -284,19 +284,19 @@ def orthogonal_bumps():
 
             "obump(x_knob_value, px_knob_value) : MACRO = {\n"+
             " SELECT, FLAG=ERROR, CLEAR;\n"+
-            ' SELECT, FLAG=ERROR, RANGE=MPSH_rb.21202..1/MPSH_rb.21202..4;\n'+
+            ' SELECT, FLAG=ERROR, PATTERN="MPSH_rb\.21202.*";\n'+
             " EFCOMP, ORDER:=0, DKN= 2.331301861e-05 * x_knob_value * (-1/4) + 9.929676756e-06 * px_knob_value * (-1e2/4);\n"+
             " SELECT, FLAG=ERROR, CLEAR;\n"+
-            ' SELECT, FLAG=ERROR, RANGE=MPLH_rb.21431..1/MPLH_rb.21431..4;\n'+
+            ' SELECT, FLAG=ERROR, "MPLH_rb\.21431.*";\n'+
             " EFCOMP, ORDER:=0, DKN= -9.91281169e-06   * x_knob_value * (-1/4) + 2.600240449e-07   * px_knob_value * (-1e2/4);\n"+
             " SELECT, FLAG=ERROR, CLEAR;\n"+
-            ' SELECT, FLAG=ERROR, RANGE=MPNH_rb.21732..1/MPNH_rb.21732..4;\n'+
+            ' SELECT, FLAG=ERROR, PATTERN="MPNH_rb\.21732.*";\n'+
             " EFCOMP, ORDER:=0, DKN=  2.98e-05 * x_knob_value * (-1/4) + 2.174863504e-05 * px_knob_value * (-1e2/4);\n"+
             " SELECT, FLAG=ERROR, CLEAR;\n"+
-            ' SELECT, FLAG=ERROR, RANGE=MPLH_rb.21995..1/MPLH_rb.21995..4;\n'+
+            ' SELECT, FLAG=ERROR, PATTERN="MPLH_rb\.21995.*";\n'+
             " EFCOMP, ORDER:=0, DKN= -1.923181311e-05 * x_knob_value * (-1/4) + (-5.128495572e-06) * px_knob_value * (-1e2/4);\n"+
             " SELECT, FLAG=ERROR, CLEAR;\n"+
-            ' SELECT, FLAG=ERROR, RANGE=MPLH_rb.22195..1/MPLH_rb.22195..4;\n'+
+            ' SELECT, FLAG=ERROR, PATTERN="MPLH_rb\.22195.*";\n'+
             " EFCOMP, ORDER:=0, DKN= 2.105219176e-05 * x_knob_value * (-1/4) + 8.373821994e-06 * px_knob_value * (-1e2/4);\n"+
             "};")
 
