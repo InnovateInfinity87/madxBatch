@@ -35,6 +35,9 @@ if __name__ == "__main__":
     zsup = 0.06795 + thickness
     zsdo = float(name.split("_")[1])/1E6 + thickness
 
-    datproc.efficiency(lossfolder, aperturex=[zsup, zsup+0.02], aperturey=[-0.023,0.023], zs_len=18.77, zs_an=4.1635E-4, aperturex2=[zsdo,zsdo+0.02])
+    if pycoll:
+        datproc.efficiency(lossfolder, pycoll=True, aperturex=[0.04219,0.08219], aperturey=[-0.0100,0.0100])
+    else:
+        datproc.efficiency(lossfolder, aperturex=[zsup, zsup+0.02], aperturey=[-0.023,0.023], zs_len=18.77, zs_an=4.1635E-4, aperturex2=[zsdo,zsdo+0.02])
     print ""
     datproc.lossstats(lossfolder)

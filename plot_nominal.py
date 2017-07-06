@@ -60,6 +60,8 @@ if __name__ == "__main__":
         #datproc.zsbacktrack(trackfolder, cax="TURN", save_d=plotfolder+"/zs_down_backtrack_"+name+".png", save_u=plotfolder+"/zs_up_backtrack_"+name+".png")
 
         datproc.trackplot(trackfolder, obsloc="obs0002", cax="TURN", tpt=1, save=plotfolder+"/zs_up_"+name+".png")
+        datproc.trackplot(trackfolder, obsloc="obs0002", xlim=[0.065,0.090], ylim=[-0.0018, -0.0013], cax="TURN", tpt=1, save=plotfolder+"/zs_up_zoom_"+name+".png")
+        datproc.trackplot(trackfolder, obsloc="obs0002", xlim=[0.05,0.090], ylim=[-0.0018, -0.0009], cax="TURN", tpt=1, save=plotfolder+"/zs_up_zoom2_"+name+".png")
 
         datproc.trackplot(trackfolder, obsloc="obs0003", cax="TURN", tpt=1, save=plotfolder+"/zs_down_"+name+".png")
 
@@ -71,5 +73,5 @@ if __name__ == "__main__":
         datproc.lossplot(lossfolder, lossloc="AP.DO.ZS21676_M", xax='X', yax='Y', cax='TURN', save=plotfolder+"/zs_do_loss_s_"+name+".png")
         datproc.lossplot(lossfolder, lossloc="AP.DO.ZS21676_M", xax='X', yax='PX', cax='TURN', save=plotfolder+"/zs_do_loss_x_"+name+".png")
 
-        datproc.lossplot(lossfolder, lossloc=lossloc, xax='TURN', yax='PT', cax='X', save=plotfolder+"/sweep.png")
-        datproc.lossplot(lossfolder, lossloc=None, xlim=[1668,1688], xax='S', yax='X', cax='PT', clim=(-0.0015,0.0015), save=plotfolder+"/zs_loss.png")
+        datproc.lossplot(lossfolder, lossloc=lossloc, xax='TURN', yax='PT', cax='X', save=plotfolder+"/sweep_"+name+".png")
+        datproc.lossplot(lossfolder, lossloc=None, xlim=[1668,1688], xax='S', yax='X', cax='PT', clim=(-0.0015,0.0015), save=plotfolder+"/zs_loss_"+name+".png")

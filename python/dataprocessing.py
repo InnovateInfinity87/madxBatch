@@ -1,7 +1,10 @@
 import os
+import sys
 import numpy as np
 import pandas as pd
 import re
+import operator
+import fileinput
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib.lines import Line2D
@@ -38,7 +41,28 @@ def readtfs(filename, usecols=None, index_col=0):
     except KeyError:
         pass
 
+    # Check for the extra buggy thing in lossfiles
+    try:
+        for location in table['ELEMENT']:
+            if not location.replace(".","").replace("_","").isalnum():
+                print "WARNING: some loss locations in "+filename+" don't reduce to alphanumeric values. For example "+location
+                break
+    except KeyError:
+        pass
+
     return header, table
+
+def fixlossfile(filename):
+    question = 'This function is dangerous, only use on lossfile with accidental additional "-symbol.\n Do you want to proceed?'
+    reply = str(raw_input(question+' (y/n): ')).lower().strip()
+    if reply[0] == 'y':
+        for line in fileinput.input(filename, inplace=1):
+            breakdown = line.split('"')
+            if len(breakdown)>3:
+                line = breakdown[0]+'"'+breakdown[1]+'"\n'
+            sys.stdout.write(line)
+    else:
+        print 'Aborting.'
 
 
 def readsingletrack(filename):
@@ -47,11 +71,9 @@ def readsingletrack(filename):
 
 
 # TODO: change scale
-def lossplot(lossfolder, lossloc="AP.UP.ZS21633", xax="X", yax="PX", cax="TURN", xlim=None, ylim=None, clim=None, save=None):
+def lossplot(lossfolder, lossloc="AP.UP.ZS21633", xax="X", yax="PX", cax="TURN", xlim=None, ylim=None, clim=[None,None], save=None):
     if xax=='S':
         lossloc = None
-    if clim is None:
-        clim=(None,None)
     xdata = []
     ydata = []
     cdata = []
@@ -147,37 +169,53 @@ def lossstats(lossfolder, region=None):
     print "End loss stats."
     return data
 
-def lossmap(lossfolder, region=None, save=None):
-    #TODO FINISH
+def lossmap(lossfolder, region=None, save=None, threshold=0.0001, extracted=None):
     rawdata = lossstats(lossfolder)
+    total = float(sum(rawdata.values()))
+    if extracted is not None:
+        rawdata[extracted[0]] -= extracted[1]
+    for x in rawdata: rawdata[x] /= total
     data = {}
     positions = {}
     _, twissfile = readtfs(lossfolder+"/../thin_twiss.tfs")
 
     for location in rawdata:
-        # Reduce sliced elements to one
-        if re.match(r'\.\.[0-9]*$', location):
-            newloc = "..".join(location.split("..")[:-1])
-            try:
-                data[newloc] += rawdata[location]
-            except KeyError:
-                data[newloc] = rawdata[location]
-        else:
-            try:
-                data[location] += rawdata[location]
-            except KeyError:
-                data[location] = rawdata[location]
-    for location in data:
-        positions[location] = twissfile["S"][twissfile["ELEMENT"]==location]
+            # Reduce sliced elements to one
+            if re.search(r'\.\.[0-9]*$', location) is not None:
+                newloc = "..".join(location.split("..")[:-1])
+                try:
+                    data[newloc] += rawdata[location]
+                except KeyError:
+                    data[newloc] = rawdata[location]
+            else:
+                try:
+                    data[location] += rawdata[location]
+                except KeyError:
+                    data[location] = rawdata[location]
 
-    labels = sorted(positions, positions.get)
+    for location in data:
+        # Keep only significant loss locations
+        if data[location] >= threshold:
+            positions[location] = twissfile.loc[location,"S"]
+
+    labels = [x[0] for x in sorted(positions.items(), key=operator.itemgetter(1))]
     lossvals = [data[location] for location in labels]
+    labels =[x[:-2] if x.endswith("_S") else x for x in labels]
     xvals = range(1, len(labels)+1)
 
-    plt.plot(xvals, lossvals, 'ko')
-    plt.xticks(xvals, labels, rotation=80)
-    print positions, "\n", data
-    #plt.show()
+    fig, ax = plt.subplots()
+    ax.bar(xvals, lossvals, 0.05, color='k')
+    ax.set_xlim(0,len(labels)+1)
+    ax.set_xticks(xvals)
+    ax.set_xticklabels(labels)
+    fig.autofmt_xdate(bottom=0.2, rotation=30, ha='right')
+    ax.set_yscale("log")
+
+    if save is None:
+        plt.show()
+    else:
+        plt.savefig(save)
+        plt.close()
 
     
                 
@@ -421,7 +459,7 @@ def errorcheck(errfolder, checkloss=True):
     return failed, messages
 
 
-def trackplot(trackfolder, obsloc="obs0001", xax="X", yax="PX", cax="TURN", xlim=None, ylim=None, clim=None, tpt=3, batches=None, save=None):
+def trackplot(trackfolder, obsloc="obs0001", xax="X", yax="PX", cax="TURN", xlim=None, ylim=None, clim=[None,None], tpt=3, batches=None, save=None):
     if xax=='S':
         lossloc = None
     xdata = []
@@ -478,7 +516,7 @@ def trackplot(trackfolder, obsloc="obs0001", xax="X", yax="PX", cax="TURN", xlim
     cm = plt.cm.get_cmap('viridis')
     fig, ax = plt.subplots()
     plt.autoscale(enable=True, axis='both', tight=True)
-    plot = ax.scatter(xdata, ydata, c=cdata, cmap=cm, edgecolor='')
+    plot = ax.scatter(xdata, ydata, c=cdata, cmap=cm, vmin=clim[0], vmax=clim[1], edgecolor='')
     if xlim is not None:
         ax.set_xlim(xlim)
     if ylim is not None:
@@ -495,11 +533,9 @@ def trackplot(trackfolder, obsloc="obs0001", xax="X", yax="PX", cax="TURN", xlim
         plt.close()
 
 
-def fullplot(folder, lossloc="AP.UP.ZS21633", obsloc="obs0002", xax="X", yax="PX", cax="TURN", xlim=None, ylim=None, clim=None, tpt=3, save=None):
+def fullplot(folder, lossloc="AP.UP.ZS21633", obsloc="obs0002", xax="X", yax="PX", cax="TURN", xlim=None, ylim=None, clim=[None,None], tpt=3, save=None):
     trackfolder = folder+"/tracks"
     lossfolder = folder+"/losses"
-    if clim is None:
-        clim=(None,None)
     if xax=='S':
         lossloc = None
     xdata = []
@@ -570,15 +606,13 @@ def fullplot(folder, lossloc="AP.UP.ZS21633", obsloc="obs0002", xax="X", yax="PX
 
 def losshistscatter(lossfolder, lossloc="AP.UP.ZS21633",
                     xax="X", yax="PX", cax="TURN",
-                    xlim=None, ylim=None, clim=None,
+                    xlim=None, ylim=None, clim=[None,None],
                     monochrom=False,
                     xbin=None, ybin=None,
                     log=False, extra=None, save=None,
                     datalim=[[None,None],[None,None],[None,None]]):
     if xax=='S':
         lossloc = None
-    if clim is None:
-        clim=(None,None)
     xdata = []
     ydata = []
     cdata = []

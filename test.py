@@ -6,7 +6,7 @@ Example SPS slow extraction study: decapole folding
 """
 from python.batching import Settings, submit_job
 
-settings=Settings('thickslice_bump_alt', studygroup='test', disk='afsproject')
+settings=Settings('oldmadxtest', studygroup='test', disk='afsproject')
 
 settings.trackingbool=True
 settings.trackertemplate=settings.home+"/madx/tracker_nominal_template.madx"
@@ -23,7 +23,7 @@ settings.nparperbatch=100
 settings.ffile=1
 
 settings.slices=[-0.0015,0.0,0.0015]
-#settings.slicewidth=0.0
+settings.slicewidth=0.0
 settings.dynamicbump=True
 settings.pycollimate=False
 
