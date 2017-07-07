@@ -1,0 +1,26 @@
+end_only(my_nrows, my_input_table, my_output_file): MACRO {
+  OPTION, ECHO, ECHOMACRO;
+  EN := TABLE(my_input_table, E);
+  SELECT, FLAG=my_input_table, COLUMN=X,PX,Y,PY,T,PT,S,EN;
+
+  end_only.__tablen = TABLE(my_input_table, TABLELENGTH);
+  IF (my_nrows>end_only.__tablen){end_only.__i = -1*end_only.__tablen;}
+  ELSE {end_only.__i = -1*my_nrows;}
+
+  CREATE, TABLE=end_only.__table, COLUMN=NUMBER,TURN,X,PX,Y,PY,T,PT,S,EN;
+  WHILE (end_only.__i<0) {
+    end_only.__j = end_only.__tablen+1+end_only.__i;
+    SETVARS, TABLE=my_input_table, ROW=end_only.__j;
+    EXEC, gettab(my_input_table, $end_only.__j);
+    FILL, TABLE=end_only.__table;
+    end_only.__i = end_only.__i+1;
+  }
+  WRITE, TABLE=end_only.__table, FILE=my_output_file;
+  DELETE, TABLE=end_only.__table;
+};
+
+
+gettab(my_input_table, my_i): MACRO = {
+  number = TABLE(my_input_table,NUMBER,my_i);
+  turn = TABLE(my_input_table,TURN,my_i);
+};

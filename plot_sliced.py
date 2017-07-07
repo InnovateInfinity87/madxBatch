@@ -25,7 +25,7 @@ if __name__ == "__main__":
     if not os.path.exists(plotfolder):
         os.makedirs(plotfolder)
 
-    if "_pc" in name:
+    if "pc" in name and "nopc" not in name:
         pycoll=True
     else:
         pycoll=False
