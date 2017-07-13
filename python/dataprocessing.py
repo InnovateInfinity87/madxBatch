@@ -41,11 +41,14 @@ def readtfs(filename, usecols=None, index_col=0):
     except KeyError:
         pass
 
-    # Check for the extra buggy thing in lossfiles
+    # Check for the extra buggy things in lossfiles
     try:
         for location in table['ELEMENT']:
             if not location.replace(".","").replace("_","").isalnum():
                 print "WARNING: some loss locations in "+filename+" don't reduce to alphanumeric values. For example "+location
+                break
+            if location=="nan":
+                print "WARNING: some loss locations in "+filename+" are 'nan'."
                 break
     except KeyError:
         pass
@@ -53,14 +56,21 @@ def readtfs(filename, usecols=None, index_col=0):
     return header, table
 
 def fixlossfile(filename):
-    question = 'This function is dangerous, only use on lossfile with accidental additional "-symbol.\n Do you want to proceed?'
+    question = 'This function is dangerous, only use on lossfile with accidental additional "-symbols or newlines.\n Do you want to proceed?'
     reply = str(raw_input(question+' (y/n): ')).lower().strip()
     if reply[0] == 'y':
+        linebuffer = ''
         for line in fileinput.input(filename, inplace=1):
+            line = linebuffer+line
             breakdown = line.split('"')
-            if len(breakdown)>3:
+            if len(breakdown)==2:
+                linebuffer = line[:-1]
+                line = ''
+            elif len(breakdown)>3:
                 line = breakdown[0]+'"'+breakdown[1]+'"\n'
-            sys.stdout.write(line)
+            if len(line)>0:
+                sys.stdout.write(line)
+                linebuffer = ''
     else:
         print 'Aborting.'
 
