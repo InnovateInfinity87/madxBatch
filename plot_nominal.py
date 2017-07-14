@@ -65,6 +65,8 @@ if __name__ == "__main__":
 
         datproc.trackplot(trackfolder, obsloc="obs0003", cax="TURN", tpt=1, save=plotfolder+"/zs_down_"+name+".png")
 
+        datproc.trackplot(trackfolder, obsloc="obs0004", cax="TURN", tpt=1, save=plotfolder+"/tpst_circ_"+name+".png")
+
         datproc.losshistscatter(lossfolder, lossloc=lossloc, xlim=[0.03759, 0.095], ylim=[0.0003,0.0027], xbin=0.001, ybin=0.00005, log=True, save=plotfolder+"/tpst_losshist_"+name+".png")
         datproc.losshistscatter(lossfolder, lossloc=lossloc, xax='Y', yax='PY', xlim=[-0.02, 0.02], ylim=[-0.0006,0.0006], xbin=0.0006, ybin=0.00003, log=True, save=plotfolder+"/tpst_losshist_v_"+name+".png")
         datproc.losshistscatter(lossfolder, lossloc=lossloc, xax='X', yax='Y', xlim=[0.03759, 0.095], ylim=[-0.02, 0.02], xbin=0.001, ybin=0.0006, log=True, save=plotfolder+"/tpst_losshist_s_"+name+".png")
