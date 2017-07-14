@@ -1,0 +1,42 @@
+trackto(_particletfs, _savefile): MACRO = {
+  OPTION, -INFO, -WARN;
+  READMYTABLE, FILE=_particletfs, TABLE=particles;
+  trackto_tablen = TABLE(particles, TABLELENGTH);
+  EXEC, trackto_innerfunc(trackto_tablen);
+  WRITE, TABLE=particles, FILE=_savefile;
+};
+
+
+trackto_innerfunc(_tablen): MACRO = {
+  i = 0;
+  WHILE (i < _tablen) {
+    i = i+1;
+    SETVARS, TABLE=particles, ROW=i;
+    EXEC, trackto_gettab($i);
+    IF (S<trackto_start_s+1E-7 && S>trackto_start_s-1E-7) {
+      IF (hastrmacro==1) {
+        EXEC, turnmacro(TURN);
+      };
+
+      TRACK, APERTURE, RECLOSS, ONEPASS;
+        START, X=X, PX=PX, Y=Y, PY=PY, T=T, PT=PT;
+        RUN, MAXAPER={0.5,0.05,0.5,0.05,7000,0.1};
+      ENDTRACK;
+
+      SETVARS, TABLE = trackloss, ROW=1;
+      S = S+trackto_start_s;
+      FILL, TABLE=particles, ROW=i;
+    };
+    ELSE {
+      TURN=-1;
+      FILL, TABLE=particles, ROW=i;
+    };
+  };
+};
+
+
+trackto_gettab(_i): MACRO = {
+  number = TABLE(particles,NUMBER,_i);
+  turn = TABLE(particles,TURN,_i);
+};
+

@@ -1,0 +1,36 @@
+OPTION, ECHO, ECHOMACRO;
+
+trackto(_particletfs, _batchnumber): MACRO = {
+  OPTION, -INFO, -WARN;
+  READMYTABLE, FILE=_particletfs, TABLE=particles;
+  trackto_tablen = TABLE(particles, TABLELENGTH);
+  EXEC, trackto_innerfunc(trackto_tablen, _batchnumber);
+};
+
+
+trackto_innerfunc(_tablen, _batchnumber): MACRO = {
+  i = 0;
+  WHILE (i < _tablen) {
+    i = i+1;
+    SETVARS, TABLE=particles, ROW=i;
+    EXEC, trackto_gettab($i);
+    IF (S<trackto_start_s+1E-7 && S>trackto_start_s-1E-7) {
+      IF (hastrmacro==1) {
+        EXEC, turnmacro(TURN);
+      };
+      EXEC, trackto_twisstrack(_batchnumber, $number);
+    };
+  };
+};
+
+
+trackto_gettab(_i): MACRO = {
+  number = TABLE(particles,NUMBER,_i);
+  turn = TABLE(particles,TURN,_i);
+};
+
+
+trackto_twisstrack(_batchnumber, _particlenumber): MACRO = {
+    TWISS, BETA0=starttrack, X=X, PX=PX, Y=Y, PY=PY, T=T, PT=PT, RANGE=trackfrom_m/trackto_m, FILE='b_batchnumber_p_particlenumber.tfs';
+};
+
