@@ -14,7 +14,6 @@ import fileinput
 import subprocess
 from shutil import copyfile
 import scipy.stats as stats
-import math
 
 import make_ps_distribution as dis
 from localsub import localsub
@@ -86,9 +85,9 @@ class Settings:
         self.trackendonly = None
 
         self.monitor = False
-        
+
         self._custom_datadir = False
-        
+
     def set_name(self, name):
         self.name = name
         if not self._custom_datadir:
@@ -105,7 +104,7 @@ class Settings:
         self.datadir = dir
         self._custom_datadir = True
         
-    def set_params(nturns=None, nbatches=None, nparperbatch=None, ffile=None):
+    def set_params(self, nturns=None, nbatches=None, nparperbatch=None, ffile=None):
         if nturns is not None:
             self.nturns = nturns
         if nbatches is not None:
@@ -239,6 +238,7 @@ def track_lin(k,data,settings):
     line += "SYSTEM, 'tar -czf tracks.tar.gz "+str(k)+"';"
 
     return line
+
 
 def track_sliced(k,data,settings):
     """Creates the text to replace pyTRACKER in tracker.madx. (sliced nominal case)"""
