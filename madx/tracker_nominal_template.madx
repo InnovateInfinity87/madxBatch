@@ -39,6 +39,7 @@ qh_end := 80/3 - dpp_end*chroma_res;
 
 ! Using pycollimate?
 use_pycoll = pyPYCOLL;
+zswirethickness = 0.0002;
 
 
 /**********************************************************************/
@@ -153,8 +154,8 @@ IF (use_pycoll==1){
  AP.DO.ZS21655_M: MARKER;
  AP.UP.ZS21671_M: MARKER;
  AP.DO.ZS21671_M: MARKER;
- AP.UP.ZS21676_M: AP,APERTYPE=RECTANGLE,APERTURE={0.08+0.02/2,0.078};
- AP.DO.ZS21676_M: AP,APERTYPE=RECTANGLE,APERTURE={0.08+0.02/2,0.078};
+ AP.UP.ZS21676_M: AP,APERTYPE=RECTANGLE,APERTURE={0.08+(0.02+zswirethickness)/2,0.078};
+ AP.DO.ZS21676_M: AP,APERTYPE=RECTANGLE,APERTURE={0.08+(0.02+zswirethickness)/2,0.078};
  ZS.61676_M: MARKER;
  ZS.21633_M: MARKER;
  ZS.21638_M: MARKER;

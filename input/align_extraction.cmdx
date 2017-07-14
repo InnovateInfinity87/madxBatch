@@ -7,11 +7,11 @@
 IF (use_pycoll==1){
  SELECT, FLAG=ERROR, CLEAR;
  SELECT, FLAG=ERROR, RANGE=AP.UP.ZS21676_M;
- EALIGN, AREX=(zswireup+0.02-0.090);
+ EALIGN, AREX=(zswireup+0.02-0.090+zswirethickness/2);
 
  SELECT, FLAG=ERROR, CLEAR;
  SELECT, FLAG=ERROR, RANGE=AP.DO.ZS21676_M;
- EALIGN, AREX=(zswiredo+0.02-0.090);
+ EALIGN, AREX=(zswiredo+0.02-0.090+zswirethickness/2);
 }
 
 ! TPST
