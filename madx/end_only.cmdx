@@ -20,7 +20,7 @@ end_only(my_nrows, my_input_table, my_output_file): MACRO {
 };
 
 
-gettab(my_input_table, my_i): MACRO = {
+end_only_gettab(my_input_table, my_i): MACRO = {
   number = TABLE(my_input_table,NUMBER,my_i);
   turn = TABLE(my_input_table,TURN,my_i);
 };
