@@ -134,6 +134,14 @@ USE, SEQUENCE = sps;
 
 /**********************************************************************/
 !-----------------------------------------------------------------------
+! Changes that must be done on the thick sequence should be done here.
+!-----------------------------------------------------------------------
+
+/*pyTHICKCHANGES*/
+
+
+/**********************************************************************/
+!-----------------------------------------------------------------------
 ! Thinning of the sequence, remove zs aperture if in pycollimate
 !-----------------------------------------------------------------------
 
@@ -198,6 +206,14 @@ knob_extr_sext = knob_extr_sext_val;
 
 /**********************************************************************/
 !-----------------------------------------------------------------------
+! Changes that can be done on the thin sequence should be done here.
+!-----------------------------------------------------------------------
+
+/*pyTHINCHANGES*/
+
+
+/**********************************************************************/
+!-----------------------------------------------------------------------
 ! Set bump and misalignments
 !-----------------------------------------------------------------------
 knob_extr_bump_thin = knob_extr_bump / 4.0;
@@ -225,105 +241,109 @@ EFCOMP, ORDER:=0, DKN=.35585e-3 * knob_extr_bump_thin;
 !================================
 ! Misa in beam dump ! Doesn't fully agree with geode?
 !================================
-SELECT, FLAG = ERROR, CLEAR;
-SELECT, FLAG= ERROR, PATTERN= "TIDH.11795";
-EALIGN, DX= -0.00425, DY= -0.00611;
+SELECT, FLAG=ERROR, CLEAR;
+SELECT, FLAG= ERROR, PATTERN="TIDH.11795";
+EALIGN, AREX=-0.00425, AREY=-0.00611;
 
-SELECT, FLAG = ERROR, CLEAR;
-SELECT, FLAG= ERROR, PATTERN= "TIDV.11892";
-EALIGN, DY= -0.00194;
+SELECT, FLAG=ERROR, CLEAR;
+SELECT, FLAG=ERROR, PATTERN="TIDV.11892";
+EALIGN, AREY=-0.00194;
 
 !================================
 ! Misa in Sextant 2 ! With ugly hardcoding for 4 slices
 !================================
 
 SELECT, FLAG=ERROR, CLEAR;
-SELECT, FLAG=ERROR, RANGE="MBB.21530..1";
-EALIGN, DX=0.005*0.626/6.26;
+SELECT, FLAG=ERROR, PATTERN="^MBB\.21530.*1$";
+EALIGN, AREX=0.005*0.626/6.26;
 
 SELECT, FLAG=ERROR, CLEAR;
-SELECT, FLAG=ERROR, RANGE="MBB.21530..2";
-EALIGN, DX=0.005*2.295333/6.26;
+SELECT, FLAG=ERROR, PATTERN="^MBB\.21530.*2$";
+EALIGN, AREX=0.005*2.295333/6.26;
 
 SELECT, FLAG=ERROR, CLEAR;
-SELECT, FLAG=ERROR, RANGE="MBB.21530";
-EALIGN, DX=0.005*3.13/6.26;
+IF (VERSION>0){SELECT, FLAG=ERROR, PATTERN="^MBB\.21530$";}
+         ELSE {SELECT, FLAG=ERROR, PATTERN="^MBB\.21530_S$";}
+EALIGN, AREX=0.005*3.13/6.26;
 
 SELECT, FLAG=ERROR, CLEAR;
-SELECT, FLAG=ERROR, RANGE="MBB.21530..3";
-EALIGN, DX=0.005*3.964667/6.26;
+SELECT, FLAG=ERROR, PATTERN="^MBB\.21530.*3$";
+EALIGN, AREX=0.005*3.964667/6.26;
 
 SELECT, FLAG=ERROR, CLEAR;
-SELECT, FLAG=ERROR, RANGE="MBB.21530..4";
-EALIGN, DX=0.005*5.634/6.26;
+SELECT, FLAG=ERROR, PATTERN="^MBB.21530.*4$";
+EALIGN, AREX=0.005*5.634/6.26;
 
 SELECT, FLAG=ERROR, CLEAR;
-SELECT, FLAG=ERROR, RANGE="MBB.21550..1";
-EALIGN, DX=0.005+0.005*0.626/6.26;
+SELECT, FLAG=ERROR, PATTERN="^MBB\.21550.*1$";
+EALIGN, AREX=0.005+0.005*0.626/6.26;
 
 SELECT, FLAG=ERROR, CLEAR;
-SELECT, FLAG=ERROR, RANGE="MBB.21550..2";
-EALIGN, DX=0.005+0.005*2.295333/6.26;
+SELECT, FLAG=ERROR, PATTERN="^MBB\.21550.*2$";
+EALIGN, AREX=0.005+0.005*2.295333/6.26;
 
 SELECT, FLAG=ERROR, CLEAR;
-SELECT, FLAG=ERROR, RANGE="MBB.21550";
-EALIGN, DX=0.005+0.005*3.13/6.26;
+IF (VERSION>0){SELECT, FLAG=ERROR, PATTERN="^MBB\.21550$";}
+         ELSE {SELECT, FLAG=ERROR, PATTERN="^MBB\.21550_S$";}
+EALIGN, AREX=0.005+0.005*3.13/6.26;
 
 SELECT, FLAG=ERROR, CLEAR;
-SELECT, FLAG=ERROR, RANGE="MBB.21550..3";
-EALIGN, DX=0.005+0.005*3.964667/6.26;
+SELECT, FLAG=ERROR, PATTERN="^MBB\.21550.*3$";
+EALIGN, AREX=0.005+0.005*3.964667/6.26;
 
 SELECT, FLAG=ERROR, CLEAR;
-SELECT, FLAG=ERROR, RANGE="MBB.21550..4";
-EALIGN, DX=0.005+0.005*5.634/6.26;
+SELECT, FLAG=ERROR, PATTERN="^MBB\.21550.*4$";
+EALIGN, AREX=0.005+0.005*5.634/6.26;
 
 SELECT, FLAG=ERROR, CLEAR;
-SELECT, FLAG=ERROR, RANGE="MBB.21570..1";
-EALIGN, DX=0.01+0.001*0.626/6.26;
+SELECT, FLAG=ERROR, PATTERN="^MBA\.21570.*1$";
+EALIGN, AREX=0.01+0.001*0.626/6.26;
 
 SELECT, FLAG=ERROR, CLEAR;
-SELECT, FLAG=ERROR, RANGE="MBB.21570..2";
-EALIGN, DX=0.01+0.001*2.295333/6.26;
+SELECT, FLAG=ERROR, PATTERN="^MBA\.21570.*2$";
+EALIGN, AREX=0.01+0.001*2.295333/6.26;
 
 SELECT, FLAG=ERROR, CLEAR;
-SELECT, FLAG=ERROR, RANGE="MBB.21570";
-EALIGN, DX=0.01+0.001*3.13/6.26;
+IF (VERSION>0){SELECT, FLAG=ERROR, PATTERN="^MBA\.21570$";}
+         ELSE {SELECT, FLAG=ERROR, PATTERN="^MBA\.21570_S$";}
+EALIGN, AREX=0.01+0.001*3.13/6.26;
 
 SELECT, FLAG=ERROR, CLEAR;
-SELECT, FLAG=ERROR, RANGE="MBB.21570..3";
-EALIGN, DX=0.01+0.001*3.964667/6.26;
+SELECT, FLAG=ERROR, PATTERN="^MBA\.21570.*3$";
+EALIGN, AREX=0.01+0.001*3.964667/6.26;
 
 SELECT, FLAG=ERROR, CLEAR;
-SELECT, FLAG=ERROR, RANGE="MBB.21570..4";
-EALIGN, DX=0.01+0.001*5.634/6.26;
+SELECT, FLAG=ERROR, PATTERN="^MBA\.21570.*4$";
+EALIGN, AREX=0.01+0.001*5.634/6.26;
 
 SELECT, FLAG=ERROR, CLEAR;
-SELECT, FLAG=ERROR, RANGE="MBB.21590..1";
-EALIGN, DX=0.011;
+SELECT, FLAG=ERROR, PATTERN="^MBA\.21590.*1$";
+EALIGN, AREX=0.011;
 
 SELECT, FLAG=ERROR, CLEAR;
-SELECT, FLAG=ERROR, RANGE="MBB.21590..2";
-EALIGN, DX=0.011;
+SELECT, FLAG=ERROR, PATTERN="^MBA\.21590.*2$";
+EALIGN, AREX=0.011;
 
 SELECT, FLAG=ERROR, CLEAR;
-SELECT, FLAG=ERROR, RANGE="MBB.21590";
-EALIGN, DX=0.011;
+IF (VERSION>0){SELECT, FLAG=ERROR, PATTERN="^MBA\.21590$";}
+         ELSE {SELECT, FLAG=ERROR, PATTERN="^MBA\.21590_S$";}
+EALIGN, AREX=0.011;
 
 SELECT, FLAG=ERROR, CLEAR;
-SELECT, FLAG=ERROR, RANGE="MBB.21590..3";
-EALIGN, DX=0.011;
+SELECT, FLAG=ERROR, PATTERN="^MBA\.21590.*3$";
+EALIGN, AREX=0.011;
 
 SELECT, FLAG=ERROR, CLEAR;
-SELECT, FLAG=ERROR, RANGE="MBB.21590..4";
-EALIGN, DX=0.011;
+SELECT, FLAG=ERROR, PATTERN="^MBA\.21590.*4$";
+EALIGN, AREX=0.011;
 
 SELECT, FLAG=ERROR, CLEAR;
 SELECT, FLAG=ERROR, PATTERN="VVSB.21601";
-EALIGN, DX=0.011;
+EALIGN, AREX=0.011;
 
 SELECT, FLAG=ERROR, CLEAR;
 SELECT, FLAG=ERROR, PATTERN="TCE.21695";
-EALIGN, DX=0.01;
+EALIGN, AREX=0.01;
 
 !================================
 ! Aperture alignment extraction channel
