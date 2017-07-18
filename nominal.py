@@ -25,7 +25,7 @@ for pc, db, fast in [(True,False,True)]:#[(x,y,z) for x in bl for y in bl for z 
     if fast:
         settings.nturns = 50000
         settings.ffile = 500
-        if pc and db:
+        if pc:
             settings.flavour = "tomorrow"
     else:
         settings.nturns = 204565
@@ -34,20 +34,20 @@ for pc, db, fast in [(True,False,True)]:#[(x,y,z) for x in bl for y in bl for z 
         #    settings.flavour = "testmatch"
 
     if pc:
-        settings.elements = ['AP.UP.ZS21633_M','AP.DO.ZS21676_M','TPST.21760']
+        settings.elements = ['AP.UP.ZS21633_M','AP.DO.ZS21676_M','AP.UP.TPST21760']
         settings.nbatches = 100
         settings.nparperbatch = 1000
     else:
-        settings.elements = ['AP.UP.ZS21633','AP.DO.ZS21676','TPST.21760']
+        settings.elements = ['AP.UP.ZS21633','AP.DO.ZS21676','AP.UP.TPST21760']
         settings.nbatches = 500
         settings.nparperbatch = 200
 
     submit_job(settings)
 
 # Simulations of momentum slices
-'''for pc, db, wide in [(x,y,z) for x in bl for y in bl for z in bl]:
-    name = "sliced"
-    name += "_wide" if fast else ""
+for pc, db, thick in [(True,False,False)]:#[(x,y,z) for x in bl for y in bl for z in bl]:
+'''    name = "sliced"
+    name += "_thick" if thick else "_thin"
     name += "_pc" if pc else "_nopc"
     name += "_db" if db else "_nodb"
 
@@ -62,14 +62,14 @@ for pc, db, fast in [(True,False,True)]:#[(x,y,z) for x in bl for y in bl for z 
     settings.nbatches = 10
     settings.nparperbatch = 100
 
-    if wide:
+    if thick:
         settings.slicewidth = 2.5E-4
     else:
         settings.slicewidth = 0.0
 
     if pc:
-        settings.elements = ['AP.UP.ZS21633_M','AP.DO.ZS21676_M','TPST.21760']
+        settings.elements = ['AP.UP.ZS21633_M','AP.DO.ZS21676_M','AP.UP.TPST.21760']
     else:
-        settings.elements = ['AP.UP.ZS21633','AP.DO.ZS21676','TPST.21760']
+        settings.elements = ['AP.UP.ZS21633','AP.DO.ZS21676','AP.UP.TPST.21760']
 
     submit_job(settings)'''
