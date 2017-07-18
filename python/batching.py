@@ -55,6 +55,8 @@ class Settings:
 
         self.trackertemplate = self.home+"/madx/tracker_nominal_template.madx"
         self.trackerrep = track_lin
+        self.thinchanges = None
+        self.thickchanges = None
         self.myreplace = {}
         self.twissfile = None
         self.local = False
@@ -345,14 +347,27 @@ def submit_job(settings):
     os.makedirs(settings.datadir)
     os.chdir(settings.datadir)
 
-    #Generate twiss files before and after thinning, used to make initial distributions
+    #Fill in basic template data
     copyfile(settings.trackertemplate, "tracker.madx")
+
+    if settings.thickchanges is not None:
+        with open (settings.thickchanges, "r") as changefile:
+            changes=changefile.read()
+        replacer("tracker.madx", "/*pyTHICKCHANGES*/", changes)
+    if settings.thinchanges is not None:
+        with open (settings.thinchanges, "r") as changefile:
+            changes=changefile.read()
+        replacer("tracker.madx", "/*pyTHINCHANGES*/", changes)
+
     replacer("tracker.madx",'pyDATADIR', settings.datadir)
     replacer("tracker.madx", 'pyHOMEDIR', settings.home)
     replacer("tracker.madx", 'pySLOWEXDIR', settings.slowexdir)
     replacer("tracker.madx", 'pyPYCOLL', str(int(settings.pycollimate)))
+
     for key, replacement in settings.myreplace.iteritems():
         replacer("tracker.madx", key, replacement)
+
+    #Generate twiss files before and after thinning, used to make initial distributions
     if settings.twissfile is None:
         log = open("twisslog.txt", 'w')
         copyfile("tracker.madx", "table.madx")
