@@ -1,0 +1,9 @@
+! Install diffuser for use with pycollimate
+diffuser: RCOLLIMATOR, L=0.000;
+
+SEQEDIT, SEQUENCE=sps;
+ FLATTEN;
+ INSTALL, ELEMENT=diffuser, AT=-3.283, FROM=QFA.21610;
+ FLATTEN;
+ENDEDIT;
+USE, SEQUENCE=sps;
