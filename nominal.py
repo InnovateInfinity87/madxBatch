@@ -9,9 +9,9 @@ from python.batching import Settings, submit_job
 bl = [True, False]
 
 # Simulations with sweep
-for pc, db, fast in [(True,False,True)]:#[(x,y,z) for x in bl for y in bl for z in bl]:
+for pc, db, fast in [(x,y,z) for x in bl for y in bl for z in bl]:
     if pc and not fast:
-        break
+        continue
 
     name = "pc" if pc else "nopc"
     name += "_db" if db else "_nodb"
@@ -45,8 +45,8 @@ for pc, db, fast in [(True,False,True)]:#[(x,y,z) for x in bl for y in bl for z 
     submit_job(settings)
 
 # Simulations of momentum slices
-for pc, db, thick in [(True,False,False)]:#[(x,y,z) for x in bl for y in bl for z in bl]:
-'''    name = "sliced"
+for pc, db, thick in [(x,y,z) for x in bl for y in bl for z in bl]:
+    name = "sliced"
     name += "_thick" if thick else "_thin"
     name += "_pc" if pc else "_nopc"
     name += "_db" if db else "_nodb"
@@ -55,7 +55,7 @@ for pc, db, thick in [(True,False,False)]:#[(x,y,z) for x in bl for y in bl for 
     settings.seed = 0
     settings.pycollimate = pc
     settings.dynamicbump = db
-    settings.slices = [-0.0015,0.0,0.0015]
+    settings.slices = [-0.0015, -0.0010, -0.0005, 0.0, 0.0005, 0.0010, 0.0015]
 
     settings.nturns = 300
     settings.ffile = 1
@@ -72,4 +72,4 @@ for pc, db, thick in [(True,False,False)]:#[(x,y,z) for x in bl for y in bl for 
     else:
         settings.elements = ['AP.UP.ZS21633','AP.DO.ZS21676','AP.UP.TPST.21760']
 
-    submit_job(settings)'''
+    submit_job(settings)
