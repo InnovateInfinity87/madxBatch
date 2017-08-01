@@ -287,9 +287,11 @@ def beamstats(lossfolder, lossloc="AP.UP.ZS21633", plane="X", save=None):
 
 
 def efficiency(lossfolder, pycoll=False, aperturex=[0,1], aperturey=[0,1],
-               zs_len=1, zs_an=0.1, aperturex2=[0,1], aperturey2=None, report=True):
+               zs_len=1, zs_an=0.1, aperturex2=[0,1], aperturey2=None, report=True, errorbin=None, losslocs=[]):
     xax='X'
     yax='Y'
+    losses={}
+    binnum=0
 
     if aperturey2 is None:
         aperturey2=aperturey
@@ -297,49 +299,62 @@ def efficiency(lossfolder, pycoll=False, aperturex=[0,1], aperturey=[0,1],
     empty = 0
 
     if pycoll:
-        losses = {'extracted': 0, 'zs_wire': 0, 'zs_app': 0, 'tce': 0, 'tpst': 0, 'other': 0}
+        losses_t = ['extracted', 'zs_wire', 'zs_app', 'tce', 'tpst', 'other']+losslocs
+        losses[0]={}
+        for key in losses_t:
+            losses[0][key] = 0
 
         for lossfile in os.listdir(lossfolder):
             if os.stat(lossfolder+'/'+lossfile).st_size > 0:
                 _, losstable = readtfs(lossfolder+'/'+lossfile)
-                for _, particle in losstable.iterrows():
+                for pid, particle in losstable.iterrows():
+                    if errorbin is not None:
+                        binnum = int(pid//errorbin)
+                        if binnum not in losses:
+                            losses[binnum] = {}
+                            for key in losses_t:
+                                losses[binnum][key] = 0
                     if particle['ELEMENT']=="AP.UP.TPST21760":
                         if (particle["X"]>aperturex[0] and particle["X"]<aperturex[1]
                             and particle["Y"]>aperturey[0] and particle["Y"]<aperturey[1]):
-                            losses['extracted'] += 1
+                            losses[binnum]['extracted'] += 1
                         else:
-                            losses['tpst'] += 1
+                            losses[binnum]['tpst'] += 1
                     elif "TPST" in particle['ELEMENT']:
-                        losses['tpst'] += 1
+                        losses[binnum]['tpst'] += 1
                     elif "TCE" in particle['ELEMENT']:
-                        losses['tce'] += 1
+                        losses[binnum]['tce'] += 1
                     elif particle['ELEMENT']==("ZS.21655"):
-                        losses['zs_wire'] += 1
+                        losses[binnum]['zs_wire'] += 1
                     elif "ZS" in particle['ELEMENT']:
-                        losses['zs_app'] += 1
+                        losses[binnum]['zs_app'] += 1
                     else:
-                        losses['other'] += 1
+                        other = True
+                        for loc in losslocs:
+                            if particle['ELEMENT']==loc:
+                                losses[binnum][loc] += 1
+                                other = False
+                        if other:
+                            losses[binnum]['other'] += 1
             else:
                 empty += 1
 
-        if empty > 0:
-            print str(empty)+" empty loss files found"
-
-        if report:
-            print (str(losses['extracted'])+" extracted\n"
-                   +str(losses['zs_wire'])+" lost on the ZS wires\n"
-                   +str(losses['zs_app'])+" lost on the ZS aperture\n"
-                   +str(losses['tce'])+" lost on the TCE\n"
-                   +str(losses['tpst'])+" lost on the TPST\n"
-                   +str(losses['other'])+" lost elsewhere.\n"
-                   +"(Total: "+str(sum(losses.values()))+" particles.)")
     else:
-        losses = {'extracted': 0, 'zs_wire': 0, 'zs_cath': 0, 'zs_vert': 0, 'other': 0}
+        losses_t = ['extracted', 'zs_wire', 'zs_cath', 'zs_vert', 'other']+losslocs
+        losses[0]={}
+        for key in losses_t:
+            losses[0][key] = 0
 
         for lossfile in os.listdir(lossfolder):
             if os.stat(lossfolder+'/'+lossfile).st_size > 0:
                 _, losstable = readtfs(lossfolder+'/'+lossfile)
-                for _, particle in losstable.iterrows():
+                for pid, particle in losstable.iterrows():
+                    if errorbin is not None:
+                        binnum = int(pid//errorbin)
+                        if binnum not in losses:
+                            losses[binnum] = {}
+                            for key in losses_t:
+                                losses[0][key] = 0
                     if particle['ELEMENT']=="AP.UP.ZS21633":
                         quadraticA = zs_an/zs_len/2
                         quadraticB = (particle["PX"]
@@ -352,39 +367,96 @@ def efficiency(lossfolder, pycoll=False, aperturex=[0,1], aperturey=[0,1],
                             hitdist = 0
 
                         if particle["Y"]<aperturey[0] or particle["Y"]>aperturey[1]:
-                            losses['zs_vert'] += 1
+                            losses[binnum]['zs_vert'] += 1
                         elif particle["X"]<aperturex[0]:
-                            losses['zs_wire'] += 1
+                            losses[binnum]['zs_wire'] += 1
                         elif particle["X"]>aperturex[1]:
-                            losses['zs_cath'] +=1
+                            losses[binnum]['zs_cath'] +=1
                         elif (particle["Y"]+zs_len*particle["PY"]<aperturey2[0]
                               or particle["Y"]+zs_len*particle["PY"]>aperturey2[1]):
-                            losses['zs_vert'] += 1
+                            losses[binnum]['zs_vert'] += 1
                         elif hitdist>0 and hitdist<zs_len:
-                            losses['zs_wire'] += 1
+                            losses[binnum]['zs_wire'] += 1
                         elif particle["X"]+(particle["PX"]+zs_an/2)*zs_len>aperturex2[1]:
-                            losses['zs_cath'] += 1
+                            losses[binnum]['zs_cath'] += 1
                         else:
-                            losses['extracted'] += 1
+                            losses[binnum]['extracted'] += 1
                     elif "ZS" in particle['ELEMENT']:
-                        losses['zs_wire'] += 1
+                        losses[binnum]['zs_wire'] += 1
                     else:
-                        losses['other'] += 1
+                        other = True
+                        for loc in losslocs:
+                            if particle['ELEMENT']==loc:
+                                losses[binnum][loc] += 1
+                                other = False
+                        if other:
+                            losses[binnum]['other'] += 1
             else:
                 empty += 1
 
-        if empty > 0:
-            print str(empty)+" empty loss files found"
+    if empty > 0:
+        print str(empty)+" empty loss files found"
 
-        if report:
-            print (str(losses['extracted'])+" extracted\n"
-                   +str(losses['zs_vert'])+" lost on the ZS vertical aperture\n"
-                   +str(losses['zs_wire'])+" lost on the ZS wires\n"
-                   +str(losses['zs_cath'])+" lost on the ZS cathode\n"
-                   +str(losses['other'])+" lost elsewhere.\n"
-                   +"(Total: "+str(sum(losses.values()))+" particles.)")
+    # Add total, convert to %
+    for binnum in losses:
+        losses[binnum]['total'] = sum(losses[binnum].values())
+        for key in losses_t:
+            try:
+                losses[binnum][key] = 100.0*losses[binnum][key]/losses[binnum]['total']
+            except ZeroDivisionError:
+                losses[binnum][key] = 0
 
-    return losses
+    # Determine means and errorbars
+    if errorbin is None:
+        reslosses = losses[0]
+        reslosses['truetotal'] = reslosses['total']
+    else:
+        reslosses = {}
+        for key in losses_t+['total']:
+            temp = [losses[i][key] for i in losses]
+            reslosses[key] = np.mean(temp)
+            reslosses['std_'+key] = np.std(temp)
+        reslosses['truetotal'] = 0
+        for binnum in losses:
+            reslosses['truetotal'] += losses[binnum]['total']
+
+    if report:
+        if pycoll:
+            if errorbin is None:
+                print (str(reslosses['extracted'])+" % extracted\n"
+                       +str(reslosses['zs_wire'])+" % lost on the ZS wires\n"
+                       +str(reslosses['zs_app'])+" % lost on the ZS aperture\n"
+                       +str(reslosses['tce'])+" % lost on the TCE\n"
+                       +str(reslosses['tpst'])+" % lost on the TPST\n"
+                       +str(reslosses['other'])+" % lost elsewhere.\n"
+                       +"(Total: "+str(reslosses['truetotal'])+" particles.)")
+            else:
+                print (str(reslosses['extracted'])+'+-'+str(reslosses['std_extracted'])+" % extracted\n"
+                       +str(reslosses['zs_wire'])+'+-'+str(reslosses['std_zs_wire'])+" % lost on the ZS wires\n"
+                       +str(reslosses['zs_app'])+'+-'+str(reslosses['std_zs_app'])+" % lost on the ZS aperture\n"
+                       +str(reslosses['tce'])+'+-'+str(reslosses['std_tce'])+" % lost on the TCE\n"
+                       +str(reslosses['tpst'])+'+-'+str(reslosses['std_tpst'])+" % lost on the TPST\n"
+                       +str(reslosses['other'])+'+-'+str(reslosses['std_other'])+" % lost elsewhere.\n"
+                       +"(Total: "+str(reslosses['truetotal'])+" particles.)")
+
+        else:
+            if errorbin is None:
+                print (str(losses['extracted'])+" % extracted\n"
+                       +str(losses['zs_vert'])+" % lost on the ZS vertical aperture\n"
+                       +str(losses['zs_wire'])+" % lost on the ZS wires\n"
+                       +str(losses['zs_cath'])+" % lost on the ZS cathode\n"
+                       +str(losses['other'])+" % lost elsewhere.\n"
+                       +"(Total: "+str(reslosses['truetotal'])+" particles.)")
+            else:
+                print (str(losses['extracted'])+'+-'+str(reslosses['std_extracted'])+" % extracted\n"
+                       +str(losses['zs_vert'])+'+-'+str(reslosses['std_zs_vert'])+" % lost on the ZS vertical aperture\n"
+                       +str(losses['zs_wire'])+'+-'+str(reslosses['std_zs_wire'])+" % lost on the ZS wires\n"
+                       +str(losses['zs_cath'])+'+-'+str(reslosses['std_zs_cath'])+" % lost on the ZS cathode\n"
+                       +str(losses['other'])+'+-'+str(reslosses['std_other'])+" % lost elsewhere.\n"
+                       +"(Total: "+str(reslosses['truetotal'])+" particles.)")
+
+
+    return reslosses
 
 
 def wireangle(lossfolder, lossloc="AP.UP.ZS21633", wiremax=0.69, save=None):
@@ -449,22 +521,25 @@ def emittance(lossfolder, lossloc="AP.UP.ZS21633", ap=[0.06815, 0.08815], save=N
         with open(save, 'w') as out:
             out.write(message)
 
-def errorcheck(errfolder, checkloss=True):
+def errorcheck(errfolder, checkerr=True, checkloss=True):
     failed=[]
     messages=[]
 
     for errfile in os.listdir(errfolder):
         jobid = errfile.split(".")[0]
-        if os.stat(errfolder+'/'+errfile).st_size > 0:
-            failed += [jobid]
-            with open(errfolder+'/'+errfile, 'r') as f:
-                firstline = f.readline()
-            if firstline not in messages:
-                messages += [firstline]
-        elif checkloss==True and not os.path.exists(errfolder+"/../losses/"+jobid+".tfs"):
-            failed += [jobid]
-            if "Missing lossfile" not in messages:
-                messages += ["Missing lossfile"]
+        if checkloss:
+            if not os.path.exists(errfolder+"/../losses/"+jobid+".tfs"):
+                failed += [jobid]
+                if "Missing lossfile" not in messages:
+                    messages += ["Missing lossfile"]
+                continue
+        if checkerr:
+            if os.stat(errfolder+'/'+errfile).st_size > 0:
+                failed += [jobid]
+                with open(errfolder+'/'+errfile, 'r') as f:
+                    firstline = f.readline()
+                if firstline not in messages:
+                    messages += [firstline]
 
     return failed, messages
 
