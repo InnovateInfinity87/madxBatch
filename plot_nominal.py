@@ -39,6 +39,7 @@ def makeplots(folder):
         subprocess.check_call('./unpacker.sh', shell=True, cwd=trackfolder)
 
     # Print efficiency and loss stats
+    stdout = sys.stdout
     with open(plotfolder+"/stats.txt", 'w') as sys.stdout:
         if pycoll:
             datproc.efficiency(lossfolder, pycoll=True, aperturex=[0.04219,0.08219], aperturey=[-0.0100,0.0100])
@@ -48,6 +49,7 @@ def makeplots(folder):
             datproc.efficiency(lossfolder, aperturex=[0.06815,0.08815], aperturey=[-0.023,0.023], zs_len=18.77, zs_an=4.1635E-4, aperturex2=[0.04265,0.06265])
             print ""
             datproc.wireangle(lossfolder)
+    sys.stdout = stdout
         
 
     # Make plots
