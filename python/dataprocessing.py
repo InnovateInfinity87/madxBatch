@@ -441,18 +441,18 @@ def efficiency(lossfolder, pycoll=False, aperturex=[0,1], aperturey=[0,1],
 
         else:
             if errorbin is None:
-                print (str(losses['extracted'])+" % extracted\n"
-                       +str(losses['zs_vert'])+" % lost on the ZS vertical aperture\n"
-                       +str(losses['zs_wire'])+" % lost on the ZS wires\n"
-                       +str(losses['zs_cath'])+" % lost on the ZS cathode\n"
-                       +str(losses['other'])+" % lost elsewhere.\n"
+                print (str(reslosses['extracted'])+" % extracted\n"
+                       +str(reslosses['zs_vert'])+" % lost on the ZS vertical aperture\n"
+                       +str(reslosses['zs_wire'])+" % lost on the ZS wires\n"
+                       +str(reslosses['zs_cath'])+" % lost on the ZS cathode\n"
+                       +str(reslosses['other'])+" % lost elsewhere.\n"
                        +"(Total: "+str(reslosses['truetotal'])+" particles.)")
             else:
-                print (str(losses['extracted'])+'+-'+str(reslosses['std_extracted'])+" % extracted\n"
-                       +str(losses['zs_vert'])+'+-'+str(reslosses['std_zs_vert'])+" % lost on the ZS vertical aperture\n"
-                       +str(losses['zs_wire'])+'+-'+str(reslosses['std_zs_wire'])+" % lost on the ZS wires\n"
-                       +str(losses['zs_cath'])+'+-'+str(reslosses['std_zs_cath'])+" % lost on the ZS cathode\n"
-                       +str(losses['other'])+'+-'+str(reslosses['std_other'])+" % lost elsewhere.\n"
+                print (str(reslosses['extracted'])+'+-'+str(reslosses['std_extracted'])+" % extracted\n"
+                       +str(reslosses['zs_vert'])+'+-'+str(reslosses['std_zs_vert'])+" % lost on the ZS vertical aperture\n"
+                       +str(reslosses['zs_wire'])+'+-'+str(reslosses['std_zs_wire'])+" % lost on the ZS wires\n"
+                       +str(reslosses['zs_cath'])+'+-'+str(reslosses['std_zs_cath'])+" % lost on the ZS cathode\n"
+                       +str(reslosses['other'])+'+-'+str(reslosses['std_other'])+" % lost elsewhere.\n"
                        +"(Total: "+str(reslosses['truetotal'])+" particles.)")
 
 
