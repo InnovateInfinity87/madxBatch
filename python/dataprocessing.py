@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib.lines import Line2D
 from matplotlib.ticker import NullFormatter
+from matplotlib.colors import LogNorm
 
 _units = {'X': 'm', 'PX': 'rad', 'Y': 'm', 'PY': 'rad', 'T': 'm', 'PT': '1', 'S': 'm', 'E': 'eV', 'TURN': '1'}
 _def_unit_exp = {'X': 0, 'PX': 0, 'Y': 0, 'PY': 0, 'T': 0, 'PT': 0, 'S': 0, 'E': 9, 'TURN':0}
@@ -126,6 +127,7 @@ def lossplot(lossfolder, lossloc="AP.UP.ZS21633", xax="X", yax="PX", cax="TURN",
         plt.savefig(save)
         plt.close()
 
+
 # TODO: normalize y, change scale x, label y
 def losschart(lossfolder, lossloc="AP.UP.ZS21633", xax="X", binwidth=5E-4, startx=None, endx=None, save=None):
     if xax=='S':
@@ -159,7 +161,7 @@ def losschart(lossfolder, lossloc="AP.UP.ZS21633", xax="X", binwidth=5E-4, start
 
 
 # TODO: normalize y, change scale x, label y
-def lossstats(lossfolder, region=None):
+def lossstats(lossfolder, region=None, printstats=True):
     data = {}
 
     for lossfile in os.listdir(lossfolder):
@@ -173,18 +175,21 @@ def lossstats(lossfolder, region=None):
                 except KeyError:
                     data[location] = 1
 
-    print "Start loss stats:"
-    for location in sorted(data, key=data.get, reverse=True):
-        print location, data[location]
-    print "End loss stats."
+    if printstats:
+        print "Start loss stats:"
+        for location in sorted(data, key=data.get, reverse=True):
+            print location, data[location]
+        print "End loss stats."
+
     return data
+
 
 def lossmap(lossfolder, region=None, save=None, threshold=0.0001, extracted=None):
     rawdata = lossstats(lossfolder)
     total = float(sum(rawdata.values()))
+    for x in rawdata: rawdata[x] /= total
     if extracted is not None:
         rawdata[extracted[0]] -= extracted[1]
-    for x in rawdata: rawdata[x] /= total
     data = {}
     positions = {}
     _, twissfile = readtfs(lossfolder+"/../thin_twiss.tfs")
@@ -227,8 +232,77 @@ def lossmap(lossfolder, region=None, save=None, threshold=0.0001, extracted=None
         plt.savefig(save)
         plt.close()
 
-    
-                
+
+def lossmapscan(lossfolders, region=None, save=None, threshold=0.0001, extracted=None, clim=[5E-5,3E-2]):
+    rawdata = {}
+    data = {}
+    positions = {}
+    notwiss = True
+    for scanparam, lossfolder in lossfolders.iteritems():
+        if notwiss:
+            _, twissfile = readtfs(lossfolder+"/../thin_twiss.tfs")
+            masterkey = scanparam
+            notwiss = False
+
+        rawdata[scanparam] = lossstats(lossfolder, printstats=False)
+        total = float(sum(rawdata[scanparam].values()))
+        for x in rawdata[scanparam]: rawdata[scanparam][x] /= total
+        if extracted is not None:
+            rawdata[scanparam][extracted[0]] -= extracted[1][scanparam]
+        data[scanparam] = {}
+
+        for location in rawdata[scanparam]:
+                # Reduce sliced elements to one
+                if re.search(r'\.\.[0-9]*$', location) is not None:
+                    newloc = "..".join(location.split("..")[:-1])
+                    try:
+                        data[scanparam][newloc] += rawdata[scanparam][location]
+                    except KeyError:
+                        data[scanparam][newloc] = rawdata[scanparam][location]
+                else:
+                    try:
+                        data[scanparam][location] += rawdata[scanparam][location]
+                    except KeyError:
+                        data[scanparam][location] = rawdata[scanparam][location]
+
+        for location in data[scanparam]:
+            # Keep only significant loss locations
+            if data[scanparam][location] >= threshold:
+                positions[location] = twissfile.loc[location,"S"]
+
+    labels = [x[0] for x in sorted(positions.items(), key=operator.itemgetter(1))]
+    scanvals = sorted(list(data.keys()))
+    plotvals = np.zeros((len(scanvals), len(labels)))
+
+    for i,scanval in enumerate(scanvals):
+        for j,label in enumerate(labels):
+            try:
+                plotvals[i,j] = data[scanval][label]
+            except KeyError:
+                plotvals[i,j] = clim[0]/2.0
+
+    labels =[x[:-2] if x.endswith("_S") else x for x in labels]
+
+    cm = plt.cm.get_cmap('RdYlGn_r')
+    cm.set_under('White')
+    fig, ax = plt.subplots()
+    pcm = ax.imshow(plotvals, cmap=cm, norm=LogNorm(vmin=clim[0], vmax=clim[1]), interpolation='none', aspect='auto')
+
+    ax.set_xlim(-0.5,len(labels)-0.5)
+    ax.set_xticks(range(0, len(labels)))
+    ax.set_xticklabels(labels)
+    ax.set_ylim(-0.5,len(scanvals)-0.5)
+    ax.set_yticks(range(0, len(scanvals)))
+    ax.set_yticklabels(scanvals)
+
+    fig.autofmt_xdate(bottom=0.2, rotation=30, ha='right')
+    fig.colorbar(pcm, extend='min')
+
+    if save is None:
+        plt.show()
+    else:
+        plt.savefig(save)
+        plt.close()
 
 
 # TODO: include Francesco's loss calculation?
