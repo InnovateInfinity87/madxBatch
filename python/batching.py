@@ -302,7 +302,7 @@ def orthogonal_bumps():
             ' SELECT, FLAG=ERROR, PATTERN="MPSH_rb\.21202.*";\n'+
             " EFCOMP, ORDER:=0, DKN= 2.331301861e-05 * x_knob_value * (-1/4) + 9.929676756e-06 * px_knob_value * (-1e2/4);\n"+
             " SELECT, FLAG=ERROR, CLEAR;\n"+
-            ' SELECT, FLAG=ERROR, "MPLH_rb\.21431.*";\n'+
+            ' SELECT, FLAG=ERROR, PATTERN="MPLH_rb\.21431.*";\n'+
             " EFCOMP, ORDER:=0, DKN= -9.91281169e-06   * x_knob_value * (-1/4) + 2.600240449e-07   * px_knob_value * (-1e2/4);\n"+
             " SELECT, FLAG=ERROR, CLEAR;\n"+
             ' SELECT, FLAG=ERROR, PATTERN="MPNH_rb\.21732.*";\n'+
