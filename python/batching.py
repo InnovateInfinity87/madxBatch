@@ -231,7 +231,7 @@ def track_lin(k,data,settings):
         for obsnum in range(len(settings.elements)+1):
             for partnum in range(settings.nparperbatch):
                 temp = "obs"+str(obsnum+1).zfill(4)+".p"+str(partnum+1).zfill(4)
-                line+="EXEC, end_only("+str(settings.trackendonly)+", track."+temp+", '"+str(k)+"/"+temp+"');\n"
+                line+="EXEC, end_only("+str(settings.trackendonly)+", track."+temp+", '"+str(k)+"/track.batch"+str(k)+"."+temp+"');\n"
         line+="\n"
 
     if(settings.saveloss):
@@ -264,8 +264,11 @@ def track_sliced(k,data,settings):
              "CALL, FILE='"+settings.slowexdir+"/cmd/matchtune_offmom.cmdx';\n\n")
 
     line += ("OPTION, -WARN;\n"+
-             "TRACK, ONEPASS, APERTURE, RECLOSS, "+
-                  "FILE='"+str(k)+"/track.batch"+str(k)+"';\n\n")
+             "TRACK, ONEPASS, APERTURE, RECLOSS")
+    if settings.trackendonly is None and settings.savetracks:
+        line += (", FILE='"+str(k)+"/track.batch"+str(k)+"';\n\n")
+    else:
+        line += (";\n\n")
 
     for i in range(k*settings.nparperbatch,(k+1)*settings.nparperbatch):
         if settings.slicewidth is not None:
@@ -284,6 +287,15 @@ def track_sliced(k,data,settings):
 
              "ENDTRACK;\n"+
              "OPTION, WARN;\n\n")
+
+    if settings.trackendonly is not None and settings.savetracks:
+        line+="CALL, FILE='"+settings.home+"/madx/end_only.cmdx';\n"
+
+        for obsnum in range(len(settings.elements)+1):
+            for partnum in range(settings.nparperbatch):
+                temp = "obs"+str(obsnum+1).zfill(4)+".p"+str(partnum+1).zfill(4)
+                line+="EXEC, end_only("+str(settings.trackendonly)+", track."+temp+", '"+str(k)+"/track.batch"+str(k)+"."+temp+"');\n"
+        line+="\n"
 
     if(settings.saveloss):
         line+="WRITE, TABLE = trackloss, FILE = 'losses.tfs';\n\n"

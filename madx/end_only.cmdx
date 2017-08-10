@@ -11,7 +11,7 @@ end_only(my_nrows, my_input_table, my_output_file): MACRO {
   WHILE (end_only.__i<0) {
     end_only.__j = end_only.__tablen+1+end_only.__i;
     SETVARS, TABLE=my_input_table, ROW=end_only.__j;
-    EXEC, gettab(my_input_table, $end_only.__j);
+    EXEC, end_only_gettab(my_input_table, $end_only.__j);
     FILL, TABLE=end_only.__table;
     end_only.__i = end_only.__i+1;
   }
