@@ -1,6 +1,6 @@
        Element     Aper_up [m]      Aper_down [m] Thickness [m]  Length [m]  Material Effective_Density Error_up (Bool, std [m])  Error_down (Bool, std[m])   kick   side
- "ZS.21633"    0.06795  0.06370  200e-6     3.13     W75RE25    9.39467e-3         False 0.0                  False 0.0    8.327E-5    left
- "ZS.21638"    0.06264  0.05839  200e-6     3.13     W75RE25    9.39467e-3         False 0.0                  False 0.0    8.327E-5    left
- "ZS.21655"    0.05733  0.05307  200e-6     3.13     W75RE25    26.0963e-3         False 0.0                  False 0.0    8.327E-5    left
- "ZS.21671"    0.05201  0.04776  200e-6     3.13     W75RE25    26.0963e-3         False 0.0                  False 0.0    8.327E-5    left
- "ZS.21676"    0.04670  0.04245  200e-6     3.13     W75RE25    26.0963e-3         False 0.0                  False 0.0    8.327E-5    left
+ "ZS.21633"    0.06795  0.06352  200e-6     3.13     W75RE25    9.39467e-3         False 0.0                  False 0.0    8.327E-5    left
+ "ZS.21638"    0.06242  0.05819  200e-6     3.13     W75RE25    9.39467e-3         False 0.0                  False 0.0    8.327E-5    left
+ "ZS.21655"    0.05709  0.05266  200e-6     3.13     W75RE25    26.0963e-3         False 0.0                  False 0.0    8.327E-5    left
+ "ZS.21671"    0.05156  0.04713  200e-6     3.13     W75RE25    26.0963e-3         False 0.0                  False 0.0    8.327E-5    left
+ "ZS.21676"    0.04603  0.04160  200e-6     3.13     W75RE25    26.0963e-3         False 0.0                  False 0.0    8.327E-5    left

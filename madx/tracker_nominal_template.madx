@@ -37,6 +37,10 @@ dpp_end = 0.0015;
 qh_start := 80/3 - dpp_start*chroma_res;
 qh_end := 80/3 - dpp_end*chroma_res;
 
+! ZS alignment
+zswireup = 0.06795;
+zswiredo = 0.04140;
+
 ! Using pycollimate?
 use_pycoll = pyPYCOLL;
 zswirethickness = 0.0002;
@@ -47,8 +51,6 @@ zswirethickness = 0.0002;
 ! Call files for correct initialization of SPS.
 ! TODO: 2015 files don't work due to conflict between tcpc and crystal1?
 !-----------------------------------------------------------------------
-zswireup = 0.06795;
-zswiredo = 0.04245;
 
 CALL, FILE = '/afs/cern.ch/eng/sps/2014/beams/cngs_extraction.beamx';
 CALL, FILE = 'pyHOMEDIR/input/sps.ele';
