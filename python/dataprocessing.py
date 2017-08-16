@@ -763,6 +763,67 @@ def fullplot(folder, lossloc="AP.UP.ZS21633", obsloc="obs0002", xax="X", yax="PX
         plt.close()
 
 
+def steinbachplot(folder, xlim=None, ylim=None, save=None):
+    trackfolder = folder+"/tracks"
+    lossfolder = folder+"/losses"
+    xdata_in = []
+    ydata_in = []
+    xdata_out = []
+    ydata_out = []
+
+    empty = 0
+
+    _, twisstable = readtfs(folder+"/thin_twiss.tfs")
+    xco = twisstable.loc["BEGI.10010", "X"]
+    pxco = twisstable.loc["BEGI.10010", "PX"]
+    alpha = twisstable.loc["BEGI.10010", "ALFX"]
+    beta = twisstable.loc["BEGI.10010", "BETX"]
+    gamma = (1+alpha**2)/beta
+
+    for trackbatch in os.listdir(trackfolder):
+        if os.path.isdir(trackfolder+'/'+trackbatch):
+            _, losstable = readtfs(lossfolder+'/'+trackbatch+".tfs")
+            lostparticles = losstable.index.values.tolist()
+            for trackfile in os.listdir(trackfolder+'/'+trackbatch):
+                if trackfile.split('.')[2]=="obs0001":
+                    trackpath = trackfolder+'/'+trackbatch+'/'+trackfile
+                    if os.stat(trackpath).st_size > 0:
+                        _, tracktable = readtfs(trackpath)
+                        x = tracktable["X"].iloc[0]-xco
+                        px = tracktable["PX"].iloc[0]-pxco
+                        if int(trackfile.split('.')[-1][-4:]) in lostparticles:
+                            # TODO: USE A COLORMAP BASED ON TURN FOR THESE
+                            xdata_out += [tracktable["PT"].iloc[0]]
+                            ydata_out += [gamma*x**2 + beta*px**2 + alpha*x*px]
+                        else:
+                            xdata_in += [tracktable["PT"].iloc[0]]
+                            ydata_in += [gamma*x**2 + beta*px**2 + alpha*x*px]
+                    else:
+                        empty += 1
+
+    if empty>0:
+        print "warning: "+str(empty)+" empty track files found!"
+
+    fig, ax = plt.subplots()
+    plt.autoscale(enable=True, axis='both', tight=True)
+    # TODO: Add histograms of extracted/non-extracted?
+    plot = ax.scatter(xdata_in, ydata_in, color="k")
+    plot = ax.scatter(xdata_out, ydata_out, color="r")
+    if xlim is not None:
+        ax.set_xlim(xlim)
+    if ylim is not None:
+        ax.set_ylim(ylim)
+
+    ax.set_xlabel("PT [1]")
+    ax.set_ylabel("amplitude (disregarding dispersion...) [1]")
+
+    if save is None:
+        plt.show()
+    else:
+        plt.savefig(save)
+        plt.close()
+
+
 def losshistscatter(lossfolder, lossloc="AP.UP.ZS21633",
                     xax="X", yax="PX", cax="TURN",
                     xlim=None, ylim=None, clim=[None,None],
