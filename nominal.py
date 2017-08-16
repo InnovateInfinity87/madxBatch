@@ -68,8 +68,8 @@ for pc, db, thick in [(x,y,z) for x in bl for y in bl for z in bl]:
         settings.slicewidth = 0.0
 
     if pc:
-        settings.elements = ['AP.UP.ZS21633_M','AP.DO.ZS21676_M','AP.UP.TPST.21760']
+        settings.elements = ['AP.UP.ZS21633_M','AP.DO.ZS21676_M','AP.UP.TPST21760']
     else:
-        settings.elements = ['AP.UP.ZS21633','AP.DO.ZS21676','AP.UP.TPST.21760']
+        settings.elements = ['AP.UP.ZS21633','AP.DO.ZS21676','AP.UP.TPST21760']
 
     submit_job(settings)

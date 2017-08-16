@@ -76,7 +76,7 @@ def makeplots(folder):
 if __name__ == "__main__":
     root = "/afs/cern.ch/project/sloex/nominal/"
     for study in os.listdir(root):
-        if os.path.isdir(root+study) and study.startswith("sliced"):#and not study=="plots":
+        if os.path.isdir(root+study) and not study=="plots":
             print "making plots for "+root+study
             makeplots(root+study)
     
