@@ -361,7 +361,7 @@ def beamstats(lossfolder, lossloc="AP.UP.ZS21633", plane="X", save=None):
 
 
 def efficiency(lossfolder, pycoll=False, aperturex=[0,1], aperturey=[0,1],
-               zs_len=1, zs_an=0.1, aperturex2=[0,1], aperturey2=None, report=True, errorbin=None, losslocs=[]):
+               zs_len=1, zs_an=0.1, aperturex2=[0,1], aperturey2=None, report=True, errorbin=None, losslocs=[], debug=False):
     xax='X'
     yax='Y'
     losses={}
@@ -380,6 +380,8 @@ def efficiency(lossfolder, pycoll=False, aperturex=[0,1], aperturey=[0,1],
 
         for lossfile in os.listdir(lossfolder):
             if os.stat(lossfolder+'/'+lossfile).st_size > 0:
+                if debug:
+                    print "will read "+lossfolder+'/'+lossfile
                 _, losstable = readtfs(lossfolder+'/'+lossfile)
                 for pid, particle in losstable.iterrows():
                     if errorbin is not None:
