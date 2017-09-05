@@ -26,27 +26,42 @@ def findsloexcodedir(madcode):
                 return codedir
     raise IOError('Could not locate slow extraction code directory...')
     
-def installmarkers(startlocation, endlocation):
+def installmarkers(startlocation, endlocation, twisstrack):
     startspec = locations[startlocation]
     endspec = locations[endlocation]
     madcode = ("trackfrom_m: MARKER;\n"+
-               "trackto_m: MARKER, APERTYPE=circle, APERTURE={7.0E-5};\n\n"+
-                    
+               "trackto_m: MARKER;\n\n"+
+
                "SEQEDIT, SEQUENCE=sps;\n"+
                " FLATTEN;\n"+
                " INSTALL, ELEMENT=trackfrom_m, AT="+startspec[0]+", FROM="+startspec[1]+";\n"+
                " INSTALL, ELEMENT=trackto_m, AT="+endspec[0]+", FROM="+endspec[1]+";\n"+
                " FLATTEN;\n"+
                "ENDEDIT;\n\n"+
-               
+
                "USE, SEQUENCE = sps;\n\n")
+    
+    return madcode
+
+def cutsequence():
+    madcode = ("SEQEDIT, SEQUENCE=sps;\n"+
+               " FLATTEN;\n"+
+               " CYCLE, START=trackfrom_m;\n"+
+               " FLATTEN;\n"+
+               " EXTRACT, SEQUENCE=sps, FROM=trackfrom_m, TO=trackto_m, NEWNAME=trackseq;\n"+
+               " FLATTEN;\n"+
+               "ENDEDIT;\n\n"+
+               
+               "USE, SEQUENCE = trackseq;\n\n"
+               
+               "SURVEY, FILE='test1.sv';\n\n")
     
     return madcode
 
 
 def tracklossto(location, lossfolder, startpoint, backtrack=False, sloexcodedir=None, madxexe=None,
-                twisstrack=False):
-    "Track particles in lossfolder to location, save in ../location"
+                twisstrack=False, static=False):
+    '''Track particles in lossfolder to location, save in lossfolder/../twisstrackloss_startpoint_to_location'''
     if not location in locations:
         locations['custom'] = ["0", location]
         location = 'custom'
@@ -72,10 +87,18 @@ def tracklossto(location, lossfolder, startpoint, backtrack=False, sloexcodedir=
     with open(jobfile, 'r') as infile:
         madstart = infile.readlines()
     for i, line in enumerate(madstart):
-        if line.startswith("TRACK,"):
-           break
+        if static:
+            if line.startswith("! Tracking code"):
+                break
+        else:
+            if line.startswith("TRACK,"):
+               break
     madstart = madstart[:i-1]
-    madstart.remove("SYSTEM, 'mkdir 0';\n")
+
+    try:
+        madstart.remove("SYSTEM, 'mkdir 0';\n")
+    except ValueError:
+        pass
     
     for i, line in enumerate(madstart):
         if "tr$macro" in line:
@@ -92,28 +115,49 @@ def tracklossto(location, lossfolder, startpoint, backtrack=False, sloexcodedir=
         outf.write("SELECT, FLAG=ERROR, FULL;\n"+
                       "ESAVE, FILE=errfile;\n\n")
                       
-        outf.write(installmarkers(startpoint, location))
+        outf.write(installmarkers(startpoint, location, twisstrack))
+
+        outf.write("READMYTABLE, file=errfile, table=errtab;\n"+
+                        "SETERR, TABLE=errtab;\n\n")
 
         if twisstrack:
-            outf.write("READMYTABLE, file=errfile, table=errtab;\n"+
-                        "SETERR, TABLE=errtab;\n"+
-                        "SAVEBETA, LABEL=starttrack, PLACE=trackfrom_m, SEQUENCE=sps;\n\n")
+            outf.write("SAVEBETA, LABEL=starttrack, PLACE=trackfrom_m, SEQUENCE=sps;\n")
         
         outf.write("TWISS;\n"+
                       "trackto_start_s = TABLE(TWISS, trackfrom_m, S);\n\n")
-                      
+
+        if twisstrack:
+            outf.write("lss2_noapp = 1;\n")
+        outf.write("CALL, FILE='"+sloexcodedir
+                      +"/madxBatch/madx/lss2extraction.cmdx';\n\n")
+        
+        outf.write("SELECT, FLAG=ERROR, FULL;\n"+
+                      "ESAVE, FILE=errfile2;\n\n")
+
+        outf.write(cutsequence())
+
+        outf.write("READMYTABLE, file=errfile2, table=errtab;\n"+
+                    "SETERR, TABLE=errtab;\n\n")
+
         outf.write("hastrmacro = "+("1" if hastrmacro else "0")+";\n")
         outf.write("backtrack = "+("1" if backtrack else "0")+";\n\n")
-        
-        outf.write("CALL, FILE='"+sloexcodedir
-                      +"/madxBatch/madx/lss2extraction.cmdx';\n")
+
         if twisstrack:
             outf.write("CALL, FILE='"+sloexcodedir
                           +"/madxBatch/madx/twisstracktomacro.cmdx';\n\n")
-            outf.write("SELECT, FLAG=twiss, CLEAR;\n"+
-                       "SELECT, FLAG=twiss, COLUMN=NAME, S, X, PX, Y, PY, T, PT, TURN;\n\n")
+
+            outf.write("PTOT_GEV := (BEAM->PC)/(1-PT) + TABLE(PTC_TWISS, X)*0.0;\n"+
+                       "X_CM := TABLE(PTC_TWISS, X)*100;\n"+
+                       "Y_CM := TABLE(PTC_TWISS, Y)*100;\n"+
+                       "Z_CM := TABLE(PTC_TWISS, S)*100;\n"+
+                       "COSX := TABLE(PTC_TWISS, PX)*(1-PT);\n"+
+                       "COSY := TABLE(PTC_TWISS, PY)*(1-PT);\n\n")
+
+            outf.write("SELECT, FLAG=ptc_twiss, CLEAR;\n"+
+                       "SELECT, FLAG=ptc_twiss, COLUMN=NAME, PTOT_GEV, X_CM, Y_CM, Z_CM, COSX, COSY, S, X, PX, Y, PY, T, PT, TURN;\n\n")
+
             for lossfile in os.listdir(lossfolder):
-                outf.write("EXEC, trackto('"+lossfolder+"/"+lossfile+"', "+lossfile.split(".")[0]+");\n\n")
+                outf.write(" EXEC, trackto('"+lossfolder+"/"+lossfile+"', "+lossfile.split(".")[0]+");\n")
         else:
             outf.write("CALL, FILE='"+sloexcodedir
                           +"/madxBatch/madx/tracktomacro.cmdx';\n\n")
@@ -123,7 +167,7 @@ def tracklossto(location, lossfolder, startpoint, backtrack=False, sloexcodedir=
         outf.flush()
         
     if madxexe is None:
-        madxexe = "madx_dev"
+        madxexe = "/afs/cern.ch/user/m/mad/bin/madx_dev"
     subprocess.check_call(madxexe+" track.madx", shell=True, stdout=sys.stdout)
         
         

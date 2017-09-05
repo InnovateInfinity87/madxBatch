@@ -31,6 +31,20 @@ trackto_gettab(_i): MACRO = {
 
 
 trackto_twisstrack(_batchnumber, _particlenumber): MACRO = {
-    TWISS, BETA0=starttrack, X=X, PX=PX, Y=Y, PY=PY, T=T, PT=PT, RANGE=trackfrom_m/trackto_m, FILE='b_batchnumber_p_particlenumber.tfs';
+    ptc_create_universe;
+    ptc_create_layout, nst=100, model=1, method=6, exact=true;
+    ptc_align;
+    ptc_twiss, FILE='b_batchnumber_p_particlenumber.tfs', icase=56, BETA0=starttrack, BETZ=1, X=X, PX=PX, Y=Y, PY=PY, T=T, PT=PT, DX=0, DPX=0;
+    ptc_end;
+    trackto_zspos = TABLE(PTC_TWISS,ZS_RB.21633_DEN,X);
+    IF (trackto_zspos<zswireup){
+        CALL, FILE='/afs/cern.ch/user/l/listoel/Desktop/SloExCode/madxBatch/madx/lss2extraction_setnofield.cmdx';
+        ptc_create_universe;
+        ptc_create_layout, nst=100, model=1, method=6, exact=true, closed_layout=true;
+        ptc_align;
+        ptc_twiss, FILE='b_batchnumber_p_particlenumber.tfs', icase=56, BETA0=starttrack, BETZ=1, X=X, PX=PX, Y=Y, PY=PY, T=T, PT=PT, DX=0, DPX=0;
+        ptc_end;
+        SETERR, TABLE=errtab;
+    };
 };
 
