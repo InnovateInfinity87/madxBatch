@@ -184,8 +184,8 @@ def lossstats(lossfolder, region=None, printstats=True):
     return data
 
 
-def lossmap(lossfolder, region=None, save=None, threshold=0.0001, extracted=None):
-    rawdata = lossstats(lossfolder)
+def lossmap(lossfolder, region=None, save=None, threshold=0.0001, extracted=None, printstats=True):
+    rawdata = lossstats(lossfolder, printstats=printstats)
     total = float(sum(rawdata.values()))
     for x in rawdata: rawdata[x] /= total
     if extracted is not None:
@@ -568,7 +568,7 @@ def wireangle(lossfolder, lossloc="AP.UP.ZS21633", wiremax=0.69, save=None):
         with open(save, 'w') as out:
             out.write(message)
 
-def emittance(lossfolder, lossloc="AP.UP.ZS21633", ap=[0.06815, 0.08815], save=None):
+def emittance(lossfolder, lossloc="AP.UP.ZS21633", ap=[0.06815, 0.08815], pxcut=None, turncut=None, betagamma=None, save=None):
     xax='X'
     pax='PX'
 
@@ -579,14 +579,24 @@ def emittance(lossfolder, lossloc="AP.UP.ZS21633", ap=[0.06815, 0.08815], save=N
         if os.stat(lossfolder+'/'+lossfile).st_size > 0:
             _, losstable = readtfs(lossfolder+'/'+lossfile)
             losstable = losstable.loc[losstable['ELEMENT'] == lossloc]
+            if turncut is not None:
+                losstable = losstable.loc[losstable['TURN'] > turncut[0]]
+                losstable = losstable.loc[losstable['TURN'] < turncut[1]]
             xdata += losstable[xax].tolist()
             pdata += losstable[pax].tolist()
 
     exbeam = [i for i in range(len(xdata)) if (xdata[i]>ap[0] and xdata[i]<ap[1])]
     xdata = [xdata[i] for i in exbeam]
     pdata = [pdata[i] for i in exbeam]
+    if pxcut is not None:
+        exbeam = [i for i in range(len(xdata)) if (pdata[i]>pxcut[0] and pdata[i]<pxcut[1])]
+        xdata = [xdata[i] for i in exbeam]
+        pdata = [pdata[i] for i in exbeam]
 
-    statemit = str(np.sqrt(np.linalg.det(np.cov(xdata,pdata))))
+    statemit = np.sqrt(np.linalg.det(np.cov(xdata,pdata)))
+    if betagamma is not None:
+        statemit *= betagamma
+    statemit = str(statemit)
 
     message = ("For particles within the aperture at "+lossloc+":\n"+
                "the statistical emittance is "+statemit+"\n")
