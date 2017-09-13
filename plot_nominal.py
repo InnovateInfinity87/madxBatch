@@ -45,12 +45,15 @@ def makeplots(folder):
             datproc.efficiency(lossfolder, pycoll=True, aperturex=[0.04219,0.08219], aperturey=[-0.0100,0.0100])
             print ""
             datproc.lossstats(lossfolder)
+            print ""
+            datproc.emittance(lossfolder, lossloc=lossloc, ap=[0.04219,0.08219], betagamma=426.3167)
         else:
-            datproc.efficiency(lossfolder, aperturex=[0.06815,0.08815], aperturey=[-0.023,0.023], zs_len=18.77, zs_an=4.1635E-4, aperturex2=[0.04265,0.06265])
+            datproc.efficiency(lossfolder, aperturex=[0.06815,0.08815], aperturey=[-0.023,0.023], zs_len=18.77, zs_an=4.1635E-4, aperturex2=[0.04140,0.06140])
             print ""
             datproc.wireangle(lossfolder)
+            print ""
+            datproc.emittance(lossfolder, lossloc=lossloc, ap=[0.04219,0.08219], betagamma=426.3167)
     sys.stdout = stdout
-        
 
     # Make plots
     datproc.lossplot(lossfolder, lossloc=lossloc, xax='TURN', yax='PT', cax='PT', ylim=[-0.0025, 0.0020], clim=[-0.0025, 0.0020], save=plotfolder+"/sweep_"+name+".png")
