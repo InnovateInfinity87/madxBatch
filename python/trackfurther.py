@@ -142,6 +142,9 @@ def tracklossto(location, lossfolder, startpoint, backtrack=False, sloexcodedir=
         outf.write("hastrmacro = "+("1" if hastrmacro else "0")+";\n")
         outf.write("backtrack = "+("1" if backtrack else "0")+";\n\n")
 
+        outf.write("CALL, FILE='"+sloexcodedir
+                   +"/madxBatch/madx/setseptamacro.cmdx';\n\n")
+
         if twisstrack:
             outf.write("CALL, FILE='"+sloexcodedir
                           +"/madxBatch/madx/twisstracktomacro.cmdx';\n\n")
