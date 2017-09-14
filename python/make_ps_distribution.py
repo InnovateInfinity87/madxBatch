@@ -1,3 +1,5 @@
+from version import __version__
+
 import numpy as np
 from scipy.stats import truncnorm as trandn
 from prettytable import PrettyTable

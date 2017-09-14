@@ -13,6 +13,8 @@ and only with it's most basic use cases: "queue" and "queue #".
 
 @author: Linda Stoel
 """
+from version import __version__
+
 import os
 import shutil
 import subprocess

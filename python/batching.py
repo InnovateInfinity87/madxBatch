@@ -7,6 +7,8 @@ tune ripple and then submits them to the CERN HTCondor batching service.
 
 @author: Linda Stoel, Wouter van de Pontseele
 """
+from version import __version__
+
 import os
 import stat
 import sys
@@ -358,6 +360,12 @@ def submit_job(settings):
         settings.datadir = settings.datadir[:-1]+str(i)+"/"
     os.makedirs(settings.datadir)
     os.chdir(settings.datadir)
+
+    with open("settings.info", 'w') as f:
+        f.write("These files were generated using madxBatch version "+__version__+".\n\n")
+        f.write("Settings used:\n")
+        for item in vars(settings).items():
+            f.write(str(item[0])+" = "+str(item[1])+"\n")
 
     #Fill in basic template data
     copyfile(settings.trackertemplate, "tracker.madx")

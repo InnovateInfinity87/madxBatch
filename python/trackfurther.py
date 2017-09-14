@@ -7,6 +7,8 @@ WARNING: Backtrack does not actually work.
 
 @author: Linda Stoel
 """
+from version import __version__
+
 import os
 import sys
 import subprocess

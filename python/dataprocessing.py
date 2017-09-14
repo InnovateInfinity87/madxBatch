@@ -1,3 +1,5 @@
+from version import __version__
+
 import os
 import sys
 import numpy as np
