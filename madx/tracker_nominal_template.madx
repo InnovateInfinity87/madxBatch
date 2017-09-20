@@ -369,6 +369,8 @@ chroma_res = TABLE(SUMM,DQ1);
 
 /*pyTWISS
 WRITE, TABLE=TWISS, FILE='pyDATADIR/thin_twiss.tfs';
+SELECT, FLAG=ERROR, FULL;
+ESAVE, FILE='pyDATADIR/errfile.tfs';
 EXIT;
 pyTWISS*/
 
