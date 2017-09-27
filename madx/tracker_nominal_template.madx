@@ -218,27 +218,29 @@ knob_extr_sext = knob_extr_sext_val;
 !-----------------------------------------------------------------------
 ! Set bump and misalignments
 !-----------------------------------------------------------------------
-knob_extr_bump_thin = knob_extr_bump / 4.0;
+lss2bump(nom_knob_value, knob_x_value, knob_px_value) : MACRO = {
+ SELECT, FLAG=error, CLEAR;
+ SELECT, FLAG=error, PATTERN="MPSH_rb\.21202.*";
+ EFCOMP, ORDER:=0, DKN=(7.6765e-5*nom_knob_value + 2.331922219e-05*(knob_x_value) + 9.919569698e-07*(knob_px_value))/4.0;
 
-SELECT, FLAG=error, CLEAR;
-SELECT, FLAG=error, PATTERN="MPSH_rb\.21202.*";
-EFCOMP, ORDER:=0, DKN=7.6765e-5 * knob_extr_bump_thin;
+ SELECT, FLAG=error, CLEAR;
+ SELECT, FLAG=error, PATTERN="MPLH_rb\.21431.*";
+ EFCOMP, ORDER:=0, DKN=(-0.49e-3*nom_knob_value - 9.667304386e-06*(knob_x_value) + 4.725651517e-08*(knob_px_value))/4.0;
 
-SELECT, FLAG=error, CLEAR;
-SELECT, FLAG=error, PATTERN="MPLH_rb\.21431.*";
-EFCOMP, ORDER:=0, DKN=-0.49e-3 * knob_extr_bump_thin;
+ SELECT, FLAG=error, CLEAR;
+ SELECT, FLAG=error, PATTERN="MPNH_rb\.21732.*";
+ EFCOMP, ORDER:=0, DKN=(-0.33309e-3*nom_knob_value + 4.661e-05*(knob_x_value) + 2.323426145e-06*(knob_px_value))/4.0;
 
-SELECT, FLAG=error, CLEAR;
-SELECT, FLAG=error, PATTERN="MPNH_rb\.21732.*";
-EFCOMP, ORDER:=0, DKN=-0.33309e-3 * knob_extr_bump_thin;
+ SELECT, FLAG=error, CLEAR;
+ SELECT, FLAG=error, PATTERN="MPLH_rb\.21995.*";
+ EFCOMP, ORDER:=0, DKN=(-0.2503e-3*nom_knob_value - 1.539615399e-05*(knob_x_value) - 4.997512885e-07*(knob_px_value))/4.0;
 
-SELECT, FLAG=error, CLEAR;
-SELECT, FLAG=error, PATTERN="MPLH_rb\.21995.*";
-EFCOMP, ORDER:=0, DKN=-0.2503e-3 * knob_extr_bump_thin;
+ SELECT, FLAG=error, CLEAR;
+ SELECT, FLAG=error, PATTERN="MPLH_rb\.22195.*";
+ EFCOMP, ORDER:=0, DKN=(0.35585e-3*nom_knob_value + 2.868784873e-05*(knob_x_value) + 9.041110549e-07*(knob_px_value))/4.0;
+};
 
-SELECT, FLAG=error, CLEAR;
-SELECT, FLAG=error, PATTERN="MPLH_rb\.22195.*";
-EFCOMP, ORDER:=0, DKN=.35585e-3 * knob_extr_bump_thin;
+EXEC, lss2bump(knob_extr_bump, 0.0, 0.0)
 
 !================================
 ! Misa in beam dump ! Doesn't fully agree with geode?

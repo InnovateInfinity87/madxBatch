@@ -78,10 +78,13 @@ class Settings:
         self.elements=[]
 
         self.trackingbool = True
-        self.dynamicbump=False
         self.pycollimate = True
         self.septadb = self.home+"/input/septa_DB_nominal.tfs"
         self.septadbreplace = None
+
+        self.dynamicbump=False
+        self.dynamicbump_cx = -729.5  # knob_x_bump = this*dpp (millimeter)
+        self.dynamicbump_cpx = 42600.0  # knob_px_bump = this*dpp  (microrad)
 
         self.saveloss = True
         self.saveout = False
@@ -186,23 +189,18 @@ def track_lin(k,data,settings):
             "n_d = kqd_start - m_d;\n\n"+
         
             "SYSTEM, 'mkdir "+str(k)+"';\n\n")
-
-    if settings.dynamicbump:
-        line += (orthogonal_bumps()+"\n\n"+
-
-                "x_knob_start = 729.5*dpp_start;\n"+
-                "px_knob_start = (-42.6*dpp_start);\n"+
-                "EXEC, obump(x_knob_start, px_knob_start);\n"+
-                "dpp_inc = (dpp_end-dpp_start)/"+str(settings.nturns)+";\n"
-                "x_knob_inc = 729.5*dpp_inc;\n"+
-                "px_knob_inc = (-42.6*dpp_inc);\n\n")
         
     line += ("tr$macro(turn): MACRO = {\n"+
              " kqf1 = m_f * turn + n_f;\n"+
              " kqd = m_d * turn + n_d;\n")
+             
     if settings.dynamicbump:
-        line += (" EXEC, obump(x_knob_inc, px_knob_inc);\n")
+        line += (" knob_x_bump = "+str(settings.dynamicbump_cx)+" * (dpp_start + turn/"+str(settings.nturns)+"*(dpp_end-dpp_start));\n"+
+                 " knob_px_bump = "+str(settings.dynamicbump_cpx)+" * (dpp_start + turn/"+str(settings.nturns)+"*(dpp_end-dpp_start));\n"+
+                 " EXEC, lss2bump(knob_extr_bump, knob_x_bump, knob_px_bump);\n")
     line += "};\n\n"
+
+    line += "EXEC, tr$macro(0);\n\n"
 
     line += ("OPTION, -WARN;\n"+
              "TRACK, ONEPASS, APERTURE, UPDATE, RECLOSS")
@@ -251,15 +249,9 @@ def track_sliced(k,data,settings):
     line = "SYSTEM, 'mkdir "+str(k)+"';\n\n"
 
     if settings.dynamicbump:
-        line += (orthogonal_bumps()+"\n\n"+
-
-                #"x_knob = 406*("+dpp+") + (-0.0765*("+dpp+")*1e3);\n"+
-                #"px_knob = (-20.667*("+dpp+")) + (-0.0022*("+dpp+")*1e3);\n"+
-                #"x_knob = 329.5*("+dpp+");\n"+
-                #"px_knob = (-22.867*("+dpp+"));\n"+
-                "x_knob = (729.5*("+dpp+"));\n"+
-                "px_knob = (-42.6*("+dpp+"));\n"+
-                "EXEC, obump(x_knob, px_knob);\n\n")
+        line += (" knob_x_bump = "+str(settings.dynamicbump_cx)+" * ("+dpp+");\n"+
+                 " knob_px_bump = "+str(settings.dynamicbump_cpx)+" * ("+dpp+");\n"+
+                 " EXEC, lss2bump(knob_extr_bump, knob_x_bump, knob_px_bump);\n")
 
     line += ("dpp_matchtune = "+dpp+";\n"+
              "qh = qh_res;\n"+
@@ -305,29 +297,6 @@ def track_sliced(k,data,settings):
     line += "SYSTEM, 'tar -czf tracks.tar.gz "+str(k)+"';"
 
     return line
-
-
-def orthogonal_bumps():
-    "MAD-X code for the orthogonal bump macro"
-    return ("EOPTION, ADD = TRUE;\n\n"+
-
-            "obump(x_knob_value, px_knob_value) : MACRO = {\n"+
-            " SELECT, FLAG=ERROR, CLEAR;\n"+
-            ' SELECT, FLAG=ERROR, PATTERN="MPSH_rb\.21202.*";\n'+
-            " EFCOMP, ORDER:=0, DKN= 2.331301861e-05 * x_knob_value * (-1/4) + 9.929676756e-06 * px_knob_value * (-1e2/4);\n"+
-            " SELECT, FLAG=ERROR, CLEAR;\n"+
-            ' SELECT, FLAG=ERROR, PATTERN="MPLH_rb\.21431.*";\n'+
-            " EFCOMP, ORDER:=0, DKN= -9.91281169e-06   * x_knob_value * (-1/4) + 2.600240449e-07   * px_knob_value * (-1e2/4);\n"+
-            " SELECT, FLAG=ERROR, CLEAR;\n"+
-            ' SELECT, FLAG=ERROR, PATTERN="MPNH_rb\.21732.*";\n'+
-            " EFCOMP, ORDER:=0, DKN=  2.98e-05 * x_knob_value * (-1/4) + 2.174863504e-05 * px_knob_value * (-1e2/4);\n"+
-            " SELECT, FLAG=ERROR, CLEAR;\n"+
-            ' SELECT, FLAG=ERROR, PATTERN="MPLH_rb\.21995.*";\n'+
-            " EFCOMP, ORDER:=0, DKN= -1.923181311e-05 * x_knob_value * (-1/4) + (-5.128495572e-06) * px_knob_value * (-1e2/4);\n"+
-            " SELECT, FLAG=ERROR, CLEAR;\n"+
-            ' SELECT, FLAG=ERROR, PATTERN="MPLH_rb\.22195.*";\n'+
-            " EFCOMP, ORDER:=0, DKN= 2.105219176e-05 * x_knob_value * (-1/4) + 8.373821994e-06 * px_knob_value * (-1e2/4);\n"+
-            "};")
 
 
 def submit_job(settings):
