@@ -360,6 +360,7 @@ def submit_job(settings):
     if settings.twissfile is None:
         log = open("twisslog.txt", 'w')
         copyfile("tracker.madx", "table.madx")
+        replacer("table.madx", 'pyNTURNS', str(settings.nturns))
         replacer("table.madx", '/*pyTWISS', '')
         replacer("table.madx", 'pyTWISS*/', '')
         print "Creating Twiss table"
