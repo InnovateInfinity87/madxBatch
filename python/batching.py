@@ -73,6 +73,9 @@ class Settings:
         self.slices=None
         self.slicewidth=2.5E-4
 
+        self.beam_t='FT'
+        self.beamkwargs={'n_sigma': 6}
+
         self.flavour=None
 
         self.elements=[]
@@ -265,14 +268,12 @@ def track_sliced(k,data,settings):
         line += (";\n\n")
 
     for i in range(k*settings.nparperbatch,(k+1)*settings.nparperbatch):
-        if settings.slicewidth is not None:
-            dpp = str(settings.slices[k/settings.nbatches]+settings.slicewidth*stats.truncnorm.rvs(-1, 1))
         line += (" START, X ="+str(data[0][i])+", "+
                        "PX = "+str(data[1][i])+", "+
                        "Y = "+str(data[2][i])+", "+
                        "PY = "+str(data[3][i])+", "+
                        "T = "+str(0)+", "+
-                       "PT = "+dpp+";\n")
+                       "PT = "+str(data[4][i])+";\n")
     for place in settings.elements:
         line += " OBSERVE, PLACE = "+place+';\n';
     line += (" RUN, TURNS="+str(settings.nturns)+", "+
@@ -378,21 +379,20 @@ def submit_job(settings):
         #Generate initial particle distribution
         #TODO: Non-random input
         if settings.slices is None:
-            data=dis.get_gauss_distribution(output=settings.datadir+'initial_distribution',
-                                            input=settings.datadir+"/thin_twiss.tfs",
+            data=dis.get_gauss_distribution(output=settings.datadir+'initial_distribution.txt',
+                                            twissfile=settings.datadir+"thin_twiss.tfs",
                                             n_part=settings.nbatches*settings.nparperbatch,
-                                            sigmas=6, beam_t='FT',
-                                            seed=settings.seed,
-                                            file_head=settings.home+"/input/distributionheader.txt",
-                                            dppmax=settings.dppmax)
+                                            beam_t=settings.beam_t, seed=settings.seed,
+                                            dpp_d=settings.dppmax, **settings.beamkwargs)
         else:
-            data=dis.get_gauss_distribution(output=settings.datadir+'initial_distribution',
-                                            input=settings.datadir+"/thin_twiss.tfs",
-                                            n_part=settings.nbatches*settings.nparperbatch*nslices,
-                                            sigmas=6, beam_t='FT',
-                                            seed=settings.seed,
-                                            file_head=settings.home+"/input/distributionheader.txt",
-                                            dppmax=0)
+            slicewidth = 0 if settings.slicewidth is None else settings.slicewidth
+            data=dis.get_sliced_distribution(output=settings.datadir+'initial_distribution.txt',
+                                             twissfile=settings.datadir+"thin_twiss.tfs",
+                                             n_part=settings.nparperbatch,
+                                             n_batches=settings.nbatches,
+                                             beam_t=settings.beam_t, seed=settings.seed,
+                                             dpps=settings.slices, dpp_d=slicewidth,
+                                             **settings.beamkwargs)
         print 'Initial particle distribution created!'
 
         #Create datastructure

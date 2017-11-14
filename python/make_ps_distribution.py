@@ -4,23 +4,34 @@ import numpy as np
 from scipy.stats import truncnorm as trandn
 from prettytable import PrettyTable
 import linecache
-import random
+from datetime import datetime
+
+# Comment: In MAD-X dispersion is w.r.t PT, not DELTAP. (see uguide p19-20)
+# TODO: set default emit_x, emit_y to realistic values instead of historical?
+# TODO: Truncation happensin a parallelogram, not an ellipse atm. Look into implementing truncated Rayleigh?
+
+m_p = 0.938272081 # proton mass in GeV, from PDG website Sept.'17
+
+def header():
+    time = datetime.utcnow()
+    return ('@ NAME             %20s "INITIAL DISTRIBUTION"\n'+
+            '@ TYPE             %04s "USER"\n'+
+            '@ TITLE            %20s "INITIAL DISTRIBUTION"\n'+
+            '@ ORIGIN           %06s "PYTHON"\n'+
+            '@ DATE             %08s "'+time.strftime("%d/%m/%y")+'"\n'+
+            '@ TIME             %08s "'+time.strftime("%H.%M.%S")+'"\n')
 
 def string_to_float(seq):
-        for x in seq:
-            try:
-                yield float(x)
-            except ValueError:
-                yield x
+    for x in seq:
+        try:
+            yield float(x)
+        except ValueError:
+            yield x
 
-def get_gauss_distribution(output='initial_distribution_', input='sequence_totrack.tfs', sigmas=3,
-                            beam_t='LHC', n_part=100, seed=123, file_head='../input/distributionheader.txt', dppmax=None):
 
-    filename_out = output
-    twiss_file = input
-    
-    variables = linecache.getline(twiss_file, 46).split()[1:]
-    twiss = list(string_to_float(linecache.getline(twiss_file, 48).split()))
+def twissinit(twissfile):
+    variables = linecache.getline(twissfile, 46).split()[1:]
+    twiss = list(string_to_float(linecache.getline(twissfile, 48).split()))
 
     x0 = twiss[variables.index('X')]
     y0 = twiss[variables.index('Y')]
@@ -39,335 +50,193 @@ def get_gauss_distribution(output='initial_distribution_', input='sequence_totra
     dy = twiss[variables.index('DY')]
     dpy = twiss[variables.index('DPY')]
 
+    return x0,y0,px0,py0,betx,bety,alfx,alfy,dx,dpx,dy,dpy
 
-    #========================================
-    # Seed
-    #========================================
+
+class Beam(object):
+    def __init__(self, beam_type, **kwargs):
+        if beam_type == 'FT':
+            self.type = 'FT'
+            self.set_params(pc=400.0, dpp_0=0.0, dpp_d=0.0015,
+                            emit_xn=8E-6, emit_yn=8E-6, n_sigma=6.8,
+                            pdist='unif')
+        elif beam_type == 'CUSTOM':
+            self.type = 'CUSTOM'
+        else:
+            print('Beam type '+str(beam_type)+' not recognized, '+
+                  'creating CUSTOM beam. Parameters should be set '+
+                  'manually.')
+            self.type = 'CUSTOM'
+        self.set_params(**kwargs)
+
+    def set_params(self, pc=None, dpp_0=None, dpp_d=None,
+                   emit_xn=None, emit_yn=None, n_sigma=None,
+                   pdist=None):
+        if pc is not None: self.pc=pc
+        if dpp_0 is not None: self.dpp_0 = dpp_0
+        if dpp_d is not None: self.dpp_d = dpp_d
+        if emit_xn is not None: self.emit_xn = emit_xn
+        if emit_yn is not None: self.emit_yn = emit_yn
+        if n_sigma is not None: self.n_sigma = n_sigma
+        if pdist is not None: self.pdist = pdist
+        self._calc_params()
+
+    def _calc_params(self):
+        self.energy = np.sqrt(m_p**2 + self.pc**2)
+        self.gamma_r = self.energy/m_p
+        self.beta_r = np.sqrt(1. - 1./self.gamma_r**2)
+        self.emit_x = self.emit_xn/(self.beta_r*self.gamma_r)
+        self.emit_y = self.emit_yn/(self.beta_r*self.gamma_r)
+
+    def dpp_to_pt(self, dpp):
+        de = np.sqrt(m_p**2 + (self.pc*(1+dpp))**2) - self.energy
+        return de/self.pc
+
+
+def get_gauss_distribution(twissfile='sequence_totrack.tfs', beam_t='FT',
+                           sigmas=None, seed=None, n_part=100, noseeding=False,
+                           output='initial_distribution.txt', **kwargs):
+    x0,y0,px0,py0,betx,bety,alfx,alfy,dx,dpx,dy,dpy = twissinit(twissfile)
+    beam = Beam(beam_t, **kwargs)
+
+    if not noseeding:
+        np.random.seed(seed)
+
+    if sigmas is None:
+        sigmas = beam.n_sigma
+
+    # Momentum distribution
+    if beam.pdist == 'unif':
+        dpp = np.random.uniform(beam.dpp_0-beam.dpp_d, beam.dpp_0+beam.dpp_d, n_part)
+    elif beam.pdist.startswith('gauss'):
+        sigp = float(beam.pdist[5:])
+        dpp = beam.dpp_0+trandn(-sigp, sigp, scale=(beam.dpp_d/sigp)).rvs(n_part)
+    else:
+        print "Warning: unknown pdist '"+beam.pdist+"', assuming uniform."
+        dpp = np.random.uniform(beam.dpp_0-beam.dpp_d, beam.dpp_0+beam.dpp_d, n_part)
+
+    pt = np.fromiter((beam.dpp_to_pt(d) for d in dpp), float)
+
+    # Transverse distributions
+    sx = np.sqrt(beam.emit_x*betx)
+    n_x = trandn(-sigmas, sigmas, scale=sx).rvs(n_part)
+    n_px = trandn(-sigmas, sigmas, scale=sx).rvs(n_part)
+    x = x0 + n_x + dx*pt
+    px = px0 + (n_px - alfx*n_x)/betx + dpx*pt
+
+    sy = np.sqrt(beam.emit_y*bety)
+    n_y = trandn(-sigmas, sigmas, scale=sy).rvs(n_part)
+    n_py = trandn(-sigmas, sigmas, scale=sy).rvs(n_part)
+    y = y0 + n_y + dy*pt
+    py = py0 + (n_py - alfy*n_y)/bety + dpy*pt
+
+    # Output table
+    if output is not None:
+        normal = PrettyTable(['*', 'NUMBER', 'TURN', 'X', 'PX', 'Y', 'PY', 'T', 'PT', 'S', 'E'])
+        normal.align = 'r'
+        normal.left_padding_width = 0
+        normal.right_padding_width = 8
+        normal.border = False
+        normal.add_row(['$', '%d', '%d', '%le', '%le', '%le', '%le', '%le', '%le', '%le', '%le'])
+        for i in xrange(n_part):
+            normal.add_row([' ', i + 1, 0, x[i], px[i], y[i], py[i], 0.0000000, pt[i], 0.0000000, beam.energy])
+        
+        with open(output, 'w') as fp:
+            fp.write(header())
+            fp.write(normal.get_string())
+
+    return x, px, y, py, pt
+
+
+# either n_halo=number for thin halo, or n_halo=(lower,upper) for fat halo
+def get_halo_distribution(twissfile='sequence_totrack.tfs', beam_t='FT',
+                          n_halo=5,seed=None, n_part=100,
+                          output='initial_distribution_halo.txt', **kwargs):
+    x0,y0,px0,py0,betx,bety,alfx,alfy,dx,dpx,dy,dpy = twissinit(twissfile)
+    beam = Beam(beam_t, **kwargs)
+
+    try:
+        nhalo[0]
+    except TypeError:
+        nhalo = (nhalo,nhalo)
 
     np.random.seed(seed)
 
-    beam_type = beam_t
+    # Momentum distribution
+    dpp = np.random.uniform(beam.dpp_0-beam.dpp_d, beam.dpp_0+beam.dpp_d, n_part)
+    pt = np.fromiter((beam.dpp_to_pt(d) for d in dpp), float)
 
-    if beam_type == 'LHC':
-        beam = dict(type='LHC', energy=450., emit_nom=3.5e-6, emit_n=3.5e-6, intensity=288 * 1.15e11,
-                    dpp_t=3e-4, n_particles=10000, n_sigma=5)
-    elif beam_type == 'LIU':
-        beam = dict(type='LIU', energy=450., emit_nom=3.5e-6, emit_n=1.37e-6, intensity=288 * 2.0e11,
-                    dpp_t=3e-4, n_particles=1000, n_sigma=5)
-    elif beam_type == 'LHC-meas':
-        beam = dict(type='LHC-meas', energy=450., emit_nom=3.5e-6, emit_n=2.0e-6, intensity=288 * 1.2e11,
-                    dpp_t=3e-4, n_particles=1e6, n_sigma=6.8)
-    elif beam_type == 'FT':
-        beam = dict(type='FT', energy=400., emit_nom=12e-6, emit_n=8e-6, intensity=3e12,
-                    dpp_t=6*2.5e-4, n_particles=1e6, n_sigma=6.8)
-                #dpp_t=4e-4
-    else:
-        beam = dict(type='HL-LHC', energy=450., emit_nom=3.5e-6, emit_n=2.08e-6, intensity=288 * 2.32e11,
-                    dpp_t=3e-4, n_particles=1e6, n_sigma=5)
+    # Transverse distributions
+    psix = np.random.uniform(0, 2*np.pi, n_part)
+    widthx = np.random.uniform(n_halo[0], n_halo[1], n_part)
+    x = x0 + widthx*np.sqrt(beam.emit_x*betx)*np.cos(psix) + dx*pt
+    px = px0 + widthx*np.sqrt(beam.emit_x/betx)*(np.sin(psix) - alfx*np.cos(psix)) + dpx*pt
 
-    n_sigma = sigmas
+    psiy = np.random.uniform(0, 2*np.pi, n_part)
+    widthy = np.random.uniform(n_halo[0], n_halo[1], n_part)
+    y = y0 + widthy*np.sqrt(beam.emit_y*bety)*np.cos(psiy) + dy*pt
+    py = py0 + widthy*np.sqrt(beam.emit_y/bety)*(np.sin(psiy) - alfy*np.cos(psiy)) + dpy*pt
 
-    emit_n = beam['emit_n']  # [mm.mrad]
+    # Output table
+    if output is not None:
+        normal = PrettyTable(['*', 'NUMBER', 'TURN', 'X', 'PX', 'Y', 'PY', 'T', 'PT', 'S', 'E'])
+        normal.align = 'r'
+        normal.left_padding_width = 0
+        normal.right_padding_width = 8
+        normal.border = False
+        normal.add_row(['$', '%d', '%d', '%le', '%le', '%le', '%le', '%le', '%le', '%le', '%le'])
+        for i in xrange(n_part):
+            normal.add_row([' ', i + 1, 0, x[i], px[i], y[i], py[i], 0.0000000, pt[i], 0.0000000, beam.energy])
+        
+        with open(output, 'w') as fp:
+            fp.write(header())
+            fp.write(normal.get_string())
 
-    if dppmax is None:
-        dpp_t = beam['dpp_t']
-    else:
-        dpp_t = dppmax
-
-    n = n_part
-
-    m_p = 0.938
-
-    #========================================
-    # Beam parameters
-    #========================================
-
-    p = beam['energy']  # momentum in GeV
-
-    gamma = np.sqrt(m_p ** 2 + p ** 2) / m_p
-    beta0 = np.sqrt(gamma**2 - 1) / gamma
-    beta_r = np.sqrt(1. - 1. / gamma ** 2)
-    emit_x = emit_n / (beta_r * gamma)
-    emit_y = emit_n / (beta_r * gamma)
-
-    e0 = np.sqrt(p**2 + m_p**2)
-
-    #========================================
-    # Delta p / p
-    #========================================
-
-    ddp = (np.random.rand(n) * 2. * dpp_t) - dpp_t
-
-    de = ddp * e0 * beta0**2
-    pt = de / p
-
-    #==============================================
-    # Bivariate normal distributions
-    #==============================================
-
-    sx = np.sqrt(emit_x * betx)
-    n_x = trandn(-1 * n_sigma, n_sigma, scale=sx).rvs(n)
-    x = x0 + n_x + (dx * ddp)
-    px = px0 + (trandn(-1 * n_sigma, n_sigma, scale=sx).rvs(n) - alfx * n_x) / betx + (dpx * ddp)
-
-    sy = np.sqrt(emit_y * bety)
-    n_y = trandn(-1 * n_sigma, n_sigma, scale=sy).rvs(n)
-    y = y0 + n_y + (dy * ddp)
-    py = py0 + (trandn(-1 * n_sigma, n_sigma, scale=sy).rvs(n) - alfy * n_y) / bety + (dpy * ddp)
-
-    head = []
-    with open(file_head, 'r') as ff:
-        for i in xrange(6):
-            head.append(ff.readline())
-
-    normal = PrettyTable(['*', 'NUMBER', 'TURN', 'X', 'PX', 'Y', 'PY', 'T', 'PT', 'S', 'E'])
-    normal.align = 'r'
-    normal.border = False
-    normal.add_row(['$', '%d', '%d', '%le', '%le', '%le', '%le', '%le', '%le', '%le', '%le'])
-    i = 0
-    with open(filename_out + '.txt', 'w') as fp:
-        for i in xrange(len(head)):
-            fp.write(head[i])
-        for i in xrange(len(x)):
-            normal.add_row([' ', i + 1, 0, x[i], px[i], y[i], py[i], 0.0000000, pt[i], 0.0000000, beam['energy']])
-        fp.write(normal.get_string())
-
-    return x, px, y, py,pt
+    return x, px, y, py, pt
 
 
-
-def get_halo_distribution(output='initial_distribution_halo_', input='sequence_totrack.tfs', n_halo=5, beam_t='LHC', n_part=100, seed=123, file_head='../input/distributionheader.txt'):
-
-    filename_out = output
-
-    twiss_file = input
-
-    variables = linecache.getline(twiss_file, 46).split()[1:]
-    twiss = list(string_to_float(linecache.getline(twiss_file, 48).split()))
-
-    x0 = twiss[variables.index('X')]
-    y0 = twiss[variables.index('Y')]
-    px0 = twiss[variables.index('PX')]
-    py0 = twiss[variables.index('PX')]
-
-
-    betx = twiss[variables.index('BETX')]
-    bety = twiss[variables.index('BETY')]
-
-    alfx = twiss[variables.index('ALFX')]
-    alfy = twiss[variables.index('ALFY')]
-
-    dx = twiss[variables.index('DX')]
-    dpx = twiss[variables.index('DPX')]
-    dy = twiss[variables.index('DY')]
-    dpy = twiss[variables.index('DPY')]
-
-
-    #========================================
-    # Seed
-    #========================================
+def get_sliced_distribution(twissfile='sequence_totrack.tfs', beam_t='FT',
+                           sigmas=None, dpps=[None],
+                           seed=None, n_batches=1, n_part=100,
+                           output='initial_distribution_slices.txt', **kwargs):
 
     np.random.seed(seed)
 
-    beam_type = beam_t
+    xf = np.empty(0)
+    pxf = np.empty(0)
+    yf = np.empty(0)
+    pyf = np.empty(0)
+    ptf = np.empty(0)
 
-    if beam_type == 'LHC':
-        beam = dict(type='LHC', energy=450, emit_nom=3.5e-6, emit_n=3.5e-6, intensity=288 * 1.15e11,
-                    dpp_t=3e-4, n_particles=10000, n_sigma=5)
-    elif beam_type == 'LIU':
-        beam = dict(type='LIU', energy=450, emit_nom=3.5e-6, emit_n=1.37e-6, intensity=288 * 2.0e11,
-                    dpp_t=3e-4, n_particles=1000, n_sigma=5)
-    elif beam_type == 'LHC-meas':
-        beam = dict(type='LHC-meas', energy=450, emit_nom=3.5e-6, emit_n=2.0e-6, intensity=288 * 1.2e11,
-                    dpp_t=3e-4, n_particles=1e6, n_sigma=6.8)
-    else:
-        beam = dict(type='HL-LHC', energy=450, emit_nom=3.5e-6, emit_n=2.08e-6, intensity=288 * 2.32e11,
-                    dpp_t=3e-4, n_particles=1e6, n_sigma=5)
+    energy = Beam(beam_t, **kwargs).energy
 
-    emit_n = beam['emit_n']  # [mm.mrad]
-    dpp_t = beam['dpp_t']
+    if not 'pdist' in kwargs:
+        kwargs['pdist'] = 'gauss1'
 
-    n = n_part
+    for dpp in dpps:
+        x, px, y, py, pt = get_gauss_distribution(twissfile=twissfile, beam_t=beam_t,
+                                                  sigmas=sigmas, n_part=(n_batches*n_part),
+                                                  output=None, noseeding=True,
+                                                  dpp_0=dpp, **kwargs)
+        xf = np.concatenate((xf, x))
+        pxf = np.concatenate((pxf, px))
+        yf = np.concatenate((yf, y))
+        pyf = np.concatenate((pyf, py))
+        ptf = np.concatenate((ptf, pt))
 
-    m_p = 0.938
+    # Output table
+    if output is not None:
+        normal = PrettyTable(['*', 'NUMBER', 'TURN', 'X', 'PX', 'Y', 'PY', 'T', 'PT', 'S', 'E'])
+        normal.align = 'r'
+        normal.left_padding_width = 0
+        normal.right_padding_width = 8
+        normal.border = False
+        normal.add_row(['$', '%d', '%d', '%le', '%le', '%le', '%le', '%le', '%le', '%le', '%le'])
+        for i in xrange(xf.size):
+            normal.add_row([' ', i + 1, 0, xf[i], pxf[i], yf[i], pyf[i], 0.0000000, ptf[i], 0.0000000, energy])
+        
+        with open(output, 'w') as fp:
+            fp.write(header())
+            fp.write(normal.get_string())
 
-    #========================================
-    # Beam parameters
-    #========================================
-
-    p = beam['energy']  # momentum in GeV
-
-    gamma = np.sqrt(m_p ** 2 + p ** 2) / m_p
-    beta0 = np.sqrt(gamma**2 - 1) / gamma
-    beta_r = np.sqrt(1. - 1. / gamma ** 2)
-    emit_x = emit_n / (beta_r * gamma)
-    emit_y = emit_n / (beta_r * gamma)
-
-    e0 = np.sqrt(p**2 + m_p**2)
-
-    #========================================
-    # Delta p / p
-    #========================================
-
-    ddp = (np.random.rand(n) * 2. * dpp_t) - dpp_t
-
-    de = ddp * e0 * beta0**2
-    pt = de / p
-    #==============================================
-    # Halo distributions
-    #==============================================
-
-    psi = (np.random.rand(n) * 2. * np.pi)
-
-    ddp_t = ddp
-
-
-    x1 = x0 + n_halo * np.sqrt(betx * emit_x) * np.cos(psi) + (dx * ddp_t)
-    px1 = px0 - (n_halo * np.sqrt(emit_x / betx) * (np.sin(psi) + alfx * np.cos(psi))) + (dpx * ddp_t)
-
-    psiy = (np.random.rand(n) * 2 * np.pi)
-
-    y1 = y0 + n_halo * np.sqrt(bety * emit_y) * np.cos(psiy) + (dy * ddp_t)
-    py1 = py0 - (n_halo * np.sqrt(emit_y / bety) * (np.sin(psiy) + alfy * np.cos(psiy))) + (dpy * ddp_t)
-
-    head = []
-    with open(file_head, 'r') as ff:
-        for i in xrange(6):
-            head.append(ff.readline())
-
-    halo_tab = PrettyTable(['*', 'NUMBER', 'TURN', 'X', 'PX', 'Y', 'PY', 'T', 'PT', 'S', 'E'])
-    halo_tab.align = 'r'
-    halo_tab.border = False
-    halo_tab.add_row(['$', '%d', '%d', '%le', '%le', '%le', '%le', '%le', '%le', '%le', '%le'])
-
-
-    with open(filename_out + '_halo_' + str(int(n_halo * 10)) + '.txt', 'w') as fp:
-        for i in xrange(len(head)):
-            fp.write(head[i])
-        for i in xrange(len(x1)):
-            halo_tab.add_row([' ', i + 1, 0, x1[i], px1[i], y1[i], py1[i],
-                              0.0000000, pt[i], 0.0000000,  beam['energy']])
-        fp.write(halo_tab.get_string())
-
-    return x1, px1, y1, py1,pt
-
-
-def get_fat_halo(output='initial_distribution_f_halo_', input='sequence_totrack.tfs', n_halo=(4, 5), beam_t='LHC', n_part=100, seed=123, file_head='../input/distributionheader.txt'):
-
-    filename_out = output
-
-    twiss_file = input
-
-    variables = linecache.getline(twiss_file, 46).split()[1:]
-    twiss = list(string_to_float(linecache.getline(twiss_file, 48).split()))
-
-    x0 = twiss[variables.index('X')]
-    y0 = twiss[variables.index('Y')]
-    px0 = twiss[variables.index('PX')]
-    py0 = twiss[variables.index('PX')]
-
-
-    betx = twiss[variables.index('BETX')]
-    bety = twiss[variables.index('BETY')]
-
-    alfx = twiss[variables.index('ALFX')]
-    alfy = twiss[variables.index('ALFY')]
-
-    dx = twiss[variables.index('DX')]
-    dpx = twiss[variables.index('DPX')]
-    dy = twiss[variables.index('DY')]
-    dpy = twiss[variables.index('DPY')]
-
-
-    #========================================
-    # Seed
-    #========================================
-
-    np.random.seed(seed)
-    random.seed(seed)
-
-    beam_type = beam_t
-
-    if beam_type == 'LHC':
-        beam = dict(type='LHC', energy=450, emit_nom=3.5e-6, emit_n=3.5e-6, intensity=288 * 1.15e11,
-                    dpp_t=3e-4, n_particles=10000, n_sigma=5)
-    elif beam_type == 'LIU':
-        beam = dict(type='LIU', energy=450, emit_nom=3.5e-6, emit_n=1.37e-6, intensity=288 * 2.0e11,
-                    dpp_t=3e-4, n_particles=1000, n_sigma=5)
-    elif beam_type == 'LHC-meas':
-        beam = dict(type='LHC-meas', energy=450, emit_nom=3.5e-6, emit_n=2.0e-6, intensity=288 * 1.2e11,
-                    dpp_t=3e-4, n_particles=1e6, n_sigma=6.8)
-    elif beam_type == 'FT':
-        beam = dict(type='FT', energy=400., emit_nom=12e-6, emit_n=8e-6, intensity=3e12,
-                    dpp_t=4e-4, n_particles=1e6, n_sigma=6.8)
-    else:
-        beam = dict(type='HL-LHC', energy=450, emit_nom=3.5e-6, emit_n=2.08e-6, intensity=288 * 2.32e11,
-                    dpp_t=3e-4, n_particles=1e6, n_sigma=5)
-
-    emit_n = beam['emit_n']  # [mm.mrad]
-    dpp_t = beam['dpp_t']
-
-    n = n_part
-
-    m_p = 0.938
-
-    #========================================
-    # Beam parameters
-    #========================================
-
-    p = beam['energy']  # momentum in GeV
-
-    gamma = np.sqrt(m_p ** 2 + p ** 2) / m_p
-    beta0 = np.sqrt(gamma**2 - 1) / gamma
-    beta_r = np.sqrt(1. - 1. / gamma ** 2)
-    emit_x = emit_n / (beta_r * gamma)
-    emit_y = emit_n / (beta_r * gamma)
-
-    e0 = np.sqrt(p**2 + m_p**2)
-
-    #========================================
-    # Delta p / p
-    #========================================
-
-    ddp = (np.random.rand(n) * 2. * dpp_t) - dpp_t
-
-    de = ddp * e0 * beta0**2
-    pt = de / p
-    #==============================================
-    # Halo distributions
-    #==============================================
-
-    psi = (np.random.rand(n) * 2. * np.pi)
-
-    ddp_t = dpp_t
-
-    width = np.array([random.uniform(n_halo[0], n_halo[1]) for i in xrange(0, n)])
-
-    x1 = x0 + width * np.sqrt(betx * emit_x) * np.cos(psi) + (dx * ddp_t)
-    px1 = px0 - (width * np.sqrt(emit_x / betx) * (np.sin(psi) + alfx * np.cos(psi))) + (dpx * ddp_t)
-
-    psiy = (np.random.rand(n) * 2 * np.pi)
-
-    y1 = y0 + width * np.sqrt(bety * emit_y) * np.cos(psiy) + (dy * ddp_t)
-    py1 = py0 - (width * np.sqrt(emit_y / bety) * (np.sin(psiy) + alfy * np.cos(psiy))) + (dpy * ddp_t)
-
-    head = []
-    with open(file_head, 'r') as ff:
-        for i in xrange(6):
-            head.append(ff.readline())
-
-    halo_tab = PrettyTable(['*', 'NUMBER', 'TURN', 'X', 'PX', 'Y', 'PY', 'T', 'PT', 'S', 'E'])
-    halo_tab.align = 'r'
-    halo_tab.border = False
-    halo_tab.add_row(['$', '%d', '%d', '%le', '%le', '%le', '%le', '%le', '%le', '%le', '%le'])
-
-
-    with open(filename_out + '_fat_halo_' + str(int(n_halo[1] * 10)) + '.txt', 'w') as fp:
-        for i in xrange(len(head)):
-            fp.write(head[i])
-        for i in xrange(len(x1)):
-            halo_tab.add_row([' ', i + 1, 0, x1[i], px1[i], y1[i], py1[i],
-                              0.0000000, pt[i], 0.0000000,  beam['energy']])
-        fp.write(halo_tab.get_string())
-
-    return x1, px1, y1, py1,pt
+    return xf, pxf, yf, pyf, ptf
