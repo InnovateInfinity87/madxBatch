@@ -55,6 +55,8 @@ class Settings:
                             self.slowexdir+'/cmd/matchtune.cmdx, '+
                             self.slowexdir+'/cmd/matchchroma.cmdx')
 
+        self.madxversion = "/afs/cern.ch/user/m/mad/bin/madx"
+
         self.trackertemplate = self.home+"/madx/tracker_nominal_template.madx"
         self.trackerrep = track_lin
         self.thinchanges = None
@@ -368,7 +370,7 @@ def submit_job(settings):
         if settings.pycollimate:
             subprocess.Popen(settings.pycolldir+"madxColl<table.madx", stdout=log, shell=True).wait()
         else:
-            subprocess.Popen("/afs/cern.ch/user/m/mad/bin/madx_dev<table.madx", stdout=log, shell=True).wait()
+            subprocess.Popen(settings.madxversion+"<table.madx", stdout=log, shell=True).wait()
         log.close()
         os.remove("table.madx")
         print 'Table creation is finished!'
@@ -417,7 +419,7 @@ def submit_job(settings):
         if settings.pycollimate:
             replacer("jobs/start.sh", 'MADXEXE', "madxColl")
         else:
-            replacer("jobs/start.sh", 'MADXEXE', "madx_dev")
+            replacer("jobs/start.sh", 'MADXEXE', settings.madxversion.split('/')[-1])
         for i in range(settings.nbatches*nslices):
             outfile="jobs/"+str(i)+".madx"
             searchExp='pyTRACKER'
@@ -442,7 +444,7 @@ def submit_job(settings):
             else:
                 subfile.write("transfer_input_files = "+
                               "jobs/$(ProcId).madx, "+
-                              "/afs/cern.ch/user/m/mad/bin/madx_dev, "+
+                              settings.madxversion+", "+
                               settings.slowexfiles+"\n")
             subfile.write('arguments = "$(ProcId)"\n')
             subfile.write("initialdir = "+settings.datadir+"\n")
