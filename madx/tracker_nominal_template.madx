@@ -208,7 +208,8 @@ knob_extr_sext = knob_extr_sext_val;
 
 /**********************************************************************/
 !-----------------------------------------------------------------------
-! Changes that can be done on the thin sequence should be done here.
+! Changes that can be done on the thin sequence should be done here,
+! unless they need the bump/errors to be applied first.
 !-----------------------------------------------------------------------
 
 /*pyTHINCHANGES*/
@@ -353,6 +354,16 @@ EALIGN, AREX=0.01;
 ! Aperture alignment extraction channel
 !================================
 CALL, FILE = 'pyHOMEDIR/input/align_extraction.cmdx';
+
+
+/**********************************************************************/
+!-----------------------------------------------------------------------
+! Changes that need the bump/errors on need to be made here.
+! Caution: Any USE command will cancel any errors present!
+!-----------------------------------------------------------------------
+
+/*pyFINALCHANGES*/
+
 
 /**********************************************************************/
 !-----------------------------------------------------------------------

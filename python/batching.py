@@ -59,8 +59,9 @@ class Settings:
 
         self.trackertemplate = self.home+"/madx/tracker_nominal_template.madx"
         self.trackerrep = track_lin
-        self.thinchanges = None
         self.thickchanges = None
+        self.thinchanges = None
+        self.finalchanges = None
         self.myreplace = {}
         self.twissfile = None
         self.local = False
@@ -350,6 +351,10 @@ def submit_job(settings):
         with open (settings.thinchanges, "r") as changefile:
             changes=changefile.read()
         replacer("tracker.madx", "/*pyTHINCHANGES*/", changes)
+    if settings.finalchanges is not None:
+        with open (settings.finalchanges, "r") as changefile:
+            changes=changefile.read()
+        replacer("tracker.madx", "/*pyFINALCHANGES*/", changes)
 
     replacer("tracker.madx",'pyDATADIR', settings.datadir)
     replacer("tracker.madx", 'pyHOMEDIR', settings.home)
