@@ -9,6 +9,8 @@ import operator
 import fileinput
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import shutil
+import tarfile
 from matplotlib.lines import Line2D
 from matplotlib.ticker import NullFormatter
 from matplotlib.colors import LogNorm
@@ -16,19 +18,30 @@ from matplotlib.colors import LogNorm
 _units = {'X': 'm', 'PX': 'rad', 'Y': 'm', 'PY': 'rad', 'T': 'm', 'PT': '1', 'S': 'm', 'E': 'eV', 'TURN': '1'}
 _def_unit_exp = {'X': 0, 'PX': 0, 'Y': 0, 'PY': 0, 'T': 0, 'PT': 0, 'S': 0, 'E': 9, 'TURN':0}
 
+# Functions for reading data
+
 def readtfs(filename, usecols=None, index_col=0):
     header = {}
-    nskip=1
+    nskip = 1
+    closeit = False
 
-    with open(filename, 'r') as datafile:
-        for line in datafile:
-            nskip += 1
-            if line.startswith('@'):
-                entry = line.strip().split()
-                header[entry[1]] = ' '.join(entry[3:]).replace('"','')
-            elif line.startswith('*'):
-                colnames = line.strip().split()[1:]
-                break
+    if isinstance(filename,basestring): # NOTE: Not python3 compatible
+        datafile = open(filename, 'r')
+        closeit = True
+    else:
+        datafile = filename
+
+    for line in datafile:
+        nskip += 1
+        if line.startswith('@'):
+            entry = line.strip().split()
+            header[entry[1]] = ' '.join(entry[3:]).replace('"','')
+        elif line.startswith('*'):
+            colnames = line.strip().split()[1:]
+            break
+
+    if closeit:
+        datafile.close()
 
     if usecols is not None:
         colnames = [colnames[i] for i in usecols]
@@ -58,6 +71,7 @@ def readtfs(filename, usecols=None, index_col=0):
 
     return header, table
 
+
 def fixlossfile(filename):
     question = 'This function is dangerous, only use on lossfile with accidental additional "-symbols or newlines.\n Do you want to proceed?'
     reply = str(raw_input(question+' (y/n): ')).lower().strip()
@@ -78,10 +92,114 @@ def fixlossfile(filename):
         print 'Aborting.'
 
 
-def readsingletrack(filename):
-    header, table = readtfs(filename, usecols=[1,2,3,4,5,6,7,8,9])
-    return header, table
+def getsettings(folder):
+    with open(folder+'/settings.info', 'r') as f:
+        settings = {}
+        first = True
+        skip = True
+        for line in f:
+            if first:
+                settings['version'] = line.strip().split()[-1][:-1]
+                first = False
+                continue
+            if skip:
+                if line.startswith('Settings used:'):
+                    skip = False
+                continue
+            var, val = line.strip().split(" = ",1)
+            settings[var.strip()] = val.strip()
+    return settings
 
+
+#TODO implement usecols
+def getlosses(lossfolder, settings=None, lossloc=None, filters=None, usecols=None):
+    if settings is None:
+        settings = getsettings(trackfolder+"/..")
+    elif type(settings)==dict:
+        if 'slices' not in settings:
+            settings['slices'] = None
+    else:
+        settings = getsettings(settings)
+    batches = len(settings['slices'].split(','))*int(settings['nbatches'])
+    nppb = int(settings['nparperbatch'])
+    df = pd.DataFrame()
+    for batch in range(batches):
+        lossfile = str(batch)+'.tfs'
+        if os.path.isfile(lossfolder+'/'+lossfile):
+            _, losstable = readtfs(lossfolder+'/'+lossfile)
+            if lossloc is not None:
+                losstable = losstable.loc[losstable['ELEMENT'] == lossloc]
+            if filters is not None:
+                for (var, fun) in filters:
+                    losstable = losstable.loc[fun(losstable[var])]
+            losstable.reset_index(inplace=True)
+            losstable['NUMBER'] = losstable['NUMBER'] + int(lossfile[:-4])*nppb
+            losstable.set_index('NUMBER', inplace=True)
+            df = df.append(losstable)
+        else:
+            print "lossfile for batch "+str(batchnum)+" not found"
+    df.sort_index(inplace=True)
+    return df
+
+
+#TODO implement usecols
+def gettracks(trackfolder, settings=None, obsloc='obs0001', filters=None, usecols=None, tpt=None, verbose=False):
+    """tpt=turns per track"""
+    if settings is None:
+        settings = getsettings(trackfolder+"/..")
+    elif type(settings)==dict:
+        if 'slices' not in settings:
+            settings['slices'] = None
+    else:
+        settings = getsettings(settings)
+    batches = len(settings['slices'].split(','))*int(settings['nbatches'])
+    nppb = int(settings['nparperbatch'])
+    if not obsloc.startswith('obs0'):
+        obsind = settings['elements'].index(obsloc)
+        obsloc = 'obs'+str(obsind+2).zfill(4)
+    df = pd.DataFrame()
+
+    for batchnum in range(batches):
+        untarred = False
+        if not os.path.isdir(trackfolder+'/'+str(batchnum)) and tarfile.is_tarfile(trackfolder+'/'+str(batchnum)+'.tar.gz'):
+            if verbose:
+                print 'untarring tracks for batch '+str(batchnum)
+            with tarfile.open(trackfolder+'/'+str(batchnum)+'.tar.gz') as tar:
+                tar.extractall(path=trackfolder)
+            untarred = True
+        if os.path.isdir(trackfolder+'/'+str(batchnum)):
+            if verbose:
+                print 'reading tracks for batch '+str(batchnum)+' from folder'
+            dfb = pd.DataFrame()
+            for partnum in np.arange(nppb)+1:
+                trackfile = 'track.batch'+str(batchnum)+'.'+obsloc+'.p'+str(partnum).zfill(4)
+                trackpath = trackfolder+'/'+str(batchnum)+'/'+trackfile
+                if os.path.isfile(trackpath):
+                    _, tracktable = readtfs(trackpath)
+                    if filters is not None:
+                        for (var, fun) in filters:
+                            tracktable = tracktable.loc[fun(tracktable[var])]
+                    if tpt is not None:
+                        tracktable = tracktable.tail(tpt)
+                    tracktable.reset_index(inplace=True)
+                    tracktable['NUMBER'] = tracktable['NUMBER'] + batchnum*nppb
+                    tracktable.set_index(['NUMBER','TURN'], inplace=True)
+                    dfb = dfb.append(tracktable)
+                else:
+                    print 'trackfile '+str(batchnum)+'/'+trackfile+' not found'
+            df = df.append(dfb)
+        else:
+            print "tracks for batch "+str(batchnum)+" not found"
+        if untarred:
+            if verbose:
+                print 'deleting untarred files for batch '+str(batchnum)
+            shutil.rmtree(trackfolder+'/'+str(batchnum))
+
+    df.sort_index(inplace=True)
+    return df
+
+
+# Functions for visualizing data
 
 # TODO: change scale
 def lossplot(lossfolder, lossloc="AP.UP.ZS21633", xax="X", yax="PX", cax="TURN", xlim=None, ylim=None, clim=[None,None], save=None):
@@ -699,11 +817,15 @@ def trackplot(trackfolder, obsloc="obs0001", xax="X", yax="PX", cax="TURN", xlim
     ax.set_xlabel(xax+' ['+xunit+']')
     ax.set_ylabel(yax+' ['+yunit+']')
 
-    if save is None:
+    if save is False:
+        pass
+    elif save is None:
         plt.show()
     else:
         plt.savefig(save)
         plt.close()
+
+    return fig, ax 
 
 
 def fullplot(folder, lossloc="AP.UP.ZS21633", obsloc="obs0002", xax="X", yax="PX", cax="TURN", xlim=None, ylim=None, clim=[None,None], tpt=3, save=None):
@@ -891,7 +1013,7 @@ def losshistscatter(lossfolder, lossloc="AP.UP.ZS21633",
     rect_histx = [left, bottom_h, width, 0.2]
     rect_histy = [left_h, bottom, 0.2, height]
 
-    plt.figure(1, figsize=(8, 8))
+    fig = plt.figure(1, figsize=(8, 8))
     cm = plt.cm.get_cmap('viridis')
 
     axScatter = plt.axes(rect_scatter)
@@ -1064,6 +1186,8 @@ def losshistcombo(lossfolder, lossloc="AP.UP.ZS21633",
     else:
         plt.savefig(save)
         plt.close()
+
+    return fig
 
 
 
