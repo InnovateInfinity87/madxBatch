@@ -11,6 +11,10 @@ import matplotlib as mpl
 mpl.use('Agg') #To use plotting routines on machines without display
 import python.dataprocessing as datproc
 
+tpstcap = 0.03729401
+tpsteap = 0.04
+tpstblade = 0.0046
+
 def makeplots(folder):
     lossfolder = folder+'/losses'
     trackfolder = folder+'/tracks'
@@ -42,17 +46,17 @@ def makeplots(folder):
     stdout = sys.stdout
     with open(plotfolder+"/stats.txt", 'w') as sys.stdout:
         if pycoll:
-            datproc.efficiency(lossfolder, pycoll=True, aperturex=[0.04219,0.08219], aperturey=[-0.0100,0.0100])
+            datproc.efficiency(lossfolder, pycoll=True, aperturex=[tpstcap+tpstblade, tpstcap+tpstblade+tpsteap], aperturey=[-0.0100,0.0100])
             print ""
             datproc.lossstats(lossfolder)
             print ""
-            datproc.emittance(lossfolder, lossloc=lossloc, ap=[0.04219,0.08219], betagamma=426.3167)
+            datproc.emittance(lossfolder, lossloc=lossloc, ap=[tpstcap+tpstblade, tpstcap+tpstblade+tpsteap], betagamma=426.3167)
         else:
-            datproc.efficiency(lossfolder, aperturex=[0.06815,0.08815], aperturey=[-0.023,0.023], zs_len=18.77, zs_an=4.1635E-4, aperturex2=[0.04140,0.06140])
+            datproc.efficiency(lossfolder, aperturex=[0.06815,0.08815], aperturey=[-0.023,0.023], zs_len=18.77, zs_an=4.1635E-4, aperturex2=[0.04160,0.06160])
             print ""
             datproc.wireangle(lossfolder)
             print ""
-            datproc.emittance(lossfolder, lossloc=lossloc, ap=[0.04219,0.08219], betagamma=426.3167)
+            datproc.emittance(lossfolder, lossloc=lossloc, ap=[0.06815,0.08815], betagamma=426.3167)
     sys.stdout = stdout
 
     # Make plots
@@ -67,7 +71,7 @@ def makeplots(folder):
         datproc.trackplot(trackfolder, obsloc="obs0004", cax="PT", clim=[-0.0025, 0.0020], tpt=300, save=plotfolder+"/tpst_circ_full_"+name+".png")
 
     if pycoll:
-        datproc.losshistscatter(lossfolder, lossloc=lossloc, xlim=[0.03759, 0.095], ylim=[0.0003,0.0027], cax="PT", clim=[-0.0025, 0.0020], xbin=0.001, ybin=0.00005, log=True, save=plotfolder+"/tpst_losshist_h_"+name+".png")
+        datproc.losshistscatter(lossfolder, lossloc=lossloc, xlim=[tpstcap, 0.095], ylim=[0.0003,0.0027], cax="PT", clim=[-0.0025, 0.0020], xbin=0.001, ybin=0.00005, log=True, save=plotfolder+"/tpst_losshist_h_"+name+".png")
         datproc.losshistscatter(lossfolder, lossloc=lossloc, xax='Y', yax='PY', xlim=[-0.02, 0.02], ylim=[-0.0006,0.0006], cax="PT", clim=[-0.0025, 0.0020], xbin=0.0006, ybin=0.00003, log=True, save=plotfolder+"/tpst_losshist_v_"+name+".png")
         datproc.losshistscatter(lossfolder, lossloc=lossloc, xax='X', yax='Y', xlim=[0.03759, 0.095], ylim=[-0.02, 0.02], cax="PT", clim=[-0.0025, 0.0020], xbin=0.001, ybin=0.0006, log=True, save=plotfolder+"/tpst_losshist_s_"+name+".png")
         datproc.lossplot(lossfolder, lossloc=None, xlim=[1668,1688], xax='S', yax='X', cax="PT", clim=[-0.0025, 0.0020], save=plotfolder+"/zs_loss_"+name+".png")

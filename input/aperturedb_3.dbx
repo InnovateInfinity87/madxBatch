@@ -95,8 +95,8 @@ Select, flag=seqedit, pattern="^TPST.21760$";
 !ap.DO.TPST21760:AP,APERTYPE=RECTANGLE,APERTURE={40/1000,0.078},APER_OFFSET={-1.01/1000,0.0};
 ap.UP.TPST21760:AP,APERTYPE=RECTANGLE,APERTURE={0.08,0.078};
 ap.DO.TPST21760:AP,APERTYPE=RECTANGLE,APERTURE={0.08,0.078};
-Install, element=ap.do.TPST21760, at:=TPST_002->l/2, from=selected;
-Install, element=ap.up.TPST21760, at:=-TPST_002->l/2, from=selected;
+Install, element=ap.do.TPST21760, at:=TPST_003->l/2, from=selected;
+Install, element=ap.up.TPST21760, at:=-TPST_003->l/2, from=selected;
 Select, flag=seqedit, clear = true;
 
 Select, flag=seqedit, pattern="^MST.21774$";

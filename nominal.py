@@ -18,6 +18,7 @@ for pc, db, fast in [(x,y,z) for x in bl for y in bl for z in bl]:
     name += "_fast" if fast else ""
 
     settings=Settings(name, studygroup="nominal", disk='afsproject')
+    settings.madxversion = '/afs/cern.ch/user/m/mad/bin/rel/5.03.06/madx-linux64-gnu'
     settings.seed = 0
     settings.pycollimate = pc
     settings.dynamicbump = db

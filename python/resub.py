@@ -19,7 +19,7 @@ import sys
 import fileinput
 import subprocess
 from shutil import copyfile
-from python.dataprocessing import errorcheck
+from dataprocessing import errorcheck
 
 if __name__ == "__main__":
     folder = sys.argv[1]

@@ -49,56 +49,25 @@ zswirethickness = 0.0002;
 /**********************************************************************/
 !-----------------------------------------------------------------------
 ! Call files for correct initialization of SPS.
-! TODO: 2015 files don't work due to conflict between tcpc and crystal1?
 !-----------------------------------------------------------------------
 
-CALL, FILE = '/afs/cern.ch/eng/sps/2014/beams/cngs_extraction.beamx';
+CALL, FILE = '/afs/cern.ch/eng/sps/2015/beams/cngs_extraction.beamx';
 CALL, FILE = 'pyHOMEDIR/input/sps.ele';
 CALL, FILE = 'pyHOMEDIR/input/aperturedb_1.dbx';
-CALL, FILE = '/afs/cern.ch/eng/sps/2014/aperture/aperturedb_2.dbx';
-CALL, FILE = '/afs/cern.ch/eng/sps/2014/sequence/sps.seq';
+CALL, FILE = '/afs/cern.ch/eng/sps/2015/aperture/aperturedb_2.dbx';
+CALL, FILE = '/afs/cern.ch/eng/sps/2015/sequence/sps.seq';
 CALL, FILE = 'pyHOMEDIR/input/aperturedb_3.dbx';
-CALL, FILE = '/afs/cern.ch/eng/sps/2014/strength/ft_noqs_ext.str';
+CALL, FILE = '/afs/cern.ch/eng/sps/2015/strength/ft_noqs_ext.str';
 OPTION, -ECHO;
 CALL, FILE = 'pyHOMEDIR/input/elements.str';
+
+USE, SEQUENCE = sps;
 
 ! Initial values changed in matching later
 klsda =      -0.0853222228;
 klsdb =      -0.1628238122;
 klsfa =      0.07660956178;
 klsfb =     -0.04949411915;
-
-!-----------------------------------------------------------------------
-! Install markers relevant to the crystal MDs
-! (Crystals + new TCSM)
-!-----------------------------------------------------------------------
-
-tcsm.new: MARKER;
-crystal1.ua9: MARKER;
-crystal2.ua9: MARKER;
-crystal3.ua9: MARKER;
-crystal4.ua9: MARKER;
-crystal5.ua9: MARKER;
-crystal_lss4.ua9: MARKER;
-
-! TODO: removes bshv and tecs?
-SEQEDIT, SEQUENCE = sps;
- FLATTEN;
-! REMOVE, ELEMENT = TCSM.51934;
- REMOVE, ELEMENT = bshv.51795;
- REMOVE, ELEMENT = tecs.51797;
- REMOVE, ELEMENT = tecs.51799;
- INSTALL, ELEMENT = tcsm.new, AT = 5158.5722;
- INSTALL, ELEMENT = crystal1.ua9, AT = 5178.1685;
- INSTALL, ELEMENT = crystal2.ua9, AT = 5179.4295;
- INSTALL, ELEMENT = crystal3.ua9, AT = 5179.9245;
- INSTALL, ELEMENT = crystal4.ua9, AT = 5180.8295;
- INSTALL, ELEMENT = crystal5.ua9, AT = 5181.3245;
- INSTALL, ELEMENT = crystal_lss4.ua9, AT = 4031; !check?
- FLATTEN;
-ENDEDIT;
-
-USE, SEQUENCE = sps;
 
 !-----------------------------------------------------------------------
 ! Set extraction sextupoles
@@ -375,8 +344,8 @@ qh = qh_res;
 CALL, FILE='pySLOWEXDIR/cmd/matchtune.cmdx';
 
 SELECT, FLAG=TWISS, CLEAR;
-TWISS;
 SELECT, FLAG=TWISS, COLUMN=NAME,S,BETX,ALFX,X,DX,PX,DPX,MUX,BETY,ALFY,Y,DY,PY,DPY,MUY,APER_1,APER_2,APER_3,APER_4;
+TWISS;
 
 chroma_res = TABLE(SUMM,DQ1);
 

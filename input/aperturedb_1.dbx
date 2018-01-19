@@ -3,7 +3,9 @@
 !--------------------------------------------------------------------------
 ! SPS Aperture Data Base
 ! G.Arduini - last modified 1/6/2006
-! (uncommented collimator apertures for tracking)
+! (commented invalid rcollimator->instrument redundant keywords xsize,ysize)
+! (remove TPST aperture in favor of up/down markers in db3)
+!
 !--------------------------------------------------------------------------
 
 AP: MARKER;
@@ -437,6 +439,10 @@ TIDP, APERTYPE=RECTANGLE, APERTURE={0.041,0.015}; !TIDP at 32 mm
 TIDV, APERTYPE=RECTANGLE, APERTURE={0.0425,0.0204};
 !TIDV, XSIZE=0.0425,YSIZE=0.0204;
 
+! TPST. Protection of MST and MSE extraction septa. B.Balhan
+! https://edms.cern.ch/file/1491626/0.1/SPS-TPST-EC-0001-00-10.pdf
+! 0.1365 = 0.273/2, 0.08825 = (0.040+0.273/2)/2. See: http://project-sps-optics.web.cern.ch/project-SPS-optics/2015/aperture/APERTURE_SPS.cdf
+!TPST_003, APERTYPE=RECTANGLE, APERTURE={0.08825,0.1365}, APER_OFFSET={-0.04825,0};
 
 
 

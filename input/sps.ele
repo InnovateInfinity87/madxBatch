@@ -1,7 +1,7 @@
   /**********************************************************************************
   *
   * SPS Ring version STUDY in MAD X SEQUENCE format
-  * Generated the 12-SEP-2014 09:26:19 from LHCLAYOUT@EDMSDB Database
+  * Generated the 25-MAR-2015 13:22:33 from LHCLAYOUT@EDMSDB Database
   * Adapted for pycollimate: collimators are INSTRUMENT unless needed,
   *     ZS is RCOLLIMATOR
   *
@@ -34,7 +34,7 @@ MPSH      : HKICKER     , L := .714;      ! Bumper magnet, pulsed, short, horizo
 MSE       : HKICKER     , L := 2.38;      ! Septum magnet, extractor
 MST       : HKICKER     , L := 2.38;      ! Septum magnet, thin
 ZKHA      : HKICKER     , L := 1;         ! Electrostatic kicker, horizontal, enlarged (RF group)
-ZS        : RCOLLIMATOR     , L := 3.13;      ! Electrostatic septum
+ZS        : RCOLLIMATOR , L := 3.13;      ! Electrostatic septum
 //---------------------- HMONITOR       ---------------------------------------------
 AERB      : HMONITOR    , L := .685;      ! RF pick-up electrode, radial, type B
 BDH       : HMONITOR    , L := 2.32;      ! Beam damper horizontal (RF equipment)
@@ -82,7 +82,6 @@ VVSB      : INSTRUMENT  , L := .175;      ! Vacuum valve, sector, diameter 150 m
 VVSE      : INSTRUMENT  , L := .12;       ! Vacuum valve, sector, bakeable, diameter 250 mm.
 VVSF      : INSTRUMENT  , L := .18;       ! Vacuum valve, sector, bakeable, diameter 400 mm.
 XCLD      : INSTRUMENT  , L := 10.272;    ! COLDEX Cryogenic Experiment
-XRP       : INSTRUMENT  , L := 1.313;     ! Roman Pot Horizontal and Vertical (4 axes)
 XRPH      : INSTRUMENT  , L := .586;      ! Roman Pot Horizontal plane only (2 axes)
 XRPHB     : INSTRUMENT  , L := .417;      ! Mini Roman Pot, Horizontal plane only (2 axes)
 //---------------------- MARKER         ---------------------------------------------
@@ -123,22 +122,23 @@ QMS       : QUADRUPOLE  , L := .705;      ! Quadrupole, main ring, short
 MBA       : RBEND       , L := 6.26;      ! Bending magnet, type B1
 MBB       : RBEND       , L := 6.26;      ! Bending Magnet, type B2
 //---------------------- RCOLLIMATOR    ---------------------------------------------
-BRCH      :  INSTRUMENT, L := .6;        ! Collimator horizontal (from LEP)
-BRCV      :  INSTRUMENT, L := .6;        ! Collimator vertical (from LEP)
-BRCZ      :  INSTRUMENT, L := .36;       ! Collimator (from LEP)
-BSHV      :  INSTRUMENT, L := .45;       ! Beam scraper, horizontal + vertical (test)
-TACW      :  INSTRUMENT, L := .848;      ! Aperture Collimator with Tungsten jaw
-TAL       :  INSTRUMENT, L := 1.25;      ! Tungsten absorber - Secondary collimator. Drawing SPSTCSTV0026.
-TBSJB     :  INSTRUMENT, L := 2.1;       ! Beam stopper, before inflector, type B (?)
-TBSM      :  INSTRUMENT, L := 2;         ! Beam stopper, first turn
-TCE       :  INSTRUMENT, L := 2.7;       ! Collimator, extraction
-TCSM      :  INSTRUMENT, L := 1.83;      ! Simplified Phase I collimator prototype (Glidcop jaw with graphite inserts) with integrated BPMs
-TIDH      :  INSTRUMENT, L := 4.3;       ! Internal beam dump, horizontal
-TIDP      :  INSTRUMENT, L := 4.3;       ! Internal beam dump, momentum
-TIDV      :  INSTRUMENT, L := 4.3;       ! Internal beam dump, vertical
-TPSG      :  INSTRUMENT, L := 3;         ! Protection shield for septum magnet MSE, graphite
-TPSGS     :  INSTRUMENT, L := 1.853;
-TPST_002  :  INSTRUMENT, L := 2.52;      ! Protection shield for septum magnet MST
+BRCH      : INSTRUMENT , L := .6;        ! Collimator horizontal (from LEP)
+BRCV      : INSTRUMENT , L := .6;        ! Collimator vertical (from LEP)
+BRCZ      : INSTRUMENT , L := .36;       ! Collimator (from LEP)
+BSHV      : INSTRUMENT , L := .45;       ! Beam scraper, horizontal + vertical (test)
+TACW      : INSTRUMENT , L := .848;      ! Aperture Collimator with Tungsten jaw
+TAL       : INSTRUMENT , L := 1.25;      ! Tungsten absorber - Secondary collimator. Drawing SPSTCSTV0026.
+TBSJB     : INSTRUMENT , L := 2.1;       ! Beam stopper, before inflector, type B (?)
+TBSM      : INSTRUMENT , L := 2;         ! Beam stopper, first turn
+TCE       : INSTRUMENT , L := 2.7;       ! Collimator, extraction
+TCPC      : INSTRUMENT , L := .45;       ! Target Collimator Primary Crystal
+TCSM      : INSTRUMENT , L := 1.83;      ! Simplified Phase I collimator prototype (Glidcop jaw with graphite inserts) with integrated BPMs
+TIDH      : INSTRUMENT , L := 4.3;       ! Internal beam dump, horizontal
+TIDP      : INSTRUMENT , L := 4.3;       ! Internal beam dump, momentum
+TIDV      : INSTRUMENT , L := 4.3;       ! Internal beam dump, vertical
+TPSG      : INSTRUMENT , L := 3;         ! Protection shield for septum magnet MSE, graphite
+TPSGS     : INSTRUMENT , L := 1.853;
+TPST_003  : INSTRUMENT , L := 2.251;     ! Protection shield for septum magnet MST
 //---------------------- RFCAVITY       ---------------------------------------------
 ACL       : RFCAVITY    , L := 3.52913;   ! Accelerating cavity, Landau damping, travelling wave 800 MHz, Valvo
 ACTA      : RFCAVITY    , L := 17.782;    ! Accelerating cavity, travelling wave 200 MHz, type A (4 modules, 43 cells)
