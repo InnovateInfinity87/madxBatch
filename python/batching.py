@@ -87,6 +87,7 @@ class Settings:
         self.pycollimate = True
         self.septadb = self.home+"/input/septa_DB_nominal.tfs"
         self.septadbreplace = None
+        self.pcblack = False
 
         self.dynamicbump=False
         self.dynamicbump_cx = -729.5  # knob_x_bump = this*dpp (millimeter)
@@ -419,6 +420,11 @@ def submit_job(settings):
             for key, replacement in settings.septadbreplace.iteritems():
                 replacer("septa_DB_custom.tfs", key, replacement)
 
+        #Change from scattering to black in pycollimate, if needed
+        if settings.pcblack:
+            copyfile(settings.pycolldir+"track_inside_coll.py", "track_inside_coll.py")
+            replacer("track_inside_coll.py", "black=False", "black=True")
+
         #Prepare job files for each batch
         copyfile(settings.home+"/other/job.sh", "jobs/start.sh")
         if settings.pycollimate:
@@ -441,7 +447,7 @@ def submit_job(settings):
                 subfile.write("transfer_input_files = "+
                               "jobs/$(ProcId).madx, "+
                               settings.pycolldir+"madxColl, "+
-                              settings.pycolldir+"track_inside_coll.py, "+
+                              ("" if (settings.pcblack) else settings.pycolldir)+"track_inside_coll.py, "+
                               settings.pycolldir+"pycollimate.py, "+
                               (settings.septadb if (settings.septadbreplace is None) else "septa_DB_custom.tfs")+", "+
                               settings.home+"/other/matplotlibrc, "+
