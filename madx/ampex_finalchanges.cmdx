@@ -1,0 +1,40 @@
+! Match chroma to 0 with bump on.
+
+qh = qh_res;
+dqh_norm = 0.0;
+CALL, FILE='pySLOWEXDIR/cmd/matchtune.cmdx';
+CALL, FILE='pySLOWEXDIR/cmd/matchchroma.cmdx';
+
+! dpp values provide hacked dynamic bump settings
+dpp_start = -1;
+dpp_end = 1;
+
+! qh values provide actual tune sweep
+qh_start = 26.657;
+qh_end = 26.667;
+
+! Bruteforce DB tune compensation (needs proper settings.myreplace:
+! settings.myreplace['pyDB'] = '1'
+! settings.myreplace['pyCX'] = str(settings.dynamicbump_cx)
+! settings.myreplace['pyCPX'] = str(settings.dynamicbump_cpx))
+IF (pyDB==1){
+  qh = qh_start;
+  temp_bf_cx = (pyCX)*dpp_start;
+  temp_bf_cpx = (pyCPX)*dpp_start;
+  EXEC, lss2bump(knob_extr_bump, temp_bf_cx, temp_bf_cpx);
+  CALL, FILE='pySLOWEXDIR/cmd/matchtune.cmdx';
+  EXEC, lss2bump(knob_extr_bump, 0, 0);
+  TWISS;
+  qh_start = TABLE(SUMM, Q1);
+
+  qh = qh_end;
+  temp_bf_cx = (pyCX)*dpp_end;
+  temp_bf_cpx = (pyCPX)*dpp_end;
+  EXEC, lss2bump(knob_extr_bump, temp_bf_cx, temp_bf_cpx);
+  CALL, FILE='pySLOWEXDIR/cmd/matchtune.cmdx';
+  EXEC, lss2bump(knob_extr_bump, 0, 0);
+  TWISS;
+  qh_end = TABLE(SUMM, Q1);
+
+  VALUE, qh_start, qh_end;
+}

@@ -956,6 +956,116 @@ def losshistscatter(lossfolder, lossloc="AP.UP.ZS21633",
         plt.close()
 
 
+def losshistcombo(lossfolder, lossloc="AP.UP.ZS21633",
+                  xax="X", yax="PX", log=False,
+                  xlim=None, ylim=None, cm='viridis',
+                  xbin=None, ybin=None, extra=None,
+                  save=None, datalim=[[None,None],[None,None]]):
+    if xax=='S':
+        lossloc = None
+    xdata = []
+    ydata = []
+
+    empty = 0
+
+    for lossfile in os.listdir(lossfolder):
+        if os.stat(lossfolder+'/'+lossfile).st_size > 0:
+            _, losstable = readtfs(lossfolder+'/'+lossfile)
+            if lossloc is not None:
+                losstable = losstable.loc[losstable['ELEMENT'] == lossloc]
+            xdata += losstable[xax].tolist()
+            ydata += losstable[yax].tolist()
+        else:
+            empty += 1
+
+    if empty>0:
+        print "warning: "+str(empty)+" empty loss files found!"
+
+    selector = [((True if (datalim[0][0] is None) else (datalim[0][0]<=xdata[i])) and
+                 (True if (datalim[0][1] is None) else (xdata[i]<=datalim[0][1])) and
+                 (True if (datalim[1][0] is None) else (datalim[1][0]<=ydata[i])) and
+                 (True if (datalim[1][1] is None) else (ydata[i]<=datalim[1][1])))
+                 for i in range(len(xdata))]
+    xdata = [xdata[i] for i in range(len(selector)) if selector[i]]
+    ydata = [ydata[i] for i in range(len(selector)) if selector[i]]
+
+    xunit = _units[xax]
+    yunit = _units[yax]
+
+    left, width = 0.1, 0.65
+    left_h = left + width + 0.02
+    bottom, height = 0.1, 0.65
+    bottom_h = bottom + height + 0.02
+
+    rect_scatter = [left, bottom, width, height]
+    rect_histx = [left, bottom_h, width, 0.2]
+    rect_histy = [left_h, bottom, 0.2, height]
+
+    plt.figure(1, figsize=(8, 8))
+    cm = plt.cm.get_cmap(cm)
+
+    axScatter = plt.axes(rect_scatter)
+    #plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
+    #plt.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
+
+    axHistx = plt.axes(rect_histx)
+    axHisty = plt.axes(rect_histy)
+
+    axHistx.xaxis.set_major_formatter(NullFormatter())
+    axHisty.yaxis.set_major_formatter(NullFormatter())
+
+    weights = 100*np.ones_like(xdata)/len(xdata)
+
+    if xbin is None:
+        xbin = (max(xdata)-min(xdata))/100
+    if ybin is None:
+        ybin = (max(xdata)-min(xdata))/100
+
+    if xlim is None:
+        binsx = np.arange(min(xdata)-xbin, max(xdata)+2*xbin, xbin)
+    else:
+        binsx = np.arange(xlim[0]-xbin, xlim[1]+xbin, xbin)
+
+    if ylim is None:
+        binsy = np.arange(min(ydata)-ybin, max(ydata)+2*ybin, ybin)
+    else:
+        binsy = np.arange(ylim[0]-ybin, ylim[1]+ybin, ybin)
+
+    args={}
+    if log:
+        args['norm'] = LogNorm()
+    axScatter.hist2d(xdata, ydata, bins=[binsx,binsy], normed=True,
+                     weights=weights, cmap=cm, **args)
+
+    if extra is not None:
+        for line in extra:
+            linex = [v[0] for v in line]
+            liney = [v[1] for v in line]
+            axScatter.plot(linex, liney, 'k--')
+        
+    axScatter.set_xlim((binsx[0], binsx[-1]))
+    axScatter.set_ylim((binsy[0], binsy[-1]))
+
+    axHistx.hist(xdata, bins=binsx, weights=weights, log=log)
+    axHisty.hist(ydata, bins=binsy, weights=weights,
+                 orientation='horizontal', log=log)
+
+    axHistx.set_xlim(axScatter.get_xlim())
+    axHisty.set_ylim(axScatter.get_ylim())
+
+    axScatter.set_xlabel(xax+' ['+xunit+']')
+    axScatter.set_ylabel(yax+' ['+yunit+']')
+
+    axHistx.set_ylabel(r'$\%$')
+    axHisty.set_xlabel(r'$\%$')
+
+    if save is None:
+        plt.show()
+    else:
+        plt.savefig(save)
+        plt.close()
+
+
 
 
 
