@@ -74,10 +74,13 @@ def makeplots(folder):
         datproc.losshistscatter(lossfolder, lossloc=lossloc, xlim=[tpstcap, 0.095], ylim=[0.0003,0.0027], cax="PT", clim=[-0.0025, 0.0020], xbin=0.001, ybin=0.00005, log=True, save=plotfolder+"/tpst_losshist_h_"+name+".png")
         datproc.losshistscatter(lossfolder, lossloc=lossloc, xax='Y', yax='PY', xlim=[-0.02, 0.02], ylim=[-0.0006,0.0006], cax="PT", clim=[-0.0025, 0.0020], xbin=0.0006, ybin=0.00003, log=True, save=plotfolder+"/tpst_losshist_v_"+name+".png")
         datproc.losshistscatter(lossfolder, lossloc=lossloc, xax='X', yax='Y', xlim=[0.03759, 0.095], ylim=[-0.02, 0.02], cax="PT", clim=[-0.0025, 0.0020], xbin=0.001, ybin=0.0006, log=True, save=plotfolder+"/tpst_losshist_s_"+name+".png")
+        datproc.losshistcombo(lossfolder, lossloc=lossloc, xlim=[tpstcap, 0.095], ylim=[0.0003,0.0027], xbin=0.0005, ybin=0.000025, cm='viridis', log=True, save=plotfolder+"/losshist2_"+name+".png")
         datproc.lossplot(lossfolder, lossloc=None, xlim=[1668,1688], xax='S', yax='X', cax="PT", clim=[-0.0025, 0.0020], save=plotfolder+"/zs_loss_"+name+".png")
     else:
         datproc.lossplot(lossfolder, xlim=[0.0675, 0.084], ylim=[-0.0018, -0.0013], cax="PT", clim=[-0.0025, 0.0020], save=plotfolder+"/beam_"+name+".png")
-        datproc.losshistscatter(lossfolder, lossloc=lossloc, xlim=[0.06815,0.08315], ylim=[-0.0018, -0.00135],cax="PT", clim=[-0.0025, 0.0020], xbin=0.0002, ybin=0.00001, log=False, save=plotfolder+"/losshist_"+name+".png")
+        datproc.losshistscatter(lossfolder, lossloc=lossloc, xlim=[0.06815,0.08515], ylim=[-0.00185, -0.00135],cax="PT", clim=[-0.0025, 0.0020], xbin=0.0002, ybin=0.00001, log=False, save=plotfolder+"/losshist_"+name+".png")
+        datproc.losshistcombo(lossfolder, lossloc=lossloc, xlim=[0.06815,0.08515], ylim=[-0.00185, -0.00135], xbin=0.0002, ybin=0.000005, cm='viridis', log=False, save=plotfolder+"/losshist2_"+name+".png")
+        datproc.losshistcombo(lossfolder, lossloc=lossloc, xlim=[0.06815,0.07215], ylim=[-0.00155, -0.0014], xbin=0.00008, ybin=0.000004, cm='viridis', log=False, save=plotfolder+"/losshist2_zoom_"+name+".png")
 
 
 if __name__ == "__main__":
