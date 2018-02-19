@@ -316,6 +316,8 @@ def submit_job(settings):
       template options added.
     - The generated twiss table should be generated in output, not input.
     """
+    starting_dir = os.getcwd()
+
     if settings.slices is not None:
         nslices = len(settings.slices)
         if settings.trackerrep==track_lin:
@@ -481,6 +483,8 @@ def submit_job(settings):
             subprocess.check_call("condor_submit "+settings.name+".sub", shell=True)
             if settings.monitor:
                 subprocess.check_call("condor_wait -status "+settings.datadir+"log.txt", shell=True)
+
+    os.chdir(starting_dir)
 
 
 def tester():
