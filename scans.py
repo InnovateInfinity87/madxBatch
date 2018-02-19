@@ -1,4 +1,5 @@
-from __future__ import division, print_function
+from __future__ import print_function
+from __future__ import division
 import sys, re
 import numpy as np
 import pandas as pd
@@ -6,6 +7,7 @@ basePath = '/afs/cern.ch/project/sloex/'
 sys.path.append(basePath+'code/madxBatch')
 sys.path.append(basePath+'code/slowExtractionMADX')
 from python.batching import Settings, submit_job, track_lin
+import python.dataprocessing as dp
 
 ## ------ Global parameters ------ ##
 # TODO: gamma and magnet strengths should not be hardcoded
@@ -33,17 +35,18 @@ class Ripple(object):
 
     """
 
-    parentDirectory = '/'.join((basePath,'ripple')).replace('//', '/')
-
     def __init__(self, rippleParams, baseTracker = track_lin):
         # Tracker template
         self.baseTracker = baseTracker
         # List of magnets that can be rippled with this code - plus RF
         self.elements = ['qf', 'qd', 'qms', 'mb', 'mp', 'lse', 'lsd', 'lsf', 'rf']
 
+        self.folder = ''
+
         for key in self.elements:
             try:
                 setattr(self, key, rippleParams[key])
+                self.folder += '_'.join([key] + map(str, rippleParams[key].tolist()))
             except KeyError:
                 setattr(self, key, pd.Series([]))
 
@@ -178,65 +181,44 @@ class Ripple(object):
 
         print(madxCode)
 
+    def run(self, studyname = None, studygroup = 'ripple', nturns = 50000, nbatches = 500, nparperbatch = 200, seed = 0, pycollimate = False, elements = ['AP.UP.ZS21633','AP.DO.ZS21676','AP.UP.TPST21760'], ffile = 500, savetracks = False, **mySettings):
 
-class Align(object):
+        # Create settings instance
+        if studyname is None:
+            studyname = self.folder
+        self.settings = Settings(self.folder, studygroup = studygroup, disk = 'afsproject')
 
-    parentDirectory = '/'.join((basePath, 'emittance/zsalign')).replace('//', '/')
+        # Set folder name for the study in the studyGroup directory
+        self.settings.name = self.folder
 
-    def __init__(self, alignParams, baseTracker = track_lin, trackerTemplate = 'tracker_nominal_template.madx'):
-        self.baseTracker = baseTracker
-        self.trackerTemplate = trackerTemplate
-        self.alignParams = alignParams
+        # Set tracker to custom
+        self.settings.trackerrep = lambda k, data, settings: self.tracker(k, data, settings)
 
-        for key in alignParams.keys():
-            setattr(self, key, alignParams[key])
+        # Set random seed
+        self.settings.seed = seed
+        # Use pyCollimate scattering routine
+        self.settings.pycollimate = pycollimate
+        # Observe losses at these elements
+        self.settings.elements = elements
+        # Simulation length in number of turns
+        self.settings.nturns = nturns
+        # Save tracks every ffile turns
+        self.settings.ffile = ffile
 
-    def _replace(self):
-        line = '\n'
+        # Number of batches
+        self.settings.nbatches = nbatches # number of batches
+        # Number of particles per batch
+        self.settings.nparperbatch = nparperbatch # particles per batch
 
-        for var, value in zip(self.alignParams.index, self.alignParams):
-            line += '{} = {};\n'.format(var, value)
+        # Save track files - takes up a lot of space
+        self.settings.savetracks = savetracks
 
-        return line
+        # Other settings
+        for mySetting in mySettings:
+            setattr(self.settings, mySetting, mySettings[mySetting])
 
-    def tracker(self, k, data, settings):
-        """Change ZS alignment in tracker_nominal_template.madx.
+        submit_job(self.settings)
 
-        The function works by side-effect, changing the template in settings.trackertemplate.
-        @return: None"""
-        try:
-            with open(settings.trackertemplate, 'r') as f:
-                madxCode = f.read()
-        except IOError:
-            print('Error reading tracker template at {}'.format(settings.trackertemplate))
-            return
-
-        # Remove zswirethickness before adding it again
-        madxCode = re.sub('\nzswirethickness.*=.*\n', '\n', madxCode)
-        # Pattern to replace
-        regexp = re.compile(r'\nzswireup.*=.*\nzswiredo.*=.*\n')
-        # Replacement
-        line = self._replace()
-
-        if regexp.search(madxCode):
-            madxCode = re.sub('\nzswireup.*\nzswiredo.*\n', line, madxCode)
-        else:
-            print('WARNING: no substitutions were made because the original tracker {} did not define girder alignment'.format(self.settings.trackertemplate))
-            return
-
-        newTrackerTemplate = '/'.join((self.parentDirectory, 'tracker_new_template.madx')).replace('//', '/')
-
-        with open(newTrackerTemplate, 'w') as f:
-            f.write(madxCode)
-
-        settings.trackertemplate = newTrackerTemplate
-        return self.baseTracker(k, data, settings)
-
-    def _printTracker(self):
-        """Only for checking everything works"""
-        madxCode = self.tracker(0, np.random.randn(200, 200), Settings('dummy', 'dum'))
-
-        print(madxCode)
 
 class Scan(object):
     """Create and run several studies of the same type for different values of the parameters.
@@ -305,7 +287,7 @@ class Scan(object):
                     # postprocess
         return
 
-    def run(self, nturns = 50000, nbatches = 500, nparperbatch = 200, seed = 0, pycollimate = False, elements = ['AP.UP.ZS21633','AP.DO.ZS21676','AP.UP.TPST21760'], ffile = 500, savetracks = False):
+    def runScan(self, nturns = 50000, nbatches = 500, nparperbatch = 200, seed = 0, pycollimate = False, elements = ['AP.UP.ZS21633','AP.DO.ZS21676','AP.UP.TPST21760'], ffile = 500, savetracks = False):
 
         # Load parameters file
         d = pd.read_csv(self.paramsFile)
@@ -314,35 +296,7 @@ class Scan(object):
             # Create instance of study for these combination of parameters
             study = studyClass(row)
 
-            # Create settings instance
-            self.settings = Settings(self.paramsToFolder(row), studygroup = self.studyClass.parentDirectory, disk = 'afsproject')
-
-            # Set folder name for the study in the studyGroup directory
-            self.settings.name = self.paramsToFolder(row)
-
-            # Set tracker to custom
-            # TODO: re-write Alignment tracker so that this makes sense
-            self.settings.trackerrep = lambda k, data, settings: self.study.tracker(k, data, settings)
-
-            # Set random seed
-            self.settings.seed = seed
-            # Use pyCollimate scattering routine
-            self.settings.pycollimate = pycollimate
-            # Observe losses at these elements
-            self.settings.elements = elements
-            # Simulation length in number of turns
-            self.settings.nturns = nturns
-            self.settings.ffile = ffile # ffile MADX ?
-
-            # Number of batches
-            self.settings.nbatches = nbatches # number of batches
-            # Number of particles per batch
-            self.settings.nparperbatch = nparperbatch # particles per batch
-
-            # Save track files - takes up a lot of space
-            self.settings.savetracks = savetracks
-
-            submit_job(self.settings)
+            study.run(nturns = nturns, nbatches = nbatches, nparperbatch = nparperbatch, seed = seed, pycollimate = pycollimate, elements = elements, ffile = ffile, savetracks = savetracks)
 
     # Post-processing goes here. It could mostly be done by calling functions from the dataprocessing module and looping:
     # 1. tfs files to csv including where the particle hit
@@ -352,38 +306,94 @@ class Scan(object):
     # 5. Other plots ?
 
 
-def parseLossFiles(scanFolder, lossFolders, align):
-    """Reads loss files for every study in a scan and finds where particles hit the ZS.
+class Align(object):
 
-    @param lossFolders: list of lists of paths to tfs files. lossFolders[i][j] contains the j-th tfs loss file for the i-th study in a scan.
-    @param align: pd.DataFrame containing alignment information.
-    @return: None - saves csv files (one per study) with (X,PX) coordinates at ZS upstream, at the point the particle hit the ZS and label indicating tank where it hit and from where.
-    """
-    hDir = '/'.join((scanFolder+ '_hits')).replace('//','/')
-    if not os.path.isdir(hDir):
-        os.makedirs(hDir)
+    parentDirectory = '/'.join((basePath, 'emittance/zsalign')).replace('//', '/')
 
-    for folder in lossFolders:
-        h = []
-        hFile = '/'.join(hDir, folder[0].split('/')[-3], )).replace('//','/')
+    def __init__(self, alignParams, baseTracker = track_lin, trackerTemplate = 'tracker_nominal_template.madx'):
+        self.baseTracker = baseTracker
+        self.trackerTemplate = trackerTemplate
+        self.alignParams = alignParams
 
-        if os.path.isfile(hFile):
-            print('{} already exists'.format(hFile))
+        for key in alignParams.keys():
+            setattr(self, key, alignParams[key])
+
+    def _replace(self):
+        line = '\n'
+
+        for var, value in zip(self.alignParams.index, self.alignParams):
+            line += '{} = {};\n'.format(var, value)
+
+        return line
+
+    def tracker(self, k, data, settings):
+        """Change ZS alignment in tracker_nominal_template.madx.
+
+        The function works by side-effect, changing the template in settings.trackertemplate.
+        @return: None"""
+        try:
+            with open(settings.trackertemplate, 'r') as f:
+                madxCode = f.read()
+        except IOError:
+            print('Error reading tracker template at {}'.format(settings.trackertemplate))
+            return
+
+        # Remove zswirethickness before adding it again
+        madxCode = re.sub('\nzswirethickness.*=.*\n', '\n', madxCode)
+        # Pattern to replace
+        regexp = re.compile(r'\nzswireup.*=.*\nzswiredo.*=.*\n')
+        # Replacement
+        line = self._replace()
+
+        if regexp.search(madxCode):
+            madxCode = re.sub('\nzswireup.*\nzswiredo.*\n', line, madxCode)
         else:
-            print('{} needs to be computed...'.format(hFile))
+            print('WARNING: no substitutions were made because the original tracker {} did not define girder alignment'.format(self.settings.trackertemplate))
+            return
 
-            for f in folder:
-                try:
-                    _, table = dp.readtfs(f)
-                except UnboundLocalError:
-                    print('File {} was empty!'.format(f))
-                    continue
+        newTrackerTemplate = '/'.join((self.parentDirectory, 'tracker_new_template.madx')).replace('//', '/')
 
-                for _, particle in table.iterrows():
-                    particle = fieldFreeBacktrack(particle)
-                    h.append(checkIntersection(particle, align))
+        with open(newTrackerTemplate, 'w') as f:
+            f.write(madxCode)
 
-                pd.DataFrame(hits).to_csv(hFile)
+        settings.trackertemplate = newTrackerTemplate
+        return self.baseTracker(k, data, settings)
+
+    def _printTracker(self):
+        """Only for checking everything works"""
+        madxCode = self.tracker(0, np.random.randn(200, 200), Settings('dummy', 'dum'))
+
+        print(madxCode)
+
+
+
+def parseLossFiles(lossFiles, align, nParPerBatch = 200, doPrint = True):
+
+    h = []
+
+    for f in lossFiles:
+        nBatch = int(f.split('/')[-1].split('.')[0])
+
+        if doPrint:
+            print('Reading... {}.tfs'.format(nBatch))
+
+        try:
+            _, table = dp.readtfs(f)
+        except UnboundLocalError:
+            print('File {} was empty!'.format(f))
+            continue
+
+        for _, particle in table.iterrows():
+            # Backtrack particle and check intersection
+            particle = fieldFreeBacktrack(particle)
+            hit = checkIntersection(particle, align)
+
+            # Add batch number to particle id
+            hit['NUMBER'] += nParPerBatch*nBatch
+
+            h.append(hit)
+
+    return pd.DataFrame(h)
 
 def getJobs():
     """Call condor_q, read output and save it to a dict with number of jobs in each state (running, idle, etc.)"""
@@ -403,7 +413,228 @@ def getJobs():
     return {i[1]: int(i[0]) for i in [j.split() for j in jobs]}
 
 
-def checkIntersection(particle0, align, kick = 4.1635e-4):
+## Cross and checkCross where meant to be used with track files ##
+
+def cross(d, wire, girder, kick = 4.1635e-4):
+    """Check if particle hits a wire in this order: HO, IN, OUT, SLIP."""
+
+    # TODO: Add batch number to this
+    number = d.index[0]
+
+    zsup, zsdo, th = girder.up, girder.do, girder.theta
+
+    tank = int(wire.name[-1])
+
+    upOut = wire.up + girder.up
+    upIn = upOut + wire.thick
+
+    doOut = wire.do + girder.up
+    doIn = doOut + wire.thick
+
+    # Head on
+    ho = (d.X > upOut)*(d.PX < upIn)
+
+    if ho.any():
+        hit = d[ho].iloc[0,:]
+        return {'NUMBER': number,
+                'X': hit.X, 'PX': hit.PX, 'S_': hit.S,
+                'HIT': 'HO', 'tank': tank}
+
+    # Inside
+    din = d[d.X > upIn]
+    delta = (din.PX - th - wire.theta)**2 - 2*kick*(din.X - zsup - wire.gamma)/L
+    sf = din.S + L*(th + wire.theta - din.PX - np.sqrt(delta))/kick
+
+    ins = (sf > wire.s)*(sf < wire.s + wire.l)
+
+    if ins.any():
+        hit = din[ins].iloc[0,:]
+        return {'NUMBER': number,
+                'X': hit.X, 'PX': hit.P, 'S_': sf[ins][0],
+                'HIT': 'IN', 'tank': tank}
+
+    # Outside
+    dout = d[d.X < upOut]
+    try:
+        sf = dout.S + (zsup+wire.gamma-dout.X)/(dout.PX-th-wire.theta)
+    except ZeroDivisionError:
+        raise
+
+    out = (sf > wire.s)*(sf < wire.s + wire.l)
+    if out.any():
+        hit = dout[out].iloc[0,:]
+        return {'NUMBER': number,
+                'X': hit.X, 'PX': hit.PX, 'S_': sf[out].iloc[0],
+                'HIT': 'OUT', 'tank': tank}
+
+    # Enters ZS through tank gaps
+    slip = (sf > wire.s + wire.l)*(sf < wire.s + wire.l + wire.gap)
+    if slip.any():
+        hit = dout[slip].iloc[0,:]
+        return {'NUMBER': number,
+                'X': hit.X, 'PX': hit.PX, 'S_': sf[slip].iloc[0],
+                'HIT': 'SLIP', 'tank': tank}
+
+    return {}
+
+def checkCross(d, align, kick = 4.1635e-4):
+    """Call cross function iteratively for every tank."""
+
+    d = fieldFreeBacktrack(d)
+
+    align['theta'] = (align.do - align.up)/align.l
+    align['gamma'] = align.up - align.theta*align.s
+    align['gap'] = np.diff(align.s[:-1]) - align.l[:-2]
+
+    girder = align.loc['girder', :]
+    h = {}
+
+    for k, wire in align.iterrows():
+        if 'tank' in wire.name and not h:
+            h = cross(d, wire, girder)
+    else:
+        hit = d.iloc[-1,:]
+        h = {'NUMBER': d.index[0],
+             'X': hit.X, 'PX': hit.PX, 'S_': hit.S,
+             'HIT': 'EXT', 'tank': np.nan}
+
+    return h
+
+
+### As of 19/1/18 checkIntersection seems to work fine and checkLosses is an attempt at vectorising checkIntersection that has yet to be benchmarked
+
+def checkLosses(_d, align, kick = 4.1635e-4):
+    """Compute losses
+    @param _d: pd.DataFrame - loss table
+    @param align: pd.DataFrame - alignment settings
+    @param kick: float - ZS kick"""
+
+    align['theta'] = (align.do - align.up)/align.l
+    align['gamma'] = align.up - align.theta*align.s
+    align['gap'] = np.diff(align.s[:-1]) - align.l[:-2]
+
+    d = _d.copy()
+
+    d = advance(d, min(d.S) - d.S, kick = 0)
+
+    d['X0'] = d.X
+    d['PX0'] = d.PX
+    d['S0'] = d.S
+
+    d['HIT'] = '_OUT'
+    d['tank'] = 'none'
+
+    for tank, wire in align.iterrows():
+        if 'tank' in wire.name:
+            uOut = align.up.girder + wire.up + align.theta.girder*(wire.s - align.s.girder)
+            uIn = uOut + wire.thick
+
+            # Check if the particles hit the wires head on or move into/out of the ZS
+            d.pipe(moveIn, uOut)
+            d.pipe(moveOut, uIn)
+            d.pipe(hitHO, uIn, uOut, tank)
+
+            # Move particles along tank, checking if they're lost or extracted
+            d.loc[d.HIT == '_IN', :] = evolve(d.loc[d.HIT == '_IN', :], align, tank, kick)
+            d.loc[d.HIT == '_OUT', :] = evolve(d.loc[d.HIT == '_OUT', :], align, tank, kick = 0)
+
+    d.pipe(declareCirculating)
+
+    return d
+
+
+def evolve(d, align, tank, kick):
+    """Check if particles are lost, extracted or keep circulating."""
+
+    # Global alignment parameters
+    th = align.theta.girder
+    L = align.l.girder
+    s0 = align.s.girder
+    zsUp, zsDo = align.loc['girder', ['up', 'do']]
+
+    # Wire parameters
+    wire = align.loc[tank, :]
+    theta = th + wire.theta
+    sUp, sDo = wire.s, wire.s + wire.l
+    xUp, xDo = zsUp + th*sUp + wire.up, zsUp + th*sUp + wire.up + wire.theta*(sDo - sUp)
+
+    l = wire.l if tank == 'tank5' else wire.l + wire.gap
+
+    # Coordinates
+    x0, p0 = d.X, d.PX
+
+    # Discriminant for the intersection equation
+    delta = (p0 - theta)**2 - 2*kick*(x0 - xUp)/L
+
+    if kick > 0:
+        hit = 'IN'
+        sHit = sUp + L*(theta - p0 + np.sqrt(delta))/kick
+       # TODO: what about cathode?
+    else:
+        hit = 'OUT'
+        try:
+            sHit = sUp + (xUp - x0)/(p0 - theta)
+        except ZeroDivisionError:
+            pass
+
+    # Extracted
+    d.loc[(delta < 0), :] = advance(d.loc[(delta < 0), :], L - sUp, kick, 'EXT')
+
+    # Lost
+    d.loc[(delta > 0) & (sHit > sUp) & (sHit < sDo), :] = advance(d.loc[(delta > 0) & (sHit > sUp) & (sHit < sDo), :], sHit - sUp, kick, hit, tank)
+
+    # Circulating
+    d.loc[(delta > 0) & ((sHit < sUp) | (sHit > sDo)), :] = advance(d.loc[(delta > 0) & ((sHit < sUp) | (sHit > sDo)), :], l, kick)
+
+    return d
+
+
+def advance(d, l, kick, hit = None, tank = None):
+    """Evolve particle trajectory by distance l and acceleration kick and update if they are lost."""
+    d.S += l
+    d.X += d.PX*l + kick*l**2
+    d.PX += 2*kick*l
+
+    if hit is not None:
+        d.HIT = hit
+
+    if tank is not None:
+        d.tank = tank
+
+    return d
+
+
+def fieldFreeBacktrack(d, align):
+    #TODO: backtrack in (T, PT) as well - you will only need compaction factor and beam's gamma if RF is off, but it gets tricky if RF is on
+    # Do we really need this if we only care about the longitudinal space for extracted particles?
+    """Backtrack particles lost along the ZS to the position of the first tank."""
+    s0 = align.s.tank1
+
+    d.X -= d.PX*(d.S - s0)
+    d.Y -= d.PY*(d.S - s0)
+    d.S = s0
+
+    return d
+
+
+def moveIn(d, uIn):
+    d.loc[(d.HIT == '_OUT') & (d.X > uIn), 'HIT'] = '_IN'
+
+def moveOut(d, uOut):
+    d.loc[(d.HIT == '_IN') & (d.X < uOut), 'HIT'] = '_OUT'
+
+def hitHO(d, uIn, uOut, tank):
+    d.loc[(d.HIT.isin(('_IN', '_OUT'))) & (d.X < uIn) & (d.X > uOut), ['HIT', 'tank']] = 'HO', tank
+
+def declareCirculating(d):
+    d.loc[d.HIT.apply(lambda x: x.startswith('_')), 'HIT'] = 'CIRC'
+
+def areExtracted(d):
+    return d[d.HIT == 'EXT']
+
+
+def checkIntersection(particle, align, kick = 4.1635e-4):
+    # TODO: vectorise this function
     # TODO: you wrote this with the anode in mind so re-using the function for the cathode is gonna be tricky - the particle cannot come from the outside, the field is on the other side, etc. Try to fix that!
     """Calculate whether/where a particle hits a set of wires.
 
@@ -417,91 +648,139 @@ def checkIntersection(particle0, align, kick = 4.1635e-4):
     @return: final (x,p) coordinates and label indicating which tank was hit and from where (outside or inside). Label is 'EXT.IN' if the particle was extracted.
     """
 
+    # Backtrack - all particles are at ZS upstream now
+    particle = fieldFreeBacktrack(particle, align)
+
     # Slope and offset of the wires calculated from girder position and misalignment
-    align['theta'] = (align['do'] - align['up'])/align['l']
-    align['gamma'] = align['up']['girder'] + align['up'] - align['theta']*align['s']
+    align['theta'] = (align.do - align.up)/align.l
+    align['gamma'] = align.up - align.theta*align.s
 
     # ZS angle set by girder
-    th = align['theta']['girder']
+    th = align.theta.girder
     # ZS length
-    L = align['l']['girder']
+    L = align.l.girder
     # ZS initial s
-    s0 = align['s']['tank1']
-    # Position of the outer and inner sides of the first wire
-    uIn = align['up']['girder'] + align['up']['tank1']
-    uOut = uIn - align['thick']['tank1']
+    s0 = align.s.tank1
+    # Girder up/downstream
+    zsup, zsdo = align.loc['girder', ['up', 'do']]
 
-    x0, p0 = map(lambda k: particle0[k], ('X', 'PX'))
+    # Particle coordinates at ZS.UP
+    x0, p0 = map(lambda k: particle[k], ('X', 'PX'))
 
-    # Hits the wires before entering the ZS
-    if x0 > uOut and x0 < uIn:
-        return {'X0': x0, 'P0': p0, 'XF': x0, 'PF': p0, 'HIT': 'tank1.HO'}
+    # Particle coordinates along ZS
+    x, p = x0, p0
 
     # Kick only if inside ZS, otherwise field free region
-    a = kick if x0 > uIn else 0
+    a = kick if x0 > align.up.girder else 0
 
     # TODO: check that this loop always goes from tank 1 to 5 - sort align df if needed
     for k, wire in align.iterrows():
         if 'tank' in wire.name:
+            uOut = align.up.girder + wire.up
+            uIn = uOut + wire.thick
 
-            # TODO: Check if it's hitting head on first
+            if x > uOut and x < uIn:
+                return {'NUMBER': particle.name, 'X': x0, 'PX': p0, 'S_': s0, 'HIT': 'HO', 'tank': 1}
 
-            delta = (p0-th-wire['theta'])**2 - 2*a*(x0-wire['gamma'])/L
+            # Discriminant
+            delta = (p0-th-wire.theta)**2 - 2*a*(x0-zsup-wire.gamma)/L
 
+            # Check intersection for every wire
             if delta > 0:
                 if a > 0:
-                    sf = s0 + L*(th+wire['theta']-p0-np.sqrt(delta))/a
+                    sf = s0 + L*(th+wire.theta-p0-np.sqrt(delta))/a
                 else:
                     try:
-                        sf = s0 + (wire['gamma']-x0)/(p0-th-wire['theta'])
+                        sf = s0 + (zsup+wire.gamma-x0)/(p0-th-wire.theta)
                     except ZeroDivisionError:
-                        print('Trajectory parallel to the ZS wires!')
-                        sf = np.nan
-                        break
+                        continue
 
-                tankUp, tankDo = wire['s'], align['s'].shift(-1)[k]
+                x = a*(sf-s0)**2/(2*L) + p0*(sf-s0) + x0
+                p = a*(sf-s0)/L + p0
+
+                #TODO: what happens when a particle slips through the gap between 2 tanks?
+                tankUp, tankDo = wire.s, wire.s + wire.l
 
                 if sf > tankUp and sf < tankDo:
-                    hit = '{tank}.{side}'.format(tank = k, side = 'OUT' if a == 0 else 'IN')
+                    hit = 'OUT' if a == 0 else 'IN'
+                    tank = int(k[-1])
                     break
     else:
         sf = s0 + L
-        hit = 'EXT.IN'
+        hit = 'EXT'
+        tank = np.nan
 
-    xf = a*(sf-s0)**2/(2*L) + p0*(sf-s0) + x0
-    pf = a*(sf-s0)/L + p0
 
-    return {'X0': x0, 'P0': p0, 'XF': xf, 'PF': pf, 'HIT': hit}
+    return {'NUMBER': particle.name, 'X': x0, 'PX': p0, 'S_': sf, 'HIT': hit, 'tank': tank}
 
-def fieldFreeBacktrack(particle, s0 = 1668.9775):
-    particle['X'] += -particle['PX']*(particle['S'] - s0)
-    particle['Y'] += -particle['PY']*(particle['S'] - s0)
+def zsg(align, s):
+    return align.up.girder + align.theta.girder*(s - align.s.girder)
 
-    return particle
+def move(x, p, s, a):
+    x += p*s + .5*a*s**2
+    p += a*s
+    return x, p
 
-def trackZS(particle, up = None, do = None):
-    #TODO: think how to pass the alignment info and make it reasonably compatible with the class defined above
-    """Tracks particle lost at (S, X, PX, Y, PY) along the ZS, given certain alignment.
+def zsTrack(part, align, kick = 4.1635e-4):
 
-    @params particle: dictionary containing the coordinates (s, x, px, y, py) at which the particle was lost by the tracking routine as well as the name of the element corresponding to this s.
-    @params **kwds: dictionary containing the ZS upstream (zswireup) and downstream (zswiredo) positions, the misalignment of each cathode (up1, do1, ..., up5, do5) and the wire thickness (zswirethickness). If a parameter is not provided it defaults to its nominal value (e.g. zero for misalignments).
-    @return: particle coordinates upstream of the ZS, final particle coordinates (either hitting or exiting the ZS) and labels indicating whether the particle was lost/extracted and, in case of loss, where it happened.
-    """
+    align['theta'] = (align.do - align.up)/align.l
+    align['gap'] = np.nan
+    align.gap.iloc[:-2] = np.diff(align.s[:-1]) - align.l.iloc[:-2]
 
-    # Constant ZS parameters
-    s0 = 1668.9776 # ZS upstream, s coordinate
-    L = 18.77 # ZS length
-    n = 5 # number of tanks
-    l = 3.13 # tank length
-    g = .78 # gap between tanks
-    c = .02 # gap between cathode and anode
-    apery = .023 # vertical aperture, symmetric
+    L = align.l.girder
 
-    particle0 = fieldFreeBacktrack(particle)
+    x0, p0 = move(part['X'], part['PX'], align.s.girder - part['S'], a = 0)
+    x, p = x0, p0
 
-    tanks = [i*(l+g) for i in range(n)] + [L]
+    for k, wire in align.iterrows():
+        if 'tank' in wire.name:
 
-    align = pd.DataFrame(np.array([tanks, up, do]), columns = ['s', 'up', 'do'])
-    align.index = ['tank{}'.format(i) for i in range(n)]+['girder']
-    align['l'] = l
-    align['l']['girder'] = L
+            th = align.theta.girder + wire.theta
+            l = wire.l if k == 'tank5' else wire.l + wire.gap
+
+            uOut = zsg(align, wire.s) + wire.up
+            uIn = uOut + wire.thick
+
+            dOut = zsg(align, wire.s + wire.l) + wire.up
+            dIn = dOut + wire.thick
+
+            if x > uOut and x < uIn:
+                sf = wire.s
+                hit = 'HO'
+                tank = k
+                break
+            elif x < uOut:
+                try:
+                    sf = wire.s + (x - uOut)/(th - p)
+                except ZeroDivisionError:
+                    x, p = move(x, p, l, a = 0)
+                    continue
+            elif x > uIn:
+                delta = (th - p)**2 - 2*kick*(x - uIn)/L
+                if delta > 0:
+                    sf = wire.s + L*(th - p - np.sqrt(delta))/(2*kick)
+                else:
+                    x, p = move(x, p, l, a = kick/L)
+                    continue
+
+            if sf > wire.s and sf < wire.s + wire.l:
+                hit = 'OUT' if x < uOut else 'IN'
+                tank = k
+                x, p = move(x, p, sf - wire.s, a = kick/L if x > uIn else 0)
+                break
+            else:
+                x, p = move(x, p, l, a = kick/L if x > uIn else 0)
+    else:
+        sf = align.s.girder + L
+        hit = 'EXT'
+        tank = 'none'
+
+    return {
+            # TODO: this has to work both with pd.Series and dicts
+            'NUMBER': part.name,
+            'S': align.s.girder, '_S': sf,
+            'X': x0, '_X': x, 'PX': p0, '_PX': p,
+            'Y': part['Y'] + part['PY']*(sf-align.s.girder), 'PY': part['PY'],
+            'T': part['T'], 'PT': part['PT'],
+            'HIT': hit, 'tank': tank
+            }
