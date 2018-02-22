@@ -155,7 +155,7 @@ def gettracks(trackfolder, settings=None, obsloc='obs0001', filters=None, usecol
     batches = len(settings['slices'].split(','))*int(settings['nbatches'])
     nppb = int(settings['nparperbatch'])
     if not obsloc.startswith('obs0'):
-        obsind = settings['elements'].index(obsloc)
+        obsind = eval(settings['elements']).index(obsloc)
         obsloc = 'obs'+str(obsind+2).zfill(4)
     df = pd.DataFrame()
 
