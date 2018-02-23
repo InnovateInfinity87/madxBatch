@@ -89,9 +89,13 @@ class Settings:
         self.septadbreplace = None
         self.pcblack = False
 
+        # knob_x_bump = offx + cx*dpp (millimeter)
+        # knob_px_bump = offpx*dpp  (microrad)
         self.dynamicbump=False
-        self.dynamicbump_cx = -729.5  # knob_x_bump = this*dpp (millimeter)
-        self.dynamicbump_cpx = 42600.0  # knob_px_bump = this*dpp  (microrad)
+        self.dynamicbump_offx = 0.0
+        self.dynamicbump_cx = -729.5
+        self.dynamicbump_offpx = 0.0
+        self.dynamicbump_cpx = 42600.0
 
         self.saveloss = True
         self.saveout = False
@@ -202,8 +206,8 @@ def track_lin(k,data,settings):
              " kqd = m_d * turn + n_d;\n")
              
     if settings.dynamicbump:
-        line += (" knob_x_bump = "+str(settings.dynamicbump_cx)+" * (dpp_start + turn/"+str(settings.nturns)+"*(dpp_end-dpp_start));\n"+
-                 " knob_px_bump = "+str(settings.dynamicbump_cpx)+" * (dpp_start + turn/"+str(settings.nturns)+"*(dpp_end-dpp_start));\n"+
+        line += (" knob_x_bump = "+str(settings.dynamicbump_offx)+" + "+str(settings.dynamicbump_cx)+" * (dpp_start + turn/"+str(settings.nturns)+"*(dpp_end-dpp_start));\n"+
+                 " knob_px_bump = "+str(settings.dynamicbump_offpx)+" + "+str(settings.dynamicbump_cpx)+" * (dpp_start + turn/"+str(settings.nturns)+"*(dpp_end-dpp_start));\n"+
                  " EXEC, lss2bump(knob_extr_bump, knob_x_bump, knob_px_bump);\n")
     line += "};\n\n"
 
@@ -256,8 +260,8 @@ def track_sliced(k,data,settings):
     line = "SYSTEM, 'mkdir "+str(k)+"';\n\n"
 
     if settings.dynamicbump:
-        line += (" knob_x_bump = "+str(settings.dynamicbump_cx)+" * ("+dpp+");\n"+
-                 " knob_px_bump = "+str(settings.dynamicbump_cpx)+" * ("+dpp+");\n"+
+        line += (" knob_x_bump = "+str(settings.dynamicbump_offx)+" + "+str(settings.dynamicbump_cx)+" * ("+dpp+");\n"+
+                 " knob_px_bump = "+str(settings.dynamicbump_offpx)+" + "+str(settings.dynamicbump_cpx)+" * ("+dpp+");\n"+
                  " EXEC, lss2bump(knob_extr_bump, knob_x_bump, knob_px_bump);\n")
 
     line += ("dpp_matchtune = "+dpp+";\n"+
