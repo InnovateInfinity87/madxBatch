@@ -1187,7 +1187,7 @@ def losshistcombo(lossfolder, lossloc="AP.UP.ZS21633",
         plt.savefig(save)
         plt.close()
 
-    return fig
+
 
 
 
