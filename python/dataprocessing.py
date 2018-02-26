@@ -143,7 +143,7 @@ def getlosses(lossfolder, settings=None, lossloc=None, filters=None, usecols=Non
 
 
 #TODO implement usecols
-def gettracks(trackfolder, settings=None, obsloc='obs0001', filters=None, usecols=None, tpt=None, verbose=False):
+def gettracks(trackfolder, settings=None, obsloc='obs0001', filters=None, usecols=None, tpt=None, batches=None, verbose=False):
     """tpt=turns per track"""
     if settings is None:
         settings = getsettings(trackfolder+"/..")
@@ -152,14 +152,17 @@ def gettracks(trackfolder, settings=None, obsloc='obs0001', filters=None, usecol
             settings['slices'] = None
     else:
         settings = getsettings(settings)
-    batches = len(settings['slices'].split(','))*int(settings['nbatches'])
     nppb = int(settings['nparperbatch'])
     if not obsloc.startswith('obs0'):
         obsind = eval(settings['elements']).index(obsloc)
         obsloc = 'obs'+str(obsind+2).zfill(4)
     df = pd.DataFrame()
 
-    for batchnum in range(batches):
+    if batches is None:
+        nbatches = len(settings['slices'].split(','))*int(settings['nbatches'])
+        batches = range(nbatches)
+
+    for batchnum in batches:
         untarred = False
         if not os.path.isdir(trackfolder+'/'+str(batchnum)) and tarfile.is_tarfile(trackfolder+'/'+str(batchnum)+'.tar.gz'):
             if verbose:

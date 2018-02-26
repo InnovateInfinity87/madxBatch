@@ -16,7 +16,8 @@ import subprocess
 locations = {"handover": ["QDA->L/2+0.00456325", "QDA.21910"],
              "zsup": ["0", "AP.UP.ZS21633"], "tpstup": ["0", "AP.UP.TPST21760"],
              "Q216start": ["-QFA->L/2", "QFA.21610"],
-             "Q216": ["0", "QFA.21610"], "Q219": ["0", "QDA.21910"]}
+             "Q216": ["0", "QFA.21610"], "Q219": ["0", "QDA.21910"],
+             "grid218": ["0", "AP.UP.MSE21857"]}
 
 def findsloexcodedir(madcode):
     for line in madcode:
@@ -24,15 +25,19 @@ def findsloexcodedir(madcode):
             if line.startswith("CALL, FILE = '"):
                 codedir = line[14:-2].split("/")
                 i = codedir.index("madxBatch")
-                codedir = "/".join(codedir[:i-1])
+                codedir = "/".join(codedir[:i])
                 return codedir
     raise IOError('Could not locate slow extraction code directory...')
     
 def installmarkers(startlocation, endlocation, twisstrack):
     startspec = locations[startlocation]
     endspec = locations[endlocation]
+    if twisstrack:
+        ap = ""
+    else:
+       ap = " , APERTYPE=CIRCLE, APERTURE=1E-9"
     madcode = ("trackfrom_m: MARKER;\n"+
-               "trackto_m: MARKER;\n\n"+
+               "trackto_m: MARKER"+ap+";\n\n"+
 
                "SEQEDIT, SEQUENCE=sps;\n"+
                " FLATTEN;\n"+
@@ -54,25 +59,23 @@ def cutsequence():
                " FLATTEN;\n"+
                "ENDEDIT;\n\n"+
                
-               "USE, SEQUENCE = trackseq;\n\n"
-               
-               "SURVEY, FILE='test1.sv';\n\n")
+               "USE, SEQUENCE = trackseq;\n\n")
     
     return madcode
 
 
 def tracklossto(location, lossfolder, startpoint, backtrack=False, sloexcodedir=None, madxexe=None,
-                twisstrack=False, static=False):
+                twisstrack=False, static=False, batch=0):
     '''Track particles in lossfolder to location, save in lossfolder/../twisstrackloss_startpoint_to_location'''
     if not location in locations:
         locations['custom'] = ["0", location]
         location = 'custom'
 
     if twisstrack:
-        savefolder = lossfolder+"/../twisstrackloss_"+startpoint+"_to_"+location
+        savefolder = lossfolder+"/../twisstrackloss_"+startpoint+"_to_"+location+"/"+str(batch)
     else:
         savefolder = lossfolder+"/../trackloss_"+startpoint+"_to_"+location
-    jobfile = lossfolder+"/../jobs/0.madx"
+    jobfile = lossfolder+"/../jobs/"+str(batch)+".madx"
     madfile = savefolder+"/track.madx"
     hastrmacro = False
 
@@ -81,7 +84,7 @@ def tracklossto(location, lossfolder, startpoint, backtrack=False, sloexcodedir=
         return
 
     if not os.path.exists(savefolder):
-        os.mkdir(savefolder)
+        os.makedirs(savefolder)
     os.chdir(savefolder)
 
     # Identify and re-use code to build the initial sequence
@@ -98,7 +101,7 @@ def tracklossto(location, lossfolder, startpoint, backtrack=False, sloexcodedir=
     madstart = madstart[:i-1]
 
     try:
-        madstart.remove("SYSTEM, 'mkdir 0';\n")
+        madstart.remove("SYSTEM, 'mkdir "+str(batch)+"';\n")
     except ValueError:
         pass
     
@@ -132,6 +135,11 @@ def tracklossto(location, lossfolder, startpoint, backtrack=False, sloexcodedir=
             outf.write("lss2_noapp = 1;\n")
         outf.write("CALL, FILE='"+sloexcodedir
                       +"/madxBatch/madx/lss2extraction.cmdx';\n\n")
+
+        if twisstrack:
+            outf.write("SELECT, FLAG=ERROR, CLEAR;\n")
+            outf.write("SELECT, FLAG=ERROR, RANGE=trackto_m;\n")
+            outf.write("EALIGN, AREX=-5, AREY=-5;\n\n")
         
         outf.write("SELECT, FLAG=ERROR, FULL;\n"+
                       "ESAVE, FILE=errfile2;\n\n")
@@ -161,19 +169,18 @@ def tracklossto(location, lossfolder, startpoint, backtrack=False, sloexcodedir=
             outf.write("SELECT, FLAG=ptc_twiss, CLEAR;\n"+
                        "SELECT, FLAG=ptc_twiss, COLUMN=NAME, PTOT_GEV, X_CM, Y_CM, Z_CM, COSX, COSY, S, X, PX, Y, PY, T, PT, TURN;\n\n")
 
-            for lossfile in os.listdir(lossfolder):
-                outf.write(" EXEC, trackto('"+lossfolder+"/"+lossfile+"', "+lossfile.split(".")[0]+");\n")
+            outf.write(" EXEC, trackto('"+lossfolder+"/"+str(batch)+".tfs', "+str(batch)+");\n")
         else:
             outf.write("CALL, FILE='"+sloexcodedir
                           +"/madxBatch/madx/tracktomacro.cmdx';\n\n")
-            for lossfile in os.listdir(lossfolder):
-                outf.write("EXEC, trackto('"+lossfolder+"/"+lossfile+"', '"+lossfile+"');\n\n")
+            outf.write("EXEC, trackto('"+lossfolder+"/"+str(batch)+".tfs', '"+str(batch)+".tfs');\n\n")
         
         outf.flush()
         
     if madxexe is None:
-        madxexe = "/afs/cern.ch/user/m/mad/bin/madx_dev"
-    subprocess.check_call(madxexe+" track.madx", shell=True, stdout=sys.stdout)
+        madxexe = "/afs/cern.ch/user/m/mad/bin/madx"
+    with open(os.devnull, 'w') as quiet:
+        subprocess.check_call(madxexe+" track.madx", shell=True, stdout=quiet)
         
         
         
