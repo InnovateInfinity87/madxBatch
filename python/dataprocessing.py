@@ -114,7 +114,7 @@ def getsettings(folder):
 #TODO implement usecols
 def getlosses(lossfolder, settings=None, lossloc=None, filters=None, usecols=None):
     if settings is None:
-        settings = getsettings(trackfolder+"/..")
+        settings = getsettings(lossfolder+"/..")
     elif type(settings)==dict:
         if 'slices' not in settings:
             settings['slices'] = None
@@ -137,7 +137,7 @@ def getlosses(lossfolder, settings=None, lossloc=None, filters=None, usecols=Non
             losstable.set_index('NUMBER', inplace=True)
             df = df.append(losstable)
         else:
-            print "lossfile for batch "+str(batchnum)+" not found"
+            print "lossfile for batch "+str(batch)+" not found"
     df.sort_index(inplace=True)
     return df
 
