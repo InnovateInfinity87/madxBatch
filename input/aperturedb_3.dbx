@@ -450,13 +450,13 @@ MDHW.51853,  APERTYPE=RECTELLIPSE, APERTURE={0.140/2, 0.0485/2, 0.140/2, 0.057};
 !!VC downstream MDHW.51853,140,48.5,rectellipse,Drawing:SPSLNINS0085, type: MDHW
 Select, flag=seqedit, pattern="^MDHW.51853$";
 ap1.do.MDHW.51853: MARKER,  APERTYPE=RECTELLIPSE, APERTURE={0.140/2, 0.0485/2, 0.140/2, 0.057};
-Install, element=ap1.up.MDHW.51853, at:=0.654, from=selected;
+Install, element=ap1.do.MDHW.51853, at:=0.654, from=selected;
 Select, flag=seqedit, clear = true;
 
 !!VC downstream MDHW.51853,152,56.4,rectangular,Drawing:SPSLNINS0085, type: MBN
 Select, flag=seqedit, pattern="^MDHW.51853$";
 ap2.do.MDHW.51853: MARKER,  APERTYPE=RECTANGLE,APERTURE={0.152/2,0.0564/2};
-Install, element=ap2.up.MDHW.51853, at:=0.654+0.00001, from=selected;
+Install, element=ap2.do.MDHW.51853, at:=0.654+0.00001, from=selected;
 Select, flag=seqedit, clear = true;
 
 !!VC downstream MDHW.51853,152,56.4,rectangular,Drawing:SPSLNINS0085, type: MBN
