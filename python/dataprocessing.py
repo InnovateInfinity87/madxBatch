@@ -83,8 +83,8 @@ def fixlossfile(filename):
             if len(breakdown)==2:
                 linebuffer = line[:-1]
                 line = ''
-            elif len(breakdown)>3:
-                line = breakdown[0]+'"'+breakdown[1]+'"\n'
+            elif len(breakdown)>=3:
+                line = breakdown[0]+'"'+breakdown[1].split()[0]+'"\n'
             if len(line)>0:
                 sys.stdout.write(line)
                 linebuffer = ''
