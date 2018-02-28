@@ -60,7 +60,7 @@ def readtfs(filename, usecols=None, index_col=0):
     # Check for the extra buggy things in lossfiles
     try:
         for location in table['ELEMENT']:
-            if not location.replace(".","").replace("_","").isalnum():
+            if not location.replace(".","").replace("_","").replace('$','').isalnum():
                 print "WARNING: some loss locations in "+filename+" don't reduce to alphanumeric values. For example "+location
                 break
             if location=="nan":
