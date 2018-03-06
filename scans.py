@@ -1,11 +1,15 @@
 from __future__ import print_function
 from __future__ import division
-import sys, re
+import sys, os, time, re, copy
+
+sys.dont_write_bytecode = True
+
 import numpy as np
 import pandas as pd
-basePath = '/afs/cern.ch/project/sloex/'
-sys.path.append(basePath+'code/madxBatch')
-sys.path.append(basePath+'code/slowExtractionMADX')
+import matplotlib.pyplot as plt
+
+BASEPATH = '/afs/cern.ch/project/sloex/'
+
 from python.batching import Settings, submit_job, track_lin
 import python.dataprocessing as dp
 
@@ -252,7 +256,7 @@ class Scan(object):
         d = pd.read_csv(self.paramsFile)
 
         folders = map(self.paramsToFolder, [row[1] for row in d.iterrows()])
-        paths = ('/'.join(basePath, studyGroup, folder, 'losses').replace('//', '/') for folder in folders)
+        paths = ('/'.join(BASEPATH, studyGroup, folder, 'losses').replace('//', '/') for folder in folders)
 
         lossCount = []
 
@@ -298,17 +302,10 @@ class Scan(object):
 
             study.run(nturns = nturns, nbatches = nbatches, nparperbatch = nparperbatch, seed = seed, pycollimate = pycollimate, elements = elements, ffile = ffile, savetracks = savetracks)
 
-    # Post-processing goes here. It could mostly be done by calling functions from the dataprocessing module and looping:
-    # 1. tfs files to csv including where the particle hit
-    # 2. Computing summary loss statistics
-    # 3. Spill quality analysis - spill and FFT plots, duty factor, etc.
-    # 4. Contour plots for losses, emittance and extraction efficiency
-    # 5. Other plots ?
-
 
 class Align(object):
 
-    parentDirectory = '/'.join((basePath, 'emittance/zsalign')).replace('//', '/')
+    parentDirectory = '/'.join((BASEPATH, 'emittance/zsalign')).replace('//', '/')
 
     def __init__(self, alignParams, baseTracker = track_lin, trackerTemplate = 'tracker_nominal_template.madx'):
         self.baseTracker = baseTracker
@@ -366,6 +363,13 @@ class Align(object):
         print(madxCode)
 
 
+    # Post-processing goes here. It could mostly be done by calling functions from the dataprocessing module and looping:
+    # 1. tfs files to csv including where the particle hit
+    # 2. Computing summary loss statistics
+    # 3. Spill quality analysis - spill and FFT plots, duty factor, etc.
+    # 4. Contour plots for losses, emittance and extraction efficiency
+    # 5. Other plots ?
+
 
 def parseLossFiles(lossFiles, align, nParPerBatch = 200, doPrint = True):
 
@@ -384,9 +388,8 @@ def parseLossFiles(lossFiles, align, nParPerBatch = 200, doPrint = True):
             continue
 
         for _, particle in table.iterrows():
-            # Backtrack particle and check intersection
-            particle = fieldFreeBacktrack(particle)
-            hit = checkIntersection(particle, align)
+            # Do the thing
+            hit = zsTrack(particle, align)
 
             # Add batch number to particle id
             hit['NUMBER'] += nParPerBatch*nBatch
@@ -394,6 +397,7 @@ def parseLossFiles(lossFiles, align, nParPerBatch = 200, doPrint = True):
             h.append(hit)
 
     return pd.DataFrame(h)
+
 
 def getJobs():
     """Call condor_q, read output and save it to a dict with number of jobs in each state (running, idle, etc.)"""
@@ -411,6 +415,21 @@ def getJobs():
         return
 
     return {i[1]: int(i[0]) for i in [j.split() for j in jobs]}
+
+
+
+
+
+
+
+
+
+
+
+## TODO ##
+# Probably remove everythin below here since I've moved it to another repo #
+
+
 
 
 ## Cross and checkCross where meant to be used with track files ##
@@ -714,14 +733,21 @@ def checkIntersection(particle, align, kick = 4.1635e-4):
     return {'NUMBER': particle.name, 'X': x0, 'PX': p0, 'S_': sf, 'HIT': hit, 'tank': tank}
 
 def zsg(align, s):
+    """Get nominal x coordinate of wires at distance s given girder alignment."""
     return align.up.girder + align.theta.girder*(s - align.s.girder)
 
 def move(x, p, s, a):
+    """Track particle with initial coordinates (x, p) for distance s in field a"""
     x += p*s + .5*a*s**2
     p += a*s
     return x, p
 
 def zsTrack(part, align, kick = 4.1635e-4):
+    """Track particle along the ZS.
+    @param part: particle coordinates at ZS upstream
+    @param align: pandas DataFrame with ZS alignment settings. One row for each tank plus another for the girder. Columns: s = element's upstream position s coordinate; up, do = element's upstream/downstream x coordinate; thick = wire thickness; l = element's length.
+    @param kick: ZS kick
+    @return particles coordinates after tracking plus flags indicating if/where it hit the wires (HIT = EXT, IN, OUT, HO) and in which tank"""
 
     align['theta'] = (align.do - align.up)/align.l
     align['gap'] = np.nan
@@ -729,6 +755,7 @@ def zsTrack(part, align, kick = 4.1635e-4):
 
     L = align.l.girder
 
+    # Backtrack particles to ZS upstream if they have larger s
     x0, p0 = move(part['X'], part['PX'], align.s.girder - part['S'], a = 0)
     x, p = x0, p0
 
@@ -744,17 +771,20 @@ def zsTrack(part, align, kick = 4.1635e-4):
             dOut = zsg(align, wire.s + wire.l) + wire.up
             dIn = dOut + wire.thick
 
+            # Particle hits wires head on
             if x > uOut and x < uIn:
                 sf = wire.s
                 hit = 'HO'
                 tank = k
                 break
+            # Particle is outside of the ZS
             elif x < uOut:
                 try:
                     sf = wire.s + (x - uOut)/(th - p)
                 except ZeroDivisionError:
                     x, p = move(x, p, l, a = 0)
                     continue
+            # Particle is inside the ZS
             elif x > uIn:
                 delta = (th - p)**2 - 2*kick*(x - uIn)/L
                 if delta > 0:
@@ -762,7 +792,7 @@ def zsTrack(part, align, kick = 4.1635e-4):
                 else:
                     x, p = move(x, p, l, a = kick/L)
                     continue
-
+            # Check intersection between trajectory and wires
             if sf > wire.s and sf < wire.s + wire.l:
                 hit = 'OUT' if x < uOut else 'IN'
                 tank = k
@@ -776,11 +806,13 @@ def zsTrack(part, align, kick = 4.1635e-4):
         tank = 'none'
 
     return {
-            # TODO: this has to work both with pd.Series and dicts
+            # TODO: this should work both with pd.Series and dicts
             'NUMBER': part.name,
             'S': align.s.girder, '_S': sf,
-            'X': x0, '_X': x, 'PX': p0, '_PX': p,
-            'Y': part['Y'] + part['PY']*(sf-align.s.girder), 'PY': part['PY'],
+            'X': x0, '_X': x,
+            'PX': p0, '_PX': p,
+            'Y': part['Y'], '_Y': part['Y'] + part['PY']*(sf-align.s.girder),
+            'PY': part['PY'], '_PY': part['PY'],
             'T': part['T'], 'PT': part['PT'],
             'HIT': hit, 'tank': tank
             }
