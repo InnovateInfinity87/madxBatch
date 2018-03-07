@@ -23,8 +23,10 @@ def makeplots(folder):
     if name=="":
         name = folder.split("/")[-2]
 
-    sliced = True if "sliced" in name else False
-    pycoll = True if "nopc" not in name else False
+    settings = datproc.getsettings(folder)
+
+    sliced = False if settings['slices']=='None' else True
+    pycoll = eval(settings['pycollimate'])
     lossloc = "AP.UP.TPST21760" if pycoll else "AP.UP.ZS21633"
 
     failed, messages = datproc.errorcheck(errfolder)
@@ -84,9 +86,17 @@ def makeplots(folder):
 
 
 if __name__ == "__main__":
-    root = "/afs/cern.ch/project/sloex/nominal/"
-    for study in os.listdir(root):
-        if os.path.isdir(root+study) and not study=="plots":
-            print "making plots for "+root+study
+    try:
+        study = sys.argv[1]
+        makeplots(study)
+    except IndexError:
+        studies = []
+        root = "/afs/cern.ch/project/sloex/nominal/"
+        for name in os.listdir(root):
+            if os.path.isdir(root+study) and not study=="plots":
+                studies += [name]
+        for i, study in enumerate(studies):
+            print study+' (study '+str(i+1)+' of '+str(len(studies))+')'
             makeplots(root+study)
-    
+        
+
