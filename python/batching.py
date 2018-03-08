@@ -55,7 +55,8 @@ class Settings:
                             self.slowexdir+'/cmd/matchtune.cmdx, '+
                             self.slowexdir+'/cmd/matchchroma.cmdx')
 
-        self.madxversion = "/afs/cern.ch/user/m/mad/bin/madx"
+        #self.madxversion = "/afs/cern.ch/user/m/mad/bin/madx"
+        self.madxversion = '/afs/cern.ch/user/m/mad/bin/rel/5.03.06/madx-linux64-gnu'
 
         self.trackertemplate = self.home+"/madx/tracker_nominal_template.madx"
         self.trackerrep = track_lin
