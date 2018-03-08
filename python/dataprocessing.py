@@ -35,7 +35,7 @@ def readtfs(filename, usecols=None, index_col=0):
         nskip += 1
         if line.startswith('@'):
             entry = line.strip().split()
-            header[entry[1]] = ' '.join(entry[3:]).replace('"','')
+            header[entry[1]] = eval(' '.join(entry[3:]))
         elif line.startswith('*'):
             colnames = line.strip().split()[1:]
             break
