@@ -60,7 +60,9 @@ class Ripple(object):
                             columns = ['a', 'f', 'p']).T
 
     def _addRipple(self, element):
-        return '{0} * SIN(2*PI * {1} turn / {f_rev}  + {2})'.format(*getattr(self, element).values, f_rev = turns_per_sec)
+        nSlices = 4. if element in ('mb', 'mp', 'qf', 'qd', 'qms') else 1.
+
+        return '{0}/{nSlices} * SIN(2*PI * {1} * turn / {f_rev}  + {2})'.format(*getattr(self, element).values, f_rev = turns_per_sec, nSlices = nSlices)
 
     def _replace(self):
         oldLine = []
