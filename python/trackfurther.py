@@ -13,7 +13,7 @@ import os
 import sys
 import subprocess
 
-locations = {"handover": ["QDA->L/2+0.00456325", "QDA.21910"],
+locations = {"handover": ["QDA->L/2+0.004724617306961", "QDA.21910"],
              "zsup": ["0", "AP.UP.ZS21633"], "tpstup": ["0", "AP.UP.TPST21760"],
              "Q216start": ["-QFA->L/2", "QFA.21610"],
              "Q216": ["0", "QFA.21610"], "Q219": ["0", "QDA.21910"],
