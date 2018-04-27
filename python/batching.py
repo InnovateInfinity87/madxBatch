@@ -48,12 +48,11 @@ class Settings:
         self.datadir = outputdir+"/"+name+"/"
         self.home = '/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1])
         self.pycolldir = self.home+'/../pycollimate/'
-        self.slowexdir = self.home+'/../slowExtractionMADX'
-        self.slowexfiles = (self.home+'/input/sps.ele, '+
-                            self.home+'/input/aperturedb_1.dbx, '+
-                            self.home+'/input/aperturedb_3.dbx, '+
-                            self.slowexdir+'/cmd/matchtune.cmdx, '+
-                            self.slowexdir+'/cmd/matchchroma.cmdx')
+        #self.slowexfiles = (self.home+'/input/sps.ele, '+
+        #                    self.home+'/input/aperturedb_1.dbx, '+
+        #                    self.home+'/input/aperturedb_3.dbx, '+
+        #                    self.home+'/madx/matchtune.cmdx, '+
+        #                    self.home+'/madx/matchchroma.cmdx')
 
         #self.madxversion = "/afs/cern.ch/user/m/mad/bin/madx"
         self.madxversion = '/afs/cern.ch/user/m/mad/bin/rel/5.03.06/madx-linux64-gnu'
@@ -267,7 +266,7 @@ def track_sliced(k,data,settings):
 
     line += ("dpp_matchtune = "+dpp+";\n"+
              "qh = qh_res;\n"+
-             "CALL, FILE='"+settings.slowexdir+"/cmd/matchtune_offmom.cmdx';\n\n")
+             "CALL, FILE='"+settings.home+"/madx/matchtune_offmom.cmdx';\n\n")
 
     line += ("OPTION, -WARN;\n"+
              "TRACK, ONEPASS, APERTURE, RECLOSS")
@@ -313,8 +312,6 @@ def submit_job(settings):
     """Creates and submits job cluster for simulation defined by settings.
 
     Needs some fixing:
-    - Ideally, the MAD-X template used should somehow be linked to the
-      slowExtractionMADX code.
     - We may want to pick non-random seeds for comparing loss-reduction
       methods.
     - The adapter needs to be made much more flexible, and/or different
@@ -366,7 +363,6 @@ def submit_job(settings):
 
     replacer("tracker.madx",'pyDATADIR', settings.datadir)
     replacer("tracker.madx", 'pyHOMEDIR', settings.home)
-    replacer("tracker.madx", 'pySLOWEXDIR', settings.slowexdir)
     replacer("tracker.madx", 'pyPYCOLL', str(int(settings.pycollimate)))
 
     for key, replacement in settings.myreplace.iteritems():
@@ -457,13 +453,13 @@ def submit_job(settings):
                               ("" if (settings.pcblack) else settings.pycolldir)+"track_inside_coll.py, "+
                               settings.pycolldir+"pycollimate.py, "+
                               (settings.septadb if (settings.septadbreplace is None) else "septa_DB_custom.tfs")+", "+
-                              settings.home+"/other/matplotlibrc, "+
-                              settings.slowexfiles+"\n")
+                              settings.home+"/other/matplotlibrc"+"\n")#, "+
+                              #settings.slowexfiles+"\n")
             else:
                 subfile.write("transfer_input_files = "+
                               "jobs/$(ProcId).madx, "+
-                              settings.madxversion+", "+
-                              settings.slowexfiles+"\n")
+                              settings.madxversion+"\n")#", "+
+                              #settings.slowexfiles+"\n")
             subfile.write('arguments = "$(ProcId)"\n')
             subfile.write("initialdir = "+settings.datadir+"\n")
             if settings.saveout:

@@ -1,0 +1,45 @@
+!--------------------------------------------------------------------------
+! Tune matching
+!--------------------------------------------------------------------------
+
+qh = 26.666 ;
+qv = 26.58 ;
+match, sequence=SPS;
+
+Global, Q1=qh, Q2= qv;
+VARY, name=KQD, step=0.0001;
+VARY, name=KQF1, step=0.0001;
+Lmdif,calls=10,tolerance=1.0e-21;
+Endmatch;
+
+value, KQD, KQF1, KQF2;
+value, tune_h,tune_v;
+
+
+!--------------------------------------------------------------------------
+! MATCH2:   DQ1=-0.77*QH & DQ2=0.465*QV
+!--------------------------------------------------------------------------
+
+qh_int := qh;
+qv_int := qv;
+value, KlSDA,klSDB,KlSFA,KlSFB;
+
+KlSDA = -0.189  ;
+KlSDB = -0.1653 ;
+KlSFA = 0.0395  ;
+KlSFB = 0.0276  ;
+
+match, sequence=SPS;
+
+VARY, name=KlSDA, step=0.0001;
+VARY, name=KlSDB, step=0.0001;
+VARY, name=KlSFA, step=0.0001;
+VARY, name=KlSFB, step=0.0001;
+
+Global, sequence=SPS, DQ1=-.77 * qh_int;
+Global, sequence=SPS, DQ2=0.465 * qv_int;
+Global, sequence=SPS, Q1=qh;
+Global, sequence=SPS, Q2=qv;
+
+Lmdif, calls=500, tolerance=1e-6;
+Endmatch;

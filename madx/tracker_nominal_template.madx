@@ -170,8 +170,8 @@ IF (use_pycoll==1){
 !-----------------------------------------------------------------------
 knob_extr_sext_val = knob_extr_sext;
 knob_extr_sext = 0;
-CALL, FILE='pySLOWEXDIR/cmd/matchtune.cmdx';
-CALL, FILE='pySLOWEXDIR/cmd/matchchroma.cmdx';
+CALL, FILE='pyHOMEDIR/madx/matchtune.cmdx';
+CALL, FILE='pyHOMEDIR/madx/matchchroma.cmdx';
 knob_extr_sext = knob_extr_sext_val;
 
 
@@ -341,7 +341,7 @@ CALL, FILE = 'pyHOMEDIR/input/align_extraction.cmdx';
 !-----------------------------------------------------------------------
 
 qh = qh_res;
-CALL, FILE='pySLOWEXDIR/cmd/matchtune.cmdx';
+CALL, FILE='pyHOMEDIR/madx/matchtune.cmdx';
 
 SELECT, FLAG=TWISS, CLEAR;
 SELECT, FLAG=TWISS, COLUMN=NAME,S,BETX,ALFX,X,DX,PX,DPX,MUX,BETY,ALFY,Y,DY,PY,DPY,MUY,APER_1,APER_2,APER_3,APER_4;
@@ -365,12 +365,12 @@ pyTWISS*/
 !-----------------------------------------------------------------------
 
 qh = qh_end;
-CALL, FILE='pySLOWEXDIR/cmd/matchtune.cmdx';
+CALL, FILE='pyHOMEDIR/madx/matchtune.cmdx';
 kqf1_end = kqf1;
 kqd_end = kqd;
 
 qh = qh_start;
-CALL, FILE='pySLOWEXDIR/cmd/matchtune.cmdx';
+CALL, FILE='pyHOMEDIR/madx/matchtune.cmdx';
 kqf1_start = kqf1;
 kqd_start = kqd;
 

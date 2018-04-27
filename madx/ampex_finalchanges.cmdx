@@ -2,8 +2,8 @@
 
 qh = qh_res;
 dqh_norm = 0.0;
-CALL, FILE='pySLOWEXDIR/cmd/matchtune.cmdx';
-CALL, FILE='pySLOWEXDIR/cmd/matchchroma.cmdx';
+CALL, FILE='pyHOMEDIR/madx/matchtune.cmdx';
+CALL, FILE='pyHOMEDIR/madx/matchchroma.cmdx';
 
 ! dpp values provide hacked dynamic bump settings
 dpp_start = -1;
@@ -22,7 +22,7 @@ IF (pyDB==1){
   temp_bf_cx = (pyCX)*dpp_start;
   temp_bf_cpx = (pyCPX)*dpp_start;
   EXEC, lss2bump(knob_extr_bump, temp_bf_cx, temp_bf_cpx);
-  CALL, FILE='pySLOWEXDIR/cmd/matchtune.cmdx';
+  CALL, FILE='pyHOMEDIR/madx/matchtune.cmdx';
   EXEC, lss2bump(knob_extr_bump, 0, 0);
   TWISS;
   qh_start = TABLE(SUMM, Q1);
@@ -31,7 +31,7 @@ IF (pyDB==1){
   temp_bf_cx = (pyCX)*dpp_end;
   temp_bf_cpx = (pyCPX)*dpp_end;
   EXEC, lss2bump(knob_extr_bump, temp_bf_cx, temp_bf_cpx);
-  CALL, FILE='pySLOWEXDIR/cmd/matchtune.cmdx';
+  CALL, FILE='pyHOMEDIR/madx/matchtune.cmdx';
   EXEC, lss2bump(knob_extr_bump, 0, 0);
   TWISS;
   qh_end = TABLE(SUMM, Q1);

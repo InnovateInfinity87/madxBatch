@@ -1,0 +1,22 @@
+!-----------------------------------------------------------------------
+! Match chroma
+!-----------------------------------------------------------------------
+
+! Settings for SPS linear model
+kLSFC := kLSFA;
+
+! Match required chroma
+! (Using tune to solve underconstrained system)
+MATCH, sequence=SPS;
+ VARY, name=KlSDA, step=0.0001;
+ VARY, name=KlSDB, step=0.0001;
+ VARY, name=KlSFA, step=0.0001;
+ VARY, name=KlSFB, step=0.0001;
+
+ GLOBAL, sequence=SPS, DQ1= dqh_norm * qh;
+ GLOBAL, sequence=SPS, DQ2=  dqv_norm * qv;
+ GLOBAL, sequence=SPS, Q1= qh;
+ GLOBAL, sequence=SPS, Q2= qv;
+
+ LMDIF, CALLS = 500, TOLERANCE = 1e-6;
+ENDMATCH;
