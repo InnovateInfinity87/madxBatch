@@ -20,7 +20,7 @@ trackto_innerfunc(_tablen): MACRO = {
 
       TRACK, APERTURE, RECLOSS, ONEPASS;
         START, X=X, PX=PX, Y=Y, PY=PY, T=T, PT=PT;
-        RUN, MAXAPER={0.5,0.05,0.5,0.05,7000,0.1};
+        RUN, TRACK_HARMON=0, MAXAPER={0.5,0.05,0.5,0.05,7000,0.1};
       ENDTRACK;
 
       SETVARS, TABLE = trackloss, ROW=1;

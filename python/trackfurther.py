@@ -9,6 +9,8 @@ WARNING: Backtrack does not actually work.
 """
 from version import __version__
 
+from dataprocessing import getsettings
+
 import os
 import sys
 import subprocess
@@ -18,16 +20,6 @@ locations = {"handover": ["QDA->L/2+0.004724617306961", "QDA.21910"],
              "Q216start": ["-QFA->L/2", "QFA.21610"],
              "Q216": ["0", "QFA.21610"], "Q219": ["0", "QDA.21910"],
              "grid218": ["0", "AP.UP.MSE21857"]}
-
-def findsloexcodedir(madcode):
-    for line in madcode:
-        if "madxBatch" in line:
-            if line.startswith("CALL, FILE = '"):
-                codedir = line[14:-2].split("/")
-                i = codedir.index("madxBatch")
-                codedir = "/".join(codedir[:i])
-                return codedir
-    raise IOError('Could not locate slow extraction code directory...')
     
 def installmarkers(startlocation, endlocation, twisstrack):
     startspec = locations[startlocation]
@@ -111,7 +103,7 @@ def tracklossto(location, lossfolder, startpoint, backtrack=False, sloexcodedir=
             madstart[i] = line.replace("tr$macro", "turnmacro")
 
     if sloexcodedir is None:    
-        sloexcodedir = findsloexcodedir(madstart)
+        sloexcodedir = getsettings(lossfolder+'/..')['home']+'/..'
 
     # Construct the new MAD-X code
     with open(madfile, 'w') as outf:
@@ -178,7 +170,7 @@ def tracklossto(location, lossfolder, startpoint, backtrack=False, sloexcodedir=
         outf.flush()
         
     if madxexe is None:
-        madxexe = "/afs/cern.ch/user/m/mad/bin/madx"
+        madxexe = getsettings(lossfolder+'/..')['madxversion']
     with open(os.devnull, 'w') as quiet:
         subprocess.check_call(madxexe+" track.madx", shell=True, stdout=quiet)
         
