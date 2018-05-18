@@ -97,6 +97,8 @@ class Settings:
         self.dynamicbump_offpx = 0.0
         self.dynamicbump_cpx = 42600.0
 
+        self.cose = False
+
         self.saveloss = True
         self.saveout = False
         self.savetracks = True
@@ -191,6 +193,26 @@ def customize_tracker(filename,searchExp,replaceExp):
         os.fsync(out.fileno())
 
 
+def tune_setup(settings):
+    if settings.cose:
+        line = ('kqf1_end = kqf1 * (1.0 + dpp_end/(1+dpp_end));\n'+
+                'kqd_end = kqd * (1.0 + dpp_end/(1+dpp_end));\n\n'+
+
+                'kqf1_start = kqf1 * (1.0 + dpp_start/(1+dpp_start));\n'+
+                'kqd_start = kqd * (1.0 + dpp_start/(1+dpp_start));\n')
+    else:
+        line = ('qh = qh_end;\n'+
+                "CALL, FILE='pyHOMEDIR/madx/matchtune.cmdx';\n"+
+                'kqf1_end = kqf1;\n'+
+                'kqd_end = kqd;\n\n'+
+
+                'qh = qh_start;\n'+
+                "CALL, FILE='pyHOMEDIR/madx/matchtune.cmdx';\n"+
+                'kqf1_start = kqf1;\n'+
+                'kqd_start = kqd;\n')
+    return line
+
+
 def track_lin(k,data,settings):
     """Creates the text to replace pyTRACKER in tracker.madx. (nominal case)"""
     line = ("m_f = (kqf1_start - kqf1_end) / (1 - "+str(settings.nturns)+");\n"+
@@ -204,6 +226,14 @@ def track_lin(k,data,settings):
     line += ("tr$macro(turn): MACRO = {\n"+
              " kqf1 = m_f * turn + n_f;\n"+
              " kqd = m_d * turn + n_d;\n")
+
+    if settings.cose:
+        line += (' dpp_turn = dpp_start + (dpp_end-dpp_start)/('+str(settings.nturns)+'-1)*(turn-1);\n'+ # Let's not fuss about dpp vs PT for now...
+         ' relerr = dpp_turn/(1+dpp_turn);\n'+
+         ' abserr = relerr*kMBA/4;\n' #kMBA=kMBB
+         ' SELECT, FLAG=ERROR, CLEAR;\n'+
+         ' SELECT, FLAG=ERROR, PATTERN="MB.*";\n'+
+         ' EFCOMP, ORDER=0, DKN={abserr};\n')
              
     if settings.dynamicbump:
         line += (" knob_x_bump = "+str(settings.dynamicbump_offx)+" + "+str(settings.dynamicbump_cx)+" * (dpp_start + turn/"+str(settings.nturns)+"*(dpp_end-dpp_start));\n"+
@@ -258,6 +288,13 @@ def track_sliced(k,data,settings):
     dpp = str(settings.slices[k/settings.nbatches])
 
     line = "SYSTEM, 'mkdir "+str(k)+"';\n\n"
+
+    if settings.cose:
+        line += ('relerr = ('+dpp+')/(1+('+dpp+'));\n'+
+         'abserr = relerr*kMBA/4;\n' #kMBA=kMBB
+         'SELECT, FLAG=ERROR, CLEAR;\n'+
+         'SELECT, FLAG=ERROR, PATTERN="MB.*";\n'+
+         'EFCOMP, ORDER=0, DKN={abserr};\n')
 
     if settings.dynamicbump:
         line += (" knob_x_bump = "+str(settings.dynamicbump_offx)+" + "+str(settings.dynamicbump_cx)+" * ("+dpp+");\n"+
@@ -361,7 +398,9 @@ def submit_job(settings):
             changes=changefile.read()
         replacer("tracker.madx", "/*pyFINALCHANGES*/", changes)
 
-    replacer("tracker.madx",'pyDATADIR', settings.datadir)
+    replacer("tracker.madx", 'pyTUNESETUP', tune_setup(settings))
+
+    replacer("tracker.madx", 'pyDATADIR', settings.datadir)
     replacer("tracker.madx", 'pyHOMEDIR', settings.home)
     replacer("tracker.madx", 'pyPYCOLL', str(int(settings.pycollimate)))
 

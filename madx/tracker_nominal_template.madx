@@ -364,15 +364,7 @@ pyTWISS*/
 ! Tracking code is completed by the python files
 !-----------------------------------------------------------------------
 
-qh = qh_end;
-CALL, FILE='pyHOMEDIR/madx/matchtune.cmdx';
-kqf1_end = kqf1;
-kqd_end = kqd;
-
-qh = qh_start;
-CALL, FILE='pyHOMEDIR/madx/matchtune.cmdx';
-kqf1_start = kqf1;
-kqd_start = kqd;
+pyTUNESETUP
 
 /*pyTWISS
 nturns = pyNTURNS;
