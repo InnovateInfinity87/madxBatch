@@ -84,11 +84,11 @@ klse52402 := extr_sext * knob_extr_sext;
 !-----------------------------------------------------------------------
 
 ! Redefine bumpers as RBEND instead of KICKER
-MPSH_rb.21202: RBEND, L = .714, angle=0.0;
-MPLH_rb.21431: RBEND, L = 2.06, angle=0.0;
-MPNH_rb.21732: RBEND, L = 2.04, angle=0.0;
-MPLH_rb.21995: RBEND, L = 2.06, angle=0.0;
-MPLH_rb.22195: RBEND, L = 2.06, angle=0.0;
+MPSH_rb.21202: RBEND, L = .714, angle=0.0, APERTYPE=RECTANGLE, APERTURE={0.076,0.01765};
+MPLH_rb.21431: RBEND, L = 2.06, angle=0.0, APERTYPE=RECTANGLE, APERTURE={0.076,0.01765};
+MPNH_rb.21732: RBEND, L = 2.04, angle=0.0, APERTYPE=ELLIPSE, APERTURE={0.078,0.028};
+MPLH_rb.21995: RBEND, L = 2.06, angle=0.0, APERTYPE=RECTANGLE, APERTURE={0.076,0.01765};
+MPLH_rb.22195: RBEND, L = 2.06, angle=0.0, APERTYPE=RECTANGLE, APERTURE={0.076,0.01765};
 
 ! Replace old bumpers by new
 SEQEDIT, SEQUENCE = sps;
