@@ -17,7 +17,7 @@ OPTION, RBARC=FALSE; ! The length of a rectangular magnet is the dist-
 
 ! Tune (on-resonance)
 qh_res = 80.0 / 3.0; ! = 26.666...
-qv = 26.58;
+qv = 26.58; ! NTS: Double check!!
 
 ! Normalized chroma measured without bump, without extraction sextupoles
 qh = 26.62;
@@ -63,11 +63,14 @@ CALL, FILE = 'pyHOMEDIR/input/elements.str';
 
 USE, SEQUENCE = sps;
 
-! Initial values changed in matching later
-klsda =      -0.0853222228;
-klsdb =      -0.1628238122;
-klsfa =      0.07660956178;
-klsfb =     -0.04949411915;
+CALL, FILE = 'pyHOMEDIR/madx/op_inittune.cmdx';
+CALL, FILE = 'pyHOMEDIR/madx/op_initchroma.cmdx';
+
+! Initial values changed in matching later (values at tune measurement)
+qh_setvalue = 26.62;
+qv_setvalue = 26.58;
+qph_setvalue = -1;
+qpv_setvalue = 0.495;
 
 !-----------------------------------------------------------------------
 ! Set extraction sextupoles
@@ -170,8 +173,7 @@ IF (use_pycoll==1){
 !-----------------------------------------------------------------------
 knob_extr_sext_val = knob_extr_sext;
 knob_extr_sext = 0;
-CALL, FILE='pyHOMEDIR/madx/matchtune.cmdx';
-CALL, FILE='pyHOMEDIR/madx/matchchroma.cmdx';
+CALL, FILE='pyHOMEDIR/madx/op_matchtunechroma.cmdx';
 knob_extr_sext = knob_extr_sext_val;
 
 
@@ -341,7 +343,7 @@ CALL, FILE = 'pyHOMEDIR/input/align_extraction.cmdx';
 !-----------------------------------------------------------------------
 
 qh = qh_res;
-CALL, FILE='pyHOMEDIR/madx/matchtune.cmdx';
+CALL, FILE='pyHOMEDIR/madx/op_matchtune.cmdx';
 
 SELECT, FLAG=TWISS, CLEAR;
 SELECT, FLAG=TWISS, COLUMN=NAME,S,BETX,ALFX,X,DX,PX,DPX,MUX,BETY,ALFY,Y,DY,PY,DPY,MUY,APER_1,APER_2,APER_3,APER_4;
@@ -368,7 +370,7 @@ pyTUNESETUP
 
 /*pyTWISS
 nturns = pyNTURNS;
-CREATE, TABLE=QSWEEP, COLUMN=nturns,kqf1_start,kqf1_end,kqd_start,kqd_end;
+CREATE, TABLE=QSWEEP, COLUMN=nturns,qv_setvalue,qh_set_start,qh_set_end,kqf1_start,kqf1_end,kqd_start,kqd_end;
 FILL, TABLE=QSWEEP;
 WRITE, TABLE=QSWEEP, FILE='pyDATADIR/qsweep.tfs';
 EXIT;

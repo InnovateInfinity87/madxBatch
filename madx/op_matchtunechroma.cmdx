@@ -1,0 +1,20 @@
+!-----------------------------------------------------------------------
+! Match chroma
+!-----------------------------------------------------------------------
+
+! Match required chroma
+MATCH, sequence=SPS;
+ VARY, name=qh_setvalue, step=0.00001;
+ VARY, name=qv_setvalue, step=0.00001;
+ VARY, name=qph_setvalue, step=0.00001;
+ VARY, name=qpv_setvalue, step=0.00001;
+
+ GLOBAL, sequence=SPS, Q1= qh;
+ GLOBAL, sequence=SPS, Q2= qv;
+ GLOBAL, sequence=SPS, DQ1= dqh_norm * qh;
+ GLOBAL, sequence=SPS, DQ2=  dqv_norm * qv;
+
+ LMDIF, CALLS = 500, TOLERANCE = 1e-6;
+ENDMATCH;
+
+RETURN;

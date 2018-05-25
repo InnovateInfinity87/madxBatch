@@ -1,0 +1,9 @@
+dkqd_h =    -7.127348119e-05 ;
+dkqf1_h =    0.0003701440969 ;
+dkqd_v =   -0.0003705446173 ;
+dkqf1_v =    7.147226908e-05 ;
+
+kqf1 :=  0.01443603711 + (qh_setvalue - 26.13) * dkqf1_h + (qv_setvalue - 26.18) * dkqf1_v;
+kqd  := -0.01443946072 + (qh_setvalue - 26.13) * dkqd_h  + (qv_setvalue - 26.18) * dkqd_v;
+
+RETURN;

@@ -48,13 +48,6 @@ class Settings:
         self.datadir = outputdir+"/"+name+"/"
         self.home = '/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1])
         self.pycolldir = self.home+'/../pycollimate/'
-        #self.slowexfiles = (self.home+'/input/sps.ele, '+
-        #                    self.home+'/input/aperturedb_1.dbx, '+
-        #                    self.home+'/input/aperturedb_3.dbx, '+
-        #                    self.home+'/madx/matchtune.cmdx, '+
-        #                    self.home+'/madx/matchchroma.cmdx')
-
-        #self.madxversion = "/afs/cern.ch/user/m/mad/bin/madx"
         self.madxversion = '/afs/cern.ch/user/m/mad/bin/rel/5.03.06/madx-linux64-gnu'
 
         self.trackertemplate = self.home+"/madx/tracker_nominal_template.madx"
@@ -195,19 +188,23 @@ def customize_tracker(filename,searchExp,replaceExp):
 
 def tune_setup(settings):
     if settings.cose:
-        line = ('kqf1_end = kqf1 * (1.0 + dpp_end/(1+dpp_end));\n'+
+        line = ('qh_set_end = qh_setvalue;\n'+
+                'kqf1_end = kqf1 * (1.0 + dpp_end/(1+dpp_end));\n'+
                 'kqd_end = kqd * (1.0 + dpp_end/(1+dpp_end));\n\n'+
 
+                'qh_set_start = qh_setvalue;\n'+
                 'kqf1_start = kqf1 * (1.0 + dpp_start/(1+dpp_start));\n'+
                 'kqd_start = kqd * (1.0 + dpp_start/(1+dpp_start));\n')
     else:
         line = ('qh = qh_end;\n'+
-                "CALL, FILE='pyHOMEDIR/madx/matchtune.cmdx';\n"+
+                "CALL, FILE='pyHOMEDIR/madx/op_matchtune.cmdx';\n"+
+                'qh_set_end = qh_setvalue;\n'+
                 'kqf1_end = kqf1;\n'+
                 'kqd_end = kqd;\n\n'+
 
                 'qh = qh_start;\n'+
-                "CALL, FILE='pyHOMEDIR/madx/matchtune.cmdx';\n"+
+                "CALL, FILE='pyHOMEDIR/madx/op_matchtune.cmdx';\n"+
+                'qh_set_start = qh_setvalue;\n'+
                 'kqf1_start = kqf1;\n'+
                 'kqd_start = kqd;\n')
     return line
@@ -303,7 +300,7 @@ def track_sliced(k,data,settings):
 
     line += ("dpp_matchtune = "+dpp+";\n"+
              "qh = qh_res;\n"+
-             "CALL, FILE='"+settings.home+"/madx/matchtune_offmom.cmdx';\n\n")
+             "CALL, FILE='"+settings.home+"/madx/op_matchtune_offmom.cmdx';\n\n")
 
     line += ("OPTION, -WARN;\n"+
              "TRACK, ONEPASS, APERTURE, RECLOSS")
