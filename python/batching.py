@@ -212,29 +212,27 @@ def tune_setup(settings):
 
 def track_lin(k,data,settings):
     """Creates the text to replace pyTRACKER in tracker.madx. (nominal case)"""
-    line = ("m_f = (kqf1_start - kqf1_end) / (1 - "+str(settings.nturns)+");\n"+
-            "m_d = (kqd_start -  kqd_end ) / (1 - "+str(settings.nturns)+");\n\n"+
-
-            "n_f = kqf1_start - m_f;\n"+
-            "n_d = kqd_start - m_d;\n\n"+
+    line = ('c_f = (kqf1_end-kqf1_start)/('+str(settings.nturns)+'-1);\n'+
+            'c_d = (kqd_end-kqd_start)/('+str(settings.nturns)+'-1);\n'+
+            'c_dpp = (dpp_end-dpp_start)/('+str(settings.nturns)+'-1);\n\n'+
         
             "SYSTEM, 'mkdir "+str(k)+"';\n\n")
         
-    line += ("tr$macro(turn): MACRO = {\n"+
-             " kqf1 = m_f * turn + n_f;\n"+
-             " kqd = m_d * turn + n_d;\n")
+    line += ('tr$macro(turn): MACRO = {\n'+
+             ' kqf1 = kqf1_start + c_f*(turn-1);\n'+
+             ' kqd = kqd_start + c_d*(turn-1);\n'+
+             ' dpp_turn = dpp_start + c_dpp*(turn-1);\n')
 
     if settings.cose:
-        line += (' dpp_turn = dpp_start + (dpp_end-dpp_start)/('+str(settings.nturns)+'-1)*(turn-1);\n'+ # Let's not fuss about dpp vs PT for now...
-         ' relerr = dpp_turn/(1+dpp_turn);\n'+
-         ' abserr = relerr*kMBA/4;\n' #kMBA=kMBB
-         ' SELECT, FLAG=ERROR, CLEAR;\n'+
-         ' SELECT, FLAG=ERROR, PATTERN="MB.*";\n'+
-         ' EFCOMP, ORDER=0, DKN={abserr};\n')
+        line += (' relerr = dpp_turn/(1+dpp_turn);\n'+ # Let's not fuss about dpp vs PT for now...
+                 ' abserr = relerr*kMBA/4;\n' #kMBA=kMBB
+                 ' SELECT, FLAG=ERROR, CLEAR;\n'+
+                 ' SELECT, FLAG=ERROR, PATTERN="MB.*";\n'+
+                 ' EFCOMP, ORDER=0, DKN={abserr};\n')
              
     if settings.dynamicbump:
-        line += (" knob_x_bump = "+str(settings.dynamicbump_offx)+" + "+str(settings.dynamicbump_cx)+" * (dpp_start + turn/"+str(settings.nturns)+"*(dpp_end-dpp_start));\n"+
-                 " knob_px_bump = "+str(settings.dynamicbump_offpx)+" + "+str(settings.dynamicbump_cpx)+" * (dpp_start + turn/"+str(settings.nturns)+"*(dpp_end-dpp_start));\n"+
+        line += (" knob_x_bump = "+str(settings.dynamicbump_offx)+"+("+str(settings.dynamicbump_cx)+")*dpp_turn;\n"+
+                 " knob_px_bump = "+str(settings.dynamicbump_offpx)+"+("+str(settings.dynamicbump_cpx)+")*dpp_turn;\n"+
                  " EXEC, lss2bump(knob_extr_bump, knob_x_bump, knob_px_bump);\n")
     line += "};\n\n"
 
@@ -288,14 +286,14 @@ def track_sliced(k,data,settings):
 
     if settings.cose:
         line += ('relerr = ('+dpp+')/(1+('+dpp+'));\n'+
-         'abserr = relerr*kMBA/4;\n' #kMBA=kMBB
-         'SELECT, FLAG=ERROR, CLEAR;\n'+
-         'SELECT, FLAG=ERROR, PATTERN="MB.*";\n'+
-         'EFCOMP, ORDER=0, DKN={abserr};\n')
+                 'abserr = relerr*kMBA/4;\n' #kMBA=kMBB
+                 'SELECT, FLAG=ERROR, CLEAR;\n'+
+                 'SELECT, FLAG=ERROR, PATTERN="MB.*";\n'+
+                 'EFCOMP, ORDER=0, DKN={abserr};\n')
 
     if settings.dynamicbump:
-        line += (" knob_x_bump = "+str(settings.dynamicbump_offx)+" + "+str(settings.dynamicbump_cx)+" * ("+dpp+");\n"+
-                 " knob_px_bump = "+str(settings.dynamicbump_offpx)+" + "+str(settings.dynamicbump_cpx)+" * ("+dpp+");\n"+
+        line += (" knob_x_bump = "+str(settings.dynamicbump_offx)+"+("+str(settings.dynamicbump_cx)+")*("+dpp+");\n"+
+                 " knob_px_bump = "+str(settings.dynamicbump_offpx)+"+("+str(settings.dynamicbump_cpx)+")*("+dpp+");\n"+
                  " EXEC, lss2bump(knob_extr_bump, knob_x_bump, knob_px_bump);\n")
 
     line += ("dpp_matchtune = "+dpp+";\n"+
