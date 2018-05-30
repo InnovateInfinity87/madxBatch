@@ -1,0 +1,11 @@
+!-----------------------------------------------------------------------
+! Match tune
+!-----------------------------------------------------------------------
+
+MATCH, SEQUENCE = sps ;
+ VARY, NAME = qh_setvalue, STEP = 0.0001 ;
+ GLOBAL, Q1 = qh;
+ LMDIF, CALLS = 100, TOLERANCE = 1.0E-21 ;
+ENDMATCH ;
+
+RETURN;

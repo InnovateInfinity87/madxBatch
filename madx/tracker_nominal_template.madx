@@ -17,7 +17,7 @@ OPTION, RBARC=FALSE; ! The length of a rectangular magnet is the dist-
 
 ! Tune (on-resonance)
 qh_res = 80.0 / 3.0; ! = 26.666...
-qv = 26.58; ! NTS: Double check!!
+qv = 26.58; ! NTS: Double check!! Also check difference between measurement and extraction qv
 
 ! Normalized chroma measured without bump, without extraction sextupoles
 qh = 26.62;
@@ -343,7 +343,7 @@ CALL, FILE = 'pyHOMEDIR/input/align_extraction.cmdx';
 !-----------------------------------------------------------------------
 
 qh = qh_res;
-CALL, FILE='pyHOMEDIR/madx/op_matchtune.cmdx';
+CALL, FILE='pyHOMEDIR/madx/op_matchtune.cmdx'; # NTS: matchtune or matchtune_h?
 
 SELECT, FLAG=TWISS, CLEAR;
 SELECT, FLAG=TWISS, COLUMN=NAME,S,BETX,ALFX,X,DX,PX,DPX,MUX,BETY,ALFY,Y,DY,PY,DPY,MUY,APER_1,APER_2,APER_3,APER_4;

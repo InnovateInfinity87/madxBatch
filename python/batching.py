@@ -197,13 +197,13 @@ def tune_setup(settings):
                 'kqd_start = kqd * (1.0 + dpp_start/(1+dpp_start));\n')
     else:
         line = ('qh = qh_end;\n'+
-                "CALL, FILE='pyHOMEDIR/madx/op_matchtune.cmdx';\n"+
+                "CALL, FILE='pyHOMEDIR/madx/op_matchtune_h.cmdx';\n"+
                 'qh_set_end = qh_setvalue;\n'+
                 'kqf1_end = kqf1;\n'+
                 'kqd_end = kqd;\n\n'+
 
                 'qh = qh_start;\n'+
-                "CALL, FILE='pyHOMEDIR/madx/op_matchtune.cmdx';\n"+
+                "CALL, FILE='pyHOMEDIR/madx/op_matchtune_h.cmdx';\n"+
                 'qh_set_start = qh_setvalue;\n'+
                 'kqf1_start = kqf1;\n'+
                 'kqd_start = kqd;\n')
@@ -298,7 +298,7 @@ def track_sliced(k,data,settings):
 
     line += ("dpp_matchtune = "+dpp+";\n"+
              "qh = qh_res;\n"+
-             "CALL, FILE='"+settings.home+"/madx/op_matchtune_offmom.cmdx';\n\n")
+             "CALL, FILE='"+settings.home+"/madx/op_matchtune_h_offmom.cmdx';\n\n")
 
     line += ("OPTION, -WARN;\n"+
              "TRACK, ONEPASS, APERTURE, RECLOSS")
