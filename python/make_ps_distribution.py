@@ -1,14 +1,14 @@
 from version import __version__
 
 import numpy as np
-from scipy.stats import truncnorm as trandn
+from scipy.stats import truncnorm, truncexpon
 from prettytable import PrettyTable
 import linecache
 from datetime import datetime
 
 # Comment: In MAD-X dispersion is w.r.t PT, not DELTAP. (see uguide p19-20)
+# For generating coordinates via action-angle, see http://www.slac.stanford.edu/grp/arb/tn/arbvol3/ARDB284.pdf
 # TODO: set default emit_x, emit_y to realistic values instead of historical?
-# TODO: Truncation happensin a parallelogram, not an ellipse atm. Look into implementing truncated Rayleigh?
 
 m_p = 0.938272081 # proton mass in GeV, from PDG website Sept.'17
 
@@ -30,6 +30,8 @@ def string_to_float(seq):
 
 
 def twissinit(twissfile):
+    # Hardcoded line numbers may break in case of large MAD-X update
+    dpp_twiss = float(linecache.getline(twissfile, 36).split()[-1])
     variables = linecache.getline(twissfile, 46).split()[1:]
     twiss = list(string_to_float(linecache.getline(twissfile, 48).split()))
 
@@ -50,7 +52,7 @@ def twissinit(twissfile):
     dy = twiss[variables.index('DY')]
     dpy = twiss[variables.index('DPY')]
 
-    return x0,y0,px0,py0,betx,bety,alfx,alfy,dx,dpx,dy,dpy
+    return x0,y0,px0,py0,betx,bety,alfx,alfy,dx,dpx,dy,dpy,dpp_twiss
 
 
 class Beam(object):
@@ -96,7 +98,7 @@ class Beam(object):
 def get_gauss_distribution(twissfile='sequence_totrack.tfs', beam_t='FT',
                            sigmas=None, seed=None, n_part=100, noseeding=False,
                            output='initial_distribution.txt', **kwargs):
-    x0,y0,px0,py0,betx,bety,alfx,alfy,dx,dpx,dy,dpy = twissinit(twissfile)
+    x0,y0,px0,py0,betx,bety,alfx,alfy,dx,dpx,dy,dpy,dpp_twiss = twissinit(twissfile)
     beam = Beam(beam_t, **kwargs)
 
     if not noseeding:
@@ -110,25 +112,25 @@ def get_gauss_distribution(twissfile='sequence_totrack.tfs', beam_t='FT',
         dpp = np.random.uniform(beam.dpp_0-beam.dpp_d, beam.dpp_0+beam.dpp_d, n_part)
     elif beam.pdist.startswith('gauss'):
         sigp = float(beam.pdist[5:])
-        dpp = beam.dpp_0+trandn(-sigp, sigp, scale=(beam.dpp_d/sigp)).rvs(n_part)
+        dpp = beam.dpp_0+truncnorm(-sigp, sigp, scale=(beam.dpp_d/sigp)).rvs(n_part)
     else:
         print "Warning: unknown pdist '"+beam.pdist+"', assuming uniform."
         dpp = np.random.uniform(beam.dpp_0-beam.dpp_d, beam.dpp_0+beam.dpp_d, n_part)
 
     pt = np.fromiter((beam.dpp_to_pt(d) for d in dpp), float)
 
-    # Transverse distributions
-    sx = np.sqrt(beam.emit_x*betx)
-    n_x = trandn(-sigmas, sigmas, scale=sx).rvs(n_part)
-    n_px = trandn(-sigmas, sigmas, scale=sx).rvs(n_part)
-    x = x0 + n_x + dx*pt
-    px = px0 + (n_px - alfx*n_x)/betx + dpx*pt
+    # Transverse distributions (from action angle, J and theta)
+    pt_twiss = beam.dpp_to_pt(dpp_twiss)
 
-    sy = np.sqrt(beam.emit_y*bety)
-    n_y = trandn(-sigmas, sigmas, scale=sy).rvs(n_part)
-    n_py = trandn(-sigmas, sigmas, scale=sy).rvs(n_part)
-    y = y0 + n_y + dy*pt
-    py = py0 + (n_py - alfy*n_y)/bety + dpy*pt
+    jx = truncexpon(b=0.5*sigmas**2, scale=beam.emit_x).rvs(n_part)
+    thx = np.random.uniform(0, 2*np.pi, n_part)
+    x = x0 + np.sqrt(2*jx*betx)*np.cos(thx) + dx*(pt-pt_twiss)
+    px = px0 - np.sqrt(2*jx/betx)*(np.sin(thx)+alfx*np.cos(thx)) + dpx*(pt-pt_twiss)
+
+    jy = truncexpon(b=0.5*sigmas**2, scale=beam.emit_y).rvs(n_part)
+    thy = np.random.uniform(0, 2*np.pi, n_part)
+    y = y0 + np.sqrt(2*jy*bety)*np.cos(thy) + dy*(pt-pt_twiss)
+    py = py0 - np.sqrt(2*jy/bety)*(np.sin(thy)+alfy*np.cos(thy)) + dpy*(pt-pt_twiss)
 
     # Output table
     if output is not None:
@@ -152,7 +154,7 @@ def get_gauss_distribution(twissfile='sequence_totrack.tfs', beam_t='FT',
 def get_halo_distribution(twissfile='sequence_totrack.tfs', beam_t='FT',
                           n_halo=5,seed=None, n_part=100,
                           output='initial_distribution_halo.txt', **kwargs):
-    x0,y0,px0,py0,betx,bety,alfx,alfy,dx,dpx,dy,dpy = twissinit(twissfile)
+    x0,y0,px0,py0,betx,bety,alfx,alfy,dx,dpx,dy,dpy,dpp_twiss = twissinit(twissfile)
     beam = Beam(beam_t, **kwargs)
 
     try:
@@ -167,15 +169,17 @@ def get_halo_distribution(twissfile='sequence_totrack.tfs', beam_t='FT',
     pt = np.fromiter((beam.dpp_to_pt(d) for d in dpp), float)
 
     # Transverse distributions
+    pt_twiss = beam.dpp_to_pt(dpp_twiss)
+
     psix = np.random.uniform(0, 2*np.pi, n_part)
     widthx = np.random.uniform(n_halo[0], n_halo[1], n_part)
-    x = x0 + widthx*np.sqrt(beam.emit_x*betx)*np.cos(psix) + dx*pt
-    px = px0 + widthx*np.sqrt(beam.emit_x/betx)*(np.sin(psix) - alfx*np.cos(psix)) + dpx*pt
+    x = x0 + widthx*np.sqrt(beam.emit_x*betx)*np.cos(psix) + dx*(pt-pt_twiss)
+    px = px0 + widthx*np.sqrt(beam.emit_x/betx)*(np.sin(psix) - alfx*np.cos(psix)) + dpx*(pt-pt_twiss)
 
     psiy = np.random.uniform(0, 2*np.pi, n_part)
     widthy = np.random.uniform(n_halo[0], n_halo[1], n_part)
-    y = y0 + widthy*np.sqrt(beam.emit_y*bety)*np.cos(psiy) + dy*pt
-    py = py0 + widthy*np.sqrt(beam.emit_y/bety)*(np.sin(psiy) - alfy*np.cos(psiy)) + dpy*pt
+    y = y0 + widthy*np.sqrt(beam.emit_y*bety)*np.cos(psiy) + dy*(pt-pt_twiss)
+    py = py0 + widthy*np.sqrt(beam.emit_y/bety)*(np.sin(psiy) - alfy*np.cos(psiy)) + dpy*(pt-pt_twiss)
 
     # Output table
     if output is not None:
@@ -195,10 +199,10 @@ def get_halo_distribution(twissfile='sequence_totrack.tfs', beam_t='FT',
     return x, px, y, py, pt
 
 
-def get_sliced_distribution(twissfile='sequence_totrack.tfs', beam_t='FT',
-                           sigmas=None, dpps=[None],
-                           seed=None, n_batches=1, n_part=100,
-                           output='initial_distribution_slices.txt', **kwargs):
+def get_sliced_distribution(twissfile='sequence_totrack___slice__.tfs',
+                            beam_t='FT', sigmas=None, dpps=[None],
+                            seed=None, n_batches=1, n_part=100,
+                            output='initial_distribution_slices.txt', **kwargs):
 
     np.random.seed(seed)
 
@@ -213,8 +217,9 @@ def get_sliced_distribution(twissfile='sequence_totrack.tfs', beam_t='FT',
     if not 'pdist' in kwargs:
         kwargs['pdist'] = 'gauss1'
 
-    for dpp in dpps:
-        x, px, y, py, pt = get_gauss_distribution(twissfile=twissfile, beam_t=beam_t,
+    for i, dpp in enumerate(dpps):
+        slicetwiss = twissfile.replace('__slice__', str(i))
+        x, px, y, py, pt = get_gauss_distribution(twissfile=slicetwiss, beam_t=beam_t,
                                                   sigmas=sigmas, n_part=(n_batches*n_part),
                                                   output=None, noseeding=True,
                                                   dpp_0=dpp, **kwargs)

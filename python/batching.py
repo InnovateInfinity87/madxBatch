@@ -56,7 +56,6 @@ class Settings:
         self.thinchanges = None
         self.finalchanges = None
         self.myreplace = {}
-        self.twissfile = None
         self.local = False
 
         self.seed = None
@@ -210,6 +209,17 @@ def tune_setup(settings):
     return line
 
 
+def twiss_init(settings):
+    if settings.slices==None:
+        line = "WRITE, TABLE=TWISS, FILE='"+settings.datadir+"/twiss/twiss_init.tfs';\n"
+    else:
+        line = ""
+        for i, dpp in enumerate(settings.slices):
+            line += slice_setup(str(dpp), settings)
+            line +="WRITE, TABLE=TWISS, FILE='"+settings.datadir+"/twiss/twiss_"+str(i)+".tfs';\n\n"
+    return line
+
+
 def track_lin(k,data,settings):
     """Creates the text to replace pyTRACKER in tracker.madx. (nominal case)"""
     line = ('c_f = (kqf1_end-kqf1_start)/('+str(settings.nturns)+'-1);\n'+
@@ -278,12 +288,8 @@ def track_lin(k,data,settings):
     return line
 
 
-def track_sliced(k,data,settings):
-    """Creates the text to replace pyTRACKER in tracker.madx. (sliced nominal case)"""
-    dpp = str(settings.slices[k/settings.nbatches])
-
-    line = "SYSTEM, 'mkdir "+str(k)+"';\n\n"
-
+def slice_setup(dpp, settings):
+    line = ""
     if settings.cose:
         line += ('relerr = ('+dpp+')/(1+('+dpp+'));\n'+
                  'abserr = relerr*kMBA/4;\n' #kMBA=kMBB
@@ -299,6 +305,16 @@ def track_sliced(k,data,settings):
     line += ("dpp_matchtune = "+dpp+";\n"+
              "qh = qh_res;\n"+
              "CALL, FILE='"+settings.home+"/madx/op_matchtune_h_offmom.cmdx';\n\n")
+    return line
+
+
+def track_sliced(k,data,settings):
+    """Creates the text to replace pyTRACKER in tracker.madx. (sliced nominal case)"""
+    dpp = str(settings.slices[k/settings.nbatches])
+
+    line = "SYSTEM, 'mkdir "+str(k)+"';\n\n"
+
+    line += slice_setup(dpp, settings)
 
     line += ("OPTION, -WARN;\n"+
              "TRACK, ONEPASS, APERTURE, RECLOSS")
@@ -341,15 +357,7 @@ def track_sliced(k,data,settings):
 
 
 def submit_job(settings):
-    """Creates and submits job cluster for simulation defined by settings.
-
-    Needs some fixing:
-    - We may want to pick non-random seeds for comparing loss-reduction
-      methods.
-    - The adapter needs to be made much more flexible, and/or different
-      template options added.
-    - The generated twiss table should be generated in output, not input.
-    """
+    """Creates and submits jobs for simulation defined by settings."""
     starting_dir = os.getcwd()
 
     if settings.slices is not None:
@@ -403,36 +411,35 @@ def submit_job(settings):
         replacer("tracker.madx", key, replacement)
 
     #Generate twiss files before and after thinning, used to make initial distributions
-    if settings.twissfile is None:
-        log = open("twisslog.txt", 'w')
-        copyfile("tracker.madx", "table.madx")
-        replacer("table.madx", 'pyNTURNS', str(settings.nturns))
-        replacer("table.madx", '/*pyTWISS', '')
-        replacer("table.madx", 'pyTWISS*/', '')
-        print "Creating Twiss table"
-        if settings.pycollimate:
-            subprocess.Popen(settings.pycolldir+"madxColl<table.madx", stdout=log, shell=True).wait()
-        else:
-            subprocess.Popen(settings.madxversion+"<table.madx", stdout=log, shell=True).wait()
-        log.close()
-        os.remove("table.madx")
-        print 'Table creation is finished!'
+    os.mkdir("twiss")
+    log = open("twisslog.txt", 'w')
+    copyfile("tracker.madx", "table.madx")
+    replacer("table.madx", 'pyNTURNS', str(settings.nturns))
+    replacer("table.madx", '/*pyTWISS', '')
+    replacer("table.madx", 'pyTWISS*/', '')
+    replacer('table.madx', 'pyTWISSINIT', twiss_init(settings))
+    print 'Creating Twiss tables'
+    if settings.pycollimate:
+        subprocess.Popen(settings.pycolldir+"madxColl<table.madx", stdout=log, shell=True).wait()
     else:
-        copyfile(settings.twissfile, settings.datadir+"/thin_twiss.tfs")
+        subprocess.Popen(settings.madxversion+"<table.madx", stdout=log, shell=True).wait()
+    log.close()
+    os.remove("table.madx")
+    print 'Table creation is finished!'
 
     if(settings.trackingbool):
         #Generate initial particle distribution
         #TODO: Non-random input
         if settings.slices is None:
             data=dis.get_gauss_distribution(output=settings.datadir+'initial_distribution.txt',
-                                            twissfile=settings.datadir+"thin_twiss.tfs",
+                                            twissfile=settings.datadir+'twiss/twiss_init.tfs',
                                             n_part=settings.nbatches*settings.nparperbatch,
                                             beam_t=settings.beam_t, seed=settings.seed,
                                             dpp_d=settings.dppmax, **settings.beamkwargs)
         else:
             slicewidth = 0 if settings.slicewidth is None else settings.slicewidth
             data=dis.get_sliced_distribution(output=settings.datadir+'initial_distribution.txt',
-                                             twissfile=settings.datadir+"thin_twiss.tfs",
+                                             twissfile=settings.datadir+'twiss/twiss___slice__.tfs',
                                              n_part=settings.nparperbatch,
                                              n_batches=settings.nbatches,
                                              beam_t=settings.beam_t, seed=settings.seed,
@@ -521,40 +528,3 @@ def submit_job(settings):
 
     os.chdir(starting_dir)
 
-
-def tester():
-    """Test of the main program functionality.
-
-    Runs a simple test to see if everything is working as it should. We
-    should think about replacing this with our (still to be defined)
-    test-case(s).
-    """
-    print "Running tester()"
-
-    settings=Settings('6900', studygroup='difftest', disk='afspublic')
-
-    settings.trackingbool=True
-    settings.trackertemplate=settings.home+"/madx/tracker_diffuser_template.madx"
-    settings.local=False
-    settings.monitor=False
-    settings.seed = 0
-
-    settings.elements=["QFA_START",'AP.UP.ZS21633']#,'AP.DO.ZS21676','AP.UP.TPST21760']
-    #settings.elements=['AP.UP.ZS21633_M']#,'AP.DO.ZS21676_M','AP.UP.TPST21760']#,'TCE.21695']
-
-    settings.nturns=10000
-    settings.nbatches=1000
-    settings.nparperbatch=20
-    settings.ffile=1
-
-    settings.dynamicbump=True
-    settings.pycollimate=True
-
-    settings.flavour=None
-
-    submit_job(settings)
-
-    return
-
-if __name__ == "__main__":
-    tester()
