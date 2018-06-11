@@ -23,7 +23,7 @@ from localsub import localsub
 class Settings:
     """Settings for the batched simulations"""
     def __init__(self, name, outputdir=None, studygroup='', disk=None):
-        if outputdir==None:
+        if outputdir is None:
             if not disk in ['afsprivate', 'afspublic', 'afsproject']:
                 print("Disk setting not valid. Valid options are afsprivate'"+
                       "/'afspublic'/'afsproject'. Defaulting to afsprivate."+
@@ -85,11 +85,12 @@ class Settings:
         # knob_px_bump = offpx*dpp  (microrad)
         self.dynamicbump=False
         self.dynamicbump_offx = 0.0
-        self.dynamicbump_cx = -729.5
+        self.dynamicbump_cx = None
         self.dynamicbump_offpx = 0.0
-        self.dynamicbump_cpx = 42600.0
+        self.dynamicbump_cpx = None
 
         self.cose = False
+        self.ampex = False
 
         self.saveloss = True
         self.saveout = False
@@ -186,7 +187,10 @@ def customize_tracker(filename,searchExp,replaceExp):
 
 
 def tune_setup(settings):
-    if settings.cose:
+    if settings.cose and settings.ampex:
+        print 'ERROR: COSE and amplitude extraction are incompatible.'
+        exit()
+    elif settings.cose:
         line = ('qh_set_end = qh_setvalue;\n'+
                 'kqf1_end = kqf1 * (1.0 + dpp_end/(1+dpp_end));\n'+
                 'kqd_end = kqd * (1.0 + dpp_end/(1+dpp_end));\n\n'+
@@ -194,6 +198,29 @@ def tune_setup(settings):
                 'qh_set_start = qh_setvalue;\n'+
                 'kqf1_start = kqf1 * (1.0 + dpp_start/(1+dpp_start));\n'+
                 'kqd_start = kqd * (1.0 + dpp_start/(1+dpp_start));\n')
+    elif settings.ampex and settings.dynamicbump:
+        line = ('! dpp values provide hacked dynamic bump settings\n'+
+                'dpp_start = -1;\n'+
+                'dpp_end = 1;\n\n'+
+
+                '! Bruteforce DB tune compensation\n'+
+                'qh = qh_end;\n'+
+                'temp_bf_cx = (pyCX)*dpp_end;\n'+
+                'temp_bf_cpx = (pyCPX)*dpp_end;\n'+
+                'EXEC, lss2bump(knob_extr_bump, temp_bf_cx, temp_bf_cpx);\n'
+                "CALL, FILE='pyHOMEDIR/madx/op_matchtune_h.cmdx';\n"+
+                'qh_set_end = qh_setvalue;\n'+
+                'kqf1_end = kqf1;\n'+
+                'kqd_end = kqd;\n\n'+
+
+                'qh = qh_start;\n'+
+                'temp_bf_cx = (pyCX)*dpp_start;\n'+
+                'temp_bf_cpx = (pyCPX)*dpp_start;\n'+
+                'EXEC, lss2bump(knob_extr_bump, temp_bf_cx, temp_bf_cpx);\n'
+                "CALL, FILE='pyHOMEDIR/madx/op_matchtune_h.cmdx';\n"+
+                'qh_set_start = qh_setvalue;\n'+
+                'kqf1_start = kqf1;\n'+
+                'kqd_start = kqd;\n')
     else:
         line = ('qh = qh_end;\n'+
                 "CALL, FILE='pyHOMEDIR/madx/op_matchtune_h.cmdx';\n"+
@@ -210,7 +237,7 @@ def tune_setup(settings):
 
 
 def twiss_init(settings):
-    if settings.slices==None:
+    if settings.slices is None:
         line = "WRITE, TABLE=TWISS, FILE='"+settings.datadir+"/twiss/twiss_init.tfs';\n"
     else:
         line = ""
@@ -245,8 +272,6 @@ def track_lin(k,data,settings):
                  " knob_px_bump = "+str(settings.dynamicbump_offpx)+"+("+str(settings.dynamicbump_cpx)+")*dpp_turn;\n"+
                  " EXEC, lss2bump(knob_extr_bump, knob_x_bump, knob_px_bump);\n")
     line += "};\n\n"
-
-    line += "EXEC, tr$macro(0);\n\n"
 
     line += ("OPTION, -WARN;\n"+
              "TRACK, ONEPASS, APERTURE, UPDATE, RECLOSS")
@@ -366,7 +391,19 @@ def submit_job(settings):
             settings.trackerrep = track_sliced
     else:
         nslices = 1
-            
+
+    if settings.dynamicbump_cx is None:
+        dynamicbump_cx = -729.5 if not settings.ampex else -2.0
+    else:
+        dynamicbump_cx = settings.dynamicbump_cx
+
+    if settings.dynamicbump_cpx is None:
+        dynamicbump_cpx = 42600.0 if not settings.ampex else 70.0
+    else:
+        dynamicbump_cpx = settings.dynamicbump_cpx
+
+    if settings.ampex and settings.finalchanges is None:
+        print "WARNING: Amplitude extraction is designed to be used with ampex_finalchanges.cmdx"
 
     if os.path.exists(settings.datadir):
         settings.datadir = settings.datadir[:-1]+'_/'
@@ -383,7 +420,7 @@ def submit_job(settings):
         f.write("These files were generated using madxBatch version "+__version__+".\n\n")
         f.write("Settings used:\n")
         for item in vars(settings).items():
-            f.write(str(item[0])+" = "+str(item[1])+"\n")
+            f.write(str(item[0])+" = "+str(item[1]).replace('\n','')+"\n")
 
     #Fill in basic template data
     copyfile(settings.trackertemplate, "tracker.madx")
