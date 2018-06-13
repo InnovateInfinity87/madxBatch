@@ -28,8 +28,8 @@ dqv_norm =  0.465;
 extr_sext = -0.11992;
 
 ! Knob values
-knob_extr_sext = 1.0;
-knob_extr_bump = 0.945;
+knob_extr_sext = 0.95;
+knob_extr_bump = 0.885;
 
 ! Tune range for tracking
 dpp_start = -0.0015;
