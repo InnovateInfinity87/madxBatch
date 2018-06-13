@@ -187,52 +187,45 @@ def customize_tracker(filename,searchExp,replaceExp):
 
 
 def tune_setup(settings):
-    if settings.cose and settings.ampex:
-        print 'ERROR: COSE and amplitude extraction are incompatible.'
-        exit()
-    elif settings.cose:
-        line = ('qh_set_end = qh_setvalue;\n'+
-                'kqf1_end = kqf1 * (1.0 + dpp_end/(1+dpp_end));\n'+
-                'kqd_end = kqd * (1.0 + dpp_end/(1+dpp_end));\n\n'+
+    if settings.cose:
+        if settings.ampex:
+            print 'ERROR: COSE and amplitude extraction are incompatible.'
+            exit()
+        else:
+            line = ('qh_set_end = qh_setvalue;\n'+
+                    'kqf1_end = kqf1 * (1.0 + dpp_end/(1+dpp_end));\n'+
+                    'kqd_end = kqd * (1.0 + dpp_end/(1+dpp_end));\n\n'+
 
-                'qh_set_start = qh_setvalue;\n'+
-                'kqf1_start = kqf1 * (1.0 + dpp_start/(1+dpp_start));\n'+
-                'kqd_start = kqd * (1.0 + dpp_start/(1+dpp_start));\n')
-    elif settings.ampex and settings.dynamicbump:
+                    'qh_set_start = qh_setvalue;\n'+
+                    'kqf1_start = kqf1 * (1.0 + dpp_start/(1+dpp_start));\n'+
+                    'kqd_start = kqd * (1.0 + dpp_start/(1+dpp_start));\n')
+    elif settings.ampex:
         line = ('! dpp values provide hacked dynamic bump settings\n'+
                 'dpp_start = -1;\n'+
-                'dpp_end = 1;\n\n'+
-
-                '! Bruteforce DB tune compensation\n'+
-                'qh = qh_end;\n'+
-                'temp_bf_cx = (pyCX)*dpp_end;\n'+
-                'temp_bf_cpx = (pyCPX)*dpp_end;\n'+
-                'EXEC, lss2bump(knob_extr_bump, temp_bf_cx, temp_bf_cpx);\n'
-                "CALL, FILE='pyHOMEDIR/madx/op_matchtune_h.cmdx';\n"+
-                'qh_set_end = qh_setvalue;\n'+
-                'kqf1_end = kqf1;\n'+
-                'kqd_end = kqd;\n\n'+
-
-                'qh = qh_start;\n'+
-                'temp_bf_cx = (pyCX)*dpp_start;\n'+
-                'temp_bf_cpx = (pyCPX)*dpp_start;\n'+
-                'EXEC, lss2bump(knob_extr_bump, temp_bf_cx, temp_bf_cpx);\n'
-                "CALL, FILE='pyHOMEDIR/madx/op_matchtune_h.cmdx';\n"+
-                'qh_set_start = qh_setvalue;\n'+
-                'kqf1_start = kqf1;\n'+
-                'kqd_start = kqd;\n')
+                'dpp_end = 1;\n\n')
     else:
-        line = ('qh = qh_end;\n'+
-                "CALL, FILE='pyHOMEDIR/madx/op_matchtune_h.cmdx';\n"+
-                'qh_set_end = qh_setvalue;\n'+
-                'kqf1_end = kqf1;\n'+
-                'kqd_end = kqd;\n\n'+
+        line = ''
 
-                'qh = qh_start;\n'+
-                "CALL, FILE='pyHOMEDIR/madx/op_matchtune_h.cmdx';\n"+
-                'qh_set_start = qh_setvalue;\n'+
-                'kqf1_start = kqf1;\n'+
-                'kqd_start = kqd;\n')
+    line += 'qh = qh_end;\n'
+    if settings.dynamicbump:
+        line += ('temp_bf_cx = (pyCX)*dpp_end;\n'+
+                 'temp_bf_cpx = (pyCPX)*dpp_end;\n'+
+                 'EXEC, lss2bump(knob_extr_bump, temp_bf_cx, temp_bf_cpx);\n')
+    line += ("CALL, FILE='pyHOMEDIR/madx/op_matchtune_h.cmdx';\n"+
+             'qh_set_end = qh_setvalue;\n'+
+             'kqf1_end = kqf1;\n'+
+             'kqd_end = kqd;\n\n'+
+
+             'qh = qh_start;\n')
+    if settings.dynamicbump:
+        line += ('temp_bf_cx = (pyCX)*dpp_start;\n'+
+                 'temp_bf_cpx = (pyCPX)*dpp_start;\n'+
+                 'EXEC, lss2bump(knob_extr_bump, temp_bf_cx, temp_bf_cpx);\n')
+    line += ("CALL, FILE='pyHOMEDIR/madx/op_matchtune_h.cmdx';\n"+
+             'qh_set_start = qh_setvalue;\n'+
+             'kqf1_start = kqf1;\n'+
+             'kqd_start = kqd;\n')
+
     return line
 
 
@@ -393,14 +386,10 @@ def submit_job(settings):
         nslices = 1
 
     if settings.dynamicbump_cx is None:
-        dynamicbump_cx = -729.5 if not settings.ampex else -2.0
-    else:
-        dynamicbump_cx = settings.dynamicbump_cx
+        settings.dynamicbump_cx = -729.5 if not settings.ampex else -2.0
 
     if settings.dynamicbump_cpx is None:
-        dynamicbump_cpx = 42600.0 if not settings.ampex else 70.0
-    else:
-        dynamicbump_cpx = settings.dynamicbump_cpx
+        settings.dynamicbump_cpx = 42600.0 if not settings.ampex else 70.0
 
     if settings.ampex and settings.finalchanges is None:
         print "WARNING: Amplitude extraction is designed to be used with ampex_finalchanges.cmdx"
