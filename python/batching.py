@@ -82,7 +82,7 @@ class Settings:
         self.pcblack = False
 
         # knob_x_bump = offx + cx*dpp (millimeter)
-        # knob_px_bump = offpx*dpp  (microrad)
+        # knob_px_bump = offpx + cpx*dpp  (microrad)
         self.dynamicbump=False
         self.dynamicbump_offx = 0.0
         self.dynamicbump_cx = None
@@ -191,6 +191,9 @@ def tune_setup(settings):
         if settings.ampex:
             print 'ERROR: COSE and amplitude extraction are incompatible.'
             exit()
+        if settings.dynamicbump:
+            print 'ERROR: COSE and dynamic bump are incompatible in this version of the code.'
+            exit()
         else:
             line = ('qh_set_end = qh_setvalue;\n'+
                     'kqf1_end = kqf1 * (1.0 + dpp_end/(1+dpp_end));\n'+
@@ -199,32 +202,32 @@ def tune_setup(settings):
                     'qh_set_start = qh_setvalue;\n'+
                     'kqf1_start = kqf1 * (1.0 + dpp_start/(1+dpp_start));\n'+
                     'kqd_start = kqd * (1.0 + dpp_start/(1+dpp_start));\n')
-    elif settings.ampex:
-        line = ('! dpp values provide hacked dynamic bump settings\n'+
-                'dpp_start = -1;\n'+
-                'dpp_end = 1;\n\n')
     else:
-        line = ''
+        if settings.ampex:
+            line = ('! dpp values provide hacked dynamic bump settings\n'+
+                    'dpp_start = -1;\n'+
+                    'dpp_end = 1;\n\n')
+        else:
+            line = ''
+        line += 'qh = qh_end;\n'
+        if settings.dynamicbump:
+            line += ('temp_bf_cx = ('+str(settings.dynamicbump_cx)+')*dpp_end;\n'+
+                     'temp_bf_cpx = ('+str(settings.dynamicbump_cpx)+')*dpp_end;\n'+
+                     'EXEC, lss2bump(knob_extr_bump, temp_bf_cx, temp_bf_cpx);\n')
+        line += ("CALL, FILE='pyHOMEDIR/madx/op_matchtune_h.cmdx';\n"+
+                 'qh_set_end = qh_setvalue;\n'+
+                 'kqf1_end = kqf1;\n'+
+                 'kqd_end = kqd;\n\n'+
 
-    line += 'qh = qh_end;\n'
-    if settings.dynamicbump:
-        line += ('temp_bf_cx = (pyCX)*dpp_end;\n'+
-                 'temp_bf_cpx = (pyCPX)*dpp_end;\n'+
-                 'EXEC, lss2bump(knob_extr_bump, temp_bf_cx, temp_bf_cpx);\n')
-    line += ("CALL, FILE='pyHOMEDIR/madx/op_matchtune_h.cmdx';\n"+
-             'qh_set_end = qh_setvalue;\n'+
-             'kqf1_end = kqf1;\n'+
-             'kqd_end = kqd;\n\n'+
-
-             'qh = qh_start;\n')
-    if settings.dynamicbump:
-        line += ('temp_bf_cx = (pyCX)*dpp_start;\n'+
-                 'temp_bf_cpx = (pyCPX)*dpp_start;\n'+
-                 'EXEC, lss2bump(knob_extr_bump, temp_bf_cx, temp_bf_cpx);\n')
-    line += ("CALL, FILE='pyHOMEDIR/madx/op_matchtune_h.cmdx';\n"+
-             'qh_set_start = qh_setvalue;\n'+
-             'kqf1_start = kqf1;\n'+
-             'kqd_start = kqd;\n')
+                 'qh = qh_start;\n')
+        if settings.dynamicbump:
+            line += ('temp_bf_cx = ('+str(settings.dynamicbump_cx)+')*dpp_start;\n'+
+                     'temp_bf_cpx = ('+str(settings.dynamicbump_cpx)+')*dpp_start;\n'+
+                     'EXEC, lss2bump(knob_extr_bump, temp_bf_cx, temp_bf_cpx);\n')
+        line += ("CALL, FILE='pyHOMEDIR/madx/op_matchtune_h.cmdx';\n"+
+                 'qh_set_start = qh_setvalue;\n'+
+                 'kqf1_start = kqf1;\n'+
+                 'kqd_start = kqd;\n')
 
     return line
 
