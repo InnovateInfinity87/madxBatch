@@ -32,8 +32,8 @@ knob_extr_sext = 0.95;
 knob_extr_bump = 0.885;
 
 ! Tune range for tracking
-dpp_start = -0.0015;
-dpp_end = 0.0015;
+dpp_start := -0.0015 - 0.00015*chroma_res/(-30.0);
+dpp_end := 0.0015 + 0.00001*chroma_res/(-30.0);
 qh_start := 80/3 - dpp_start*chroma_res;
 qh_end := 80/3 - dpp_end*chroma_res;
 
