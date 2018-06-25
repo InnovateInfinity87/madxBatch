@@ -195,13 +195,34 @@ def tune_setup(settings):
             print 'ERROR: COSE and dynamic bump are incompatible in this version of the code.'
             exit()
         else:
-            line = ('qh_set_end = qh_setvalue;\n'+
-                    'kqf1_end = kqf1 * (1.0 + dpp_end/(1+dpp_end));\n'+
-                    'kqd_end = kqd * (1.0 + dpp_end/(1+dpp_end));\n\n'+
+            line = ('relerr := dpp_turn/(1+dpp_turn);\n'+ # Let's not fuss about dpp vs PT for now...
+
+                    'qh_set_end = qh_setvalue;\n'+
+                    'dpp_turn = dpp_end;\n'+
+                    'kqf1_end = kqf1 * (1.0+relerr);\n'+
+                    'kqd_end = kqd * (1.0+relerr);\n\n'+
 
                     'qh_set_start = qh_setvalue;\n'+
-                    'kqf1_start = kqf1 * (1.0 + dpp_start/(1+dpp_start));\n'+
-                    'kqd_start = kqd * (1.0 + dpp_start/(1+dpp_start));\n')
+                    'dpp_turn = dpp_start;\n'+
+                    'kqf1_start = kqf1 * (1.0+relerr);\n'+
+                    'kqd_start = kqd * (1.0+relerr);\n'+
+
+                    'klse10602 := extr_sext * knob_extr_sext * (1.0+relerr);\n'+
+                    'klse22402 := extr_sext * knob_extr_sext * (1.0+relerr);\n'+
+                    'klse40602 := extr_sext * knob_extr_sext * (1.0+relerr);\n'+
+                    'klse52402 := extr_sext * knob_extr_sext * (1.0+relerr);\n'+
+
+                    'klsda_ref = klsda;\n'+
+                    'klsdb_ref = klsdb;\n'+
+                    'klsfa_ref = klsfa;\n'+
+                    'klsfb_ref = klsfb;\n'+
+                    'klsfc_ref = klsfc;\n'+
+
+                    'klsda = klsda * (1.0+relerr);\n'+
+                    'klsdb = klsdb * (1.0+relerr);\n'+
+                    'klsda = klsda * (1.0+relerr);\n'+
+                    'klsdb = klsdb * (1.0+relerr);\n'+
+                    'klsdc = klsdc * (1.0+relerr);\n')
     else:
         if settings.ampex:
             line = ('! dpp values provide hacked dynamic bump settings\n'+
@@ -258,10 +279,14 @@ def track_lin(k,data,settings):
 
     if settings.cose:
         line += (' relerr = dpp_turn/(1+dpp_turn);\n'+ # Let's not fuss about dpp vs PT for now...
+
                  ' abserr = relerr*kMBA/4;\n' #kMBA=kMBB
                  ' SELECT, FLAG=ERROR, CLEAR;\n'+
                  ' SELECT, FLAG=ERROR, PATTERN="MB.*";\n'+
                  ' EFCOMP, ORDER=0, DKN={abserr};\n')
+
+        #line += '\n knob_extr_bump_turn = knob_extr_bump*(1+relerr);\n'+
+        #        ' EXEC, lss2bump(knob_extr_bump_turn, 0, 0);\n')
              
     if settings.dynamicbump:
         line += (" knob_x_bump = "+str(settings.dynamicbump_offx)+"+("+str(settings.dynamicbump_cx)+")*dpp_turn;\n"+
