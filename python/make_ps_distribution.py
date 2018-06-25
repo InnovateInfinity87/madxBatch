@@ -60,7 +60,7 @@ class Beam(object):
         if beam_type == 'FT':
             self.type = 'FT'
             self.set_params(pc=400.0, dpp_0=0.0, dpp_d=0.0015,
-                            emit_xn=8E-6, emit_yn=8E-6, n_sigma=6.8,
+                            emit_xn=8E-6, emit_yn=5E-6, n_sigma=10.0,
                             pdist='unif')
         elif beam_type == 'CUSTOM':
             self.type = 'CUSTOM'

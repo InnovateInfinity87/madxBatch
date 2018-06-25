@@ -389,10 +389,10 @@ def submit_job(settings):
         nslices = 1
 
     if settings.dynamicbump_cx is None:
-        settings.dynamicbump_cx = -729.5 if not settings.ampex else -2.0
+        settings.dynamicbump_cx = 500.0 if not settings.ampex else -2.0
 
     if settings.dynamicbump_cpx is None:
-        settings.dynamicbump_cpx = 42600.0 if not settings.ampex else 70.0
+        settings.dynamicbump_cpx = 0.0 if not settings.ampex else 70.0
 
     if settings.ampex and settings.finalchanges is None:
         print "WARNING: Amplitude extraction is designed to be used with ampex_finalchanges.cmdx"

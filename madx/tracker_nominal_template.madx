@@ -12,12 +12,12 @@ OPTION, RBARC=FALSE; ! The length of a rectangular magnet is the dist-
 
 
 !-----------------------------------------------------------------------
-! Nominal settings for SFTPRO in SPS (2016)
+! Nominal settings for SFTPRO in SPS (ideal case)
 !-----------------------------------------------------------------------
 
 ! Tune (on-resonance)
 qh_res = 80.0 / 3.0; ! = 26.666...
-qv = 26.58; ! NTS: Double check!! Also check difference between measurement and extraction qv
+qv = 26.58;
 
 ! Normalized chroma measured without bump, without extraction sextupoles
 qh = 26.62;
@@ -28,8 +28,8 @@ dqv_norm =  0.465;
 extr_sext = -0.11992;
 
 ! Knob values
-knob_extr_sext = 0.95;
-knob_extr_bump = 0.885;
+knob_extr_sext = 1.0;
+knob_extr_bump = 0.9;
 
 ! Tune range for tracking
 dpp_start := -0.0015 - 0.00015*chroma_res/(-30.0);
@@ -37,13 +37,13 @@ dpp_end := 0.0015 + 0.00001*chroma_res/(-30.0);
 qh_start := 80/3 - dpp_start*chroma_res;
 qh_end := 80/3 - dpp_end*chroma_res;
 
-! ZS alignment
-zswireup = 0.06795;
-zswiredo = 0.04140;
-
 ! Using pycollimate?
 use_pycoll = pyPYCOLL;
 zswirethickness = 0.0002;
+
+! ZS alignment
+zswireup = 0.068 - zswirethickness/2;
+zswiredo = 0.04130 - zswirethickness/2;
 
 
 /**********************************************************************/
@@ -212,7 +212,7 @@ lss2bump(nom_knob_value, knob_x_value, knob_px_value) : MACRO = {
  EFCOMP, ORDER:=0, DKN=(0.35585e-3*nom_knob_value + 2.868784873e-05*(knob_x_value) + 9.041110549e-07*(knob_px_value))/4.0;
 };
 
-EXEC, lss2bump(knob_extr_bump, 0.0, 0.0)
+EXEC, lss2bump(knob_extr_bump, 0.0, 0.0);
 
 !================================
 ! Misa in beam dump ! Doesn't fully agree with geode?
@@ -343,7 +343,7 @@ CALL, FILE = 'pyHOMEDIR/input/align_extraction.cmdx';
 !-----------------------------------------------------------------------
 
 qh = qh_res;
-CALL, FILE='pyHOMEDIR/madx/op_matchtune.cmdx'; ! NTS: matchtune or matchtune_h?
+CALL, FILE='pyHOMEDIR/madx/op_matchtune_h.cmdx';
 
 SELECT, FLAG=TWISS, CLEAR;
 SELECT, FLAG=TWISS, COLUMN=NAME,S,BETX,ALFX,X,DX,PX,DPX,MUX,BETY,ALFY,Y,DY,PY,DPY,MUY,APER_1,APER_2,APER_3,APER_4;

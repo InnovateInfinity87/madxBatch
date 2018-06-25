@@ -2,7 +2,7 @@
 
 qh = qh_res;
 dqh_norm = 0.0;
-CALL, FILE='pyHOMEDIR/madx/op_matchtunechroma.cmdx'; ! NTS use horizontal settings only?
+CALL, FILE='pyHOMEDIR/madx/op_matchtunechroma_h.cmdx';
 
 ! qh values provide actual tune sweep
 qh_start = 26.6610;

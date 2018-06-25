@@ -1,0 +1,15 @@
+!-----------------------------------------------------------------------
+! Match horizontal tune and chroma
+!-----------------------------------------------------------------------
+
+MATCH, sequence=SPS;
+ VARY, name=qh_setvalue, step=0.00001;
+ VARY, name=qph_setvalue, step=0.00001;
+
+ GLOBAL, sequence=SPS, Q1= qh;
+ GLOBAL, sequence=SPS, DQ1= dqh_norm * qh;
+
+ LMDIF, CALLS = 500, TOLERANCE = 1e-6;
+ENDMATCH;
+
+RETURN;
