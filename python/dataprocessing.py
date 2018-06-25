@@ -1029,9 +1029,9 @@ def losshistscatter(lossfolder, lossloc="AP.UP.ZS21633",
     axHistx.xaxis.set_major_formatter(NullFormatter())
     axHisty.yaxis.set_major_formatter(NullFormatter())
     if monochrom:
-        axScatter.scatter(xdata, ydata, edgecolor='')
+        axScatter.scatter(xdata, ydata, edgecolor='', s=4)
     else:
-        axScatter.scatter(xdata, ydata, c=cdata, cmap=cm, vmin=clim[0], vmax=clim[1], edgecolor='')
+        axScatter.scatter(xdata, ydata, c=cdata, cmap=cm, vmin=clim[0], vmax=clim[1], edgecolor='', s=4)
 
     if extra is not None:
         for line in extra:
