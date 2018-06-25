@@ -2,7 +2,6 @@
 ! Match chroma
 !-----------------------------------------------------------------------
 
-! Match required chroma
 MATCH, sequence=SPS;
  VARY, name=qph_setvalue, step=0.0001;
  VARY, name=qpv_setvalue, step=0.0001;
