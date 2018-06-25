@@ -4,73 +4,61 @@ Nominal SPS slow extraction with and without scattering
 
 @author: Linda Stoel
 """
+import os
 from python.batching import Settings, submit_job
+import sys
 
 bl = [True, False]
+modes = ['qsweep', 'cose', 'ampex']
 
 # Simulations with sweep
-for pc, db, fast in [(x,y,z) for x in bl for y in bl for z in bl]:
-    if pc and not fast:
-        continue
+for mode in modes:
+    for pc, db, fast in [(x,y,z) for x in bl for y in bl for z in bl]:
+        if pc and not fast:
+            continue
 
-    name = "pc" if pc else "nopc"
-    name += "_db" if db else "_nodb"
-    name += "_fast" if fast else ""
+        if db and mode=='cose':
+            continue
 
-    settings=Settings(name, studygroup="nominal", disk='afsproject')
-    settings.madxversion = '/afs/cern.ch/user/m/mad/bin/rel/5.03.06/madx-linux64-gnu'
-    settings.seed = 0
-    settings.pycollimate = pc
-    settings.dynamicbump = db
+        if db and mode=='ampex':
+            print 'ampex db is not configured correctly yet'
+            continue
 
-    if fast:
-        settings.nturns = 50000
-        settings.ffile = 500
+        name = mode
+        name += "_db" if db else "_nodb"
+        name += "_fast" if fast else ""
+        name += "_pc" if pc else "_nopc"
+
+        settings=Settings(name, studygroup="nominal", disk='afsproject')
+        settings.seed = 0
+        settings.pycollimate = pc
+        settings.dynamicbump = db
+
+        if mode=='cose':
+            settings.cose = True
+        elif mode=='ampex':
+            here = os.path.dirname(os.path.realpath(sys.argv[0]))
+            settings.finalchanges = here+'/madx/ampex_finalchanges.cmdx'
+            settings.ampex = True
+
+        if fast:
+            settings.nturns = 50000
+            settings.ffile = 500
+            if pc:
+                settings.flavour = "testmatch"
+        else:
+            settings.nturns = 204565
+            settings.ffile = 2045
+
         if pc:
-            settings.flavour = "tomorrow"
-    else:
-        settings.nturns = 204565
-        settings.ffile = 2045
-        #if pc and db:
-        #    settings.flavour = "testmatch"
+            settings.elements = ['AP.UP.ZS21633_M','AP.DO.ZS21676_M','AP.UP.TPST21760']
+            settings.nbatches = 100
+            settings.nparperbatch = 2500
+        else:
+            settings.elements = ['AP.UP.ZS21633','AP.DO.ZS21676','AP.UP.TPST21760']
+            settings.nbatches = 500
+            settings.nparperbatch = 500
 
-    if pc:
-        settings.elements = ['AP.UP.ZS21633_M','AP.DO.ZS21676_M','AP.UP.TPST21760']
-        settings.nbatches = 100
-        settings.nparperbatch = 1000
-    else:
-        settings.elements = ['AP.UP.ZS21633','AP.DO.ZS21676','AP.UP.TPST21760']
-        settings.nbatches = 500
-        settings.nparperbatch = 200
+        submit_job(settings)
 
-    submit_job(settings)
-
-# Simulations of momentum slices
-for pc, db, thick in [(x,y,z) for x in bl for y in bl for z in bl]:
-    name = "sliced"
-    name += "_thick" if thick else "_thin"
-    name += "_pc" if pc else "_nopc"
-    name += "_db" if db else "_nodb"
-
-    settings=Settings(name, studygroup="nominal", disk='afsproject')
-    settings.seed = 0
-    settings.pycollimate = pc
-    settings.dynamicbump = db
-    settings.slices = [-0.0015, -0.0010, -0.0005, 0.0, 0.0005, 0.0010, 0.0015]
-
-    settings.nturns = 300
-    settings.ffile = 1
-    settings.nbatches = 10
-    settings.nparperbatch = 100
-
-    if thick:
-        settings.slicewidth = 2.5E-4
-    else:
-        settings.slicewidth = 0.0
-
-    if pc:
-        settings.elements = ['AP.UP.ZS21633_M','AP.DO.ZS21676_M','AP.UP.TPST21760']
-    else:
-        settings.elements = ['AP.UP.ZS21633','AP.DO.ZS21676','AP.UP.TPST21760']
-
-    submit_job(settings)
+# Simulations of momentum slices to be fixed in future release
