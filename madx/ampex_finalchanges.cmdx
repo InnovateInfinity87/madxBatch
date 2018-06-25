@@ -5,5 +5,5 @@ dqh_norm = 0.0;
 CALL, FILE='pyHOMEDIR/madx/op_matchtunechroma_h.cmdx';
 
 ! qh values provide actual tune sweep
-qh_start = 26.6610;
-qh_end = 26.6675;
+qh_start = 26.6583;
+qh_end = 26.6673;
