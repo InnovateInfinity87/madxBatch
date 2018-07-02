@@ -20,10 +20,6 @@ for mode in modes:
         if db and mode=='cose':
             continue
 
-        if db and mode=='ampex':
-            print 'ampex db is not configured correctly yet'
-            continue
-
         name = mode
         name += "_db" if db else "_nodb"
         name += "_fast" if fast else ""
