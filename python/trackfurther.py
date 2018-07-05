@@ -56,7 +56,8 @@ def cutsequence():
     return madcode
 
 
-def tracklossto(location, lossfolder, startpoint, backtrack=False, sloexcodedir=None, madxexe=None,
+def tracklossto(location, lossfolder, startpoint, cose=False,
+                backtrack=False, sloexcodedir=None, madxexe=None,
                 twisstrack=False, static=False, batch=0):
     '''Track particles in lossfolder to location, save in lossfolder/../twisstrackloss_startpoint_to_location'''
     if not location in locations:
@@ -144,8 +145,10 @@ def tracklossto(location, lossfolder, startpoint, backtrack=False, sloexcodedir=
         outf.write("hastrmacro = "+("1" if hastrmacro else "0")+";\n")
         outf.write("backtrack = "+("1" if backtrack else "0")+";\n\n")
 
-        outf.write("CALL, FILE='"+sloexcodedir
-                   +"/madxBatch/madx/setseptamacro.cmdx';\n\n")
+        if cose and not static:
+            outf.write('cose = 1;\n')
+            outf.write("CALL, FILE='"+sloexcodedir
+                       +"/madxBatch/madx/setseptamacro.cmdx';\n\n")
 
         if twisstrack:
             outf.write("CALL, FILE='"+sloexcodedir

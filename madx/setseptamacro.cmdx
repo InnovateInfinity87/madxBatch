@@ -6,15 +6,15 @@ set_septa(_septaknob): MACRO = {
   /*** ZS ***/
   SELECT, FLAG=ERROR, CLEAR;
   SELECT, FLAG=ERROR, PATTERN="^ZS_rb\.2.*";
-  EFCOMP, ORDER:=0, DKN=-8.327E-5/4.0*_septaknob;
+  EFCOMP, ORDER:=0, DKN=-8.327E-5/4.0*_septaknob * (1.0+relerr);
 
   /*** MST ***/
   SELECT, FLAG=ERROR, CLEAR;
   SELECT, FLAG=ERROR, PATTERN="^MST_rb\.2.*";
-  EFCOMP, ORDER:=0, DKN=-1.69520713e-3/3.0/4.0*_septaknob;
+  EFCOMP, ORDER:=0, DKN=-1.69520713e-3/3.0/4.0*_septaknob * (1.0+relerr);
 
   /*** MSE ***/
   SELECT, FLAG=ERROR, CLEAR;
   SELECT, FLAG=ERROR, PATTERN="^MSE_rb\.2.*";
-  EFCOMP, ORDER:=0, DKN=-9.74519477e-3/5.0/4.0*_septaknob;
+  EFCOMP, ORDER:=0, DKN=-9.74519477e-3/5.0/4.0*_septaknob * (1.0+relerr);
 };

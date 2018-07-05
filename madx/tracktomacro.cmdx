@@ -17,6 +17,9 @@ trackto_innerfunc(_tablen): MACRO = {
       IF (hastrmacro==1) {
         EXEC, turnmacro(TURN);
       };
+      IF (cose==1) {
+        EXEC, set_septa(cose);
+      };
 
       TRACK, APERTURE, RECLOSS, ONEPASS;
         START, X=X, PX=PX, Y=Y, PY=PY, T=T, PT=PT;
