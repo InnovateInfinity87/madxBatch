@@ -343,7 +343,8 @@ CALL, FILE = 'pyHOMEDIR/input/align_extraction.cmdx';
 !-----------------------------------------------------------------------
 
 qh = qh_res;
-CALL, FILE='pyHOMEDIR/madx/op_matchtune_h.cmdx';
+
+pyRESSETUP
 
 SELECT, FLAG=TWISS, CLEAR;
 SELECT, FLAG=TWISS, COLUMN=NAME,S,BETX,ALFX,X,DX,PX,DPX,MUX,BETY,ALFY,Y,DY,PY,DPY,MUY,APER_1,APER_2,APER_3,APER_4;

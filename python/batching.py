@@ -186,6 +186,18 @@ def customize_tracker(filename,searchExp,replaceExp):
         os.fsync(out.fileno())
 
 
+def res_setup(settings):
+    if settings.ampex:
+        line = ('dqh_norm = 0.0;\n'+
+                "CALL, FILE='pyHOMEDIR/madx/op_matchtunechroma_h.cmdx';\n\n"+
+
+                '! qh values provide actual tune sweep\n'+
+                'qh_start = 26.6583;\n'
+                'qh_end = 26.6673;')
+    else:
+        line = "CALL, FILE='pyHOMEDIR/madx/op_matchtune_h.cmdx';"
+    return line
+
 def tune_setup(settings):
     if settings.cose:
         if settings.ampex:
@@ -419,9 +431,6 @@ def submit_job(settings):
     if settings.dynamicbump_cpx is None:
         settings.dynamicbump_cpx = 0.0 if not settings.ampex else 77.0
 
-    if settings.ampex and settings.finalchanges is None:
-        print "WARNING: Amplitude extraction is designed to be used with ampex_finalchanges.cmdx"
-
     if os.path.exists(settings.datadir):
         settings.datadir = settings.datadir[:-1]+'_/'
         i = 1
@@ -455,6 +464,7 @@ def submit_job(settings):
             changes=changefile.read()
         replacer("tracker.madx", "/*pyFINALCHANGES*/", changes)
 
+    replacer("tracker.madx", 'pyRESSETUP', res_setup(settings))
     replacer("tracker.madx", 'pyTUNESETUP', tune_setup(settings))
 
     replacer("tracker.madx", 'pyDATADIR', settings.datadir)
