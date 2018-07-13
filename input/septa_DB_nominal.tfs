@@ -1,4 +1,4 @@
        Element     Aper_up [m]      Aper_down [m] Thickness [m]  Length [m]  Material Effective_Density Error_up (Bool, std [m])  Error_down (Bool, std[m])   kick   side
  "ZS.21655"    0.06790  0.04120  200e-6     18.77     W75RE25    16.1883e-3         False 0.0                  False 0.0    4.1635E-4    left
  "DIFFUSER"    0.06720  0.06720  300e-6     0.040     Tantalum   0.05235988         False 0.0                  False 0.0    0.0    left
- "D_CRYSTAL_AM"    0.06700  0.06700  800e-6     0.025     Silicon   1.0         False 0.0                  False 0.0    0.0    left
+ "D_CRYSTAL_AM"    0.06700  0.06700  800e-6     0.0025     Silicon   1.0         False 0.0                  False 0.0    0.0    left
