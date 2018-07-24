@@ -42,7 +42,7 @@ if __name__ == "__main__":
                 toclone = sub
                 resub = folder+"/"+toclone[:-5]+str(subcount)+".sub"
 
-    failed, _ = errorcheck(folder+"/error", checkerr=False)
+    failed, _ = errorcheck(folder+"/error")
 
     if len(failed)==0:
         print "no failed jobs found"
