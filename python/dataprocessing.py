@@ -379,8 +379,8 @@ def lossmap(data, twiss, slim=None, merge=True, threshold=0.0001,
         
     return fig, ax
 
-def lossmapscan(lossdict, twiss, slim=None, merge=True, clim=(5E-5,3E-2),
-                extracted=None, save=None):
+def lossmapscan(lossdict, twiss, slim=None, merge=True, apmerge=True,
+                clim=(5E-5,3E-2), extracted=None, save=None):
     if not isinstance(twiss, dict):
         onetwiss = True
         if not isinstance(twiss, pd.DataFrame):
@@ -390,7 +390,7 @@ def lossmapscan(lossdict, twiss, slim=None, merge=True, clim=(5E-5,3E-2),
     
     alldata = None
     for scanparam, data in iteritems(lossdict):
-        mydata = lossstats(data, slim=slim, normalize=True, merge=merge)
+        mydata = lossstats(data, slim=slim, normalize=True, merge=merge, apmerge=apmerge)
         if extracted is not None:
             mydata[extracted[0]] -= extracted[1]
         mydata = mydata[mydata>=clim[0]]
@@ -417,7 +417,7 @@ def lossmapscan(lossdict, twiss, slim=None, merge=True, clim=(5E-5,3E-2),
     alldata.sort_values('S', inplace=True)
     
     labels = alldata.index.values
-    scanvals = sorted(list(lossdict.keys()))
+    scanvals = sorted(list(lossdict.keys()), key=float)
     
     alldata = alldata[scanvals]
     
@@ -826,7 +826,8 @@ def getactionangle(inits, twiss, plane='X'):
     
     return result
 
-def lossstats(data, slim=None, merge=True, normalize=False, save=None, silent=True):
+def lossstats(data, slim=None, merge=True, apmerge=False, normalize=False,
+              save=None, silent=True):
     # Note: if s limits are given and normalization is on, losses will be normalized to the loss within that region.
     # Note: if some slices are inside the s limits and some out, only losses on the slices inside will be taken into account, even is merge=True
     if not isinstance(data, pd.DataFrame):
@@ -841,10 +842,15 @@ def lossstats(data, slim=None, merge=True, normalize=False, save=None, silent=Tr
     if 'tag' in data:
         data = data[data['tag']!='extracted']
         
+    losslocs = data['ELEMENT']
     if merge:
-        lossstats = data['ELEMENT'].apply(lambda x: x.split('..')[0]).value_counts()
-    else:
-        lossstats = data['ELEMENT'].value_counts()
+        losslocs = losslocs.apply(lambda x: x.split('..')[0])
+    if apmerge:
+        f = lambda x: x[:-5]+'.'+x[-5:] # Dodgy but works...
+        g = lambda y: y if not y.startswith('AP') else f(y.split('.')[-1])
+        losslocs = losslocs.apply(g)
+
+    lossstats = losslocs.value_counts()
         
     lossstats.name = 'LOSSSTATS'
     if normalize:
