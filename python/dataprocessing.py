@@ -21,6 +21,7 @@ if _mplver[0]<2 or (_mplver[0]==2 and _mplver[1]==0 and _mplver[2]<2):
     print('WARNING: dataprocessing needs matplotlib version 2.0.2 or higher to function properly.')
 
 # Set style
+mpl.rcParams['errorbar.capsize'] = mpl.rcParams['lines.markersize']
 sns.set()
 plt.style.use('seaborn-ticks')
 sns.set_context("notebook", rc={"text.usetex": True})
@@ -60,6 +61,7 @@ nomap = {'tpstcirc': 0.03729401, # central orbit to inner blade edge (start tpst
          'zsthick': 0.0002, # effective Zs thickness
          'zsex': 0.02} # centre wire to edge cathode
 
+# NTS: Does not find 'corrupted' loss files yet
 def errorcheck(errfolder):
     failed=[]
     messages=[]
@@ -119,7 +121,13 @@ def getunits(data, forceunit=None):
     if result['unit']=='1' and result['expon']!=0:
         result['unit'] = ''
         result['prefix'] = '$10^{'+str(result['expon'])+'}$'
-    return result   
+    return result
+
+def _is_tarfile(name):
+    try:
+        return tarfile.is_tarfile(name)
+    except IOError:
+        return False
 
 # Wilson score interval as described on wiki: https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval
 def wilson(ns, ntot, conf=0.95):
@@ -181,7 +189,7 @@ def getlosses(lossfolder, settings=None, lossloc=None, batches=None,
     
     for batch in batches:
         lossfile = str(batch)+'.tfs'
-        if os.path.isfile(lossfolder+'/'+lossfile):
+        try:
             _, losstable = readtfs(lossfolder+'/'+lossfile, usecols=usecols)
             if lossloc is not None:
                 losstable = losstable.loc[losstable['ELEMENT'] == lossloc]
@@ -194,8 +202,10 @@ def getlosses(lossfolder, settings=None, lossloc=None, batches=None,
             losstable['NUMBER'] = losstable['NUMBER'] + int(lossfile[:-4])*nppb
             losstable.set_index('NUMBER', inplace=True)
             df = df.append(losstable)
-        else:
+        except IOError:
             print("lossfile for batch "+str(batch)+" not found")
+        except UnboundLocalError:
+            print("lossfile for batch "+str(batch)+" corrupted/empty")
     df.sort_index(inplace=True)
     return df
 
@@ -229,7 +239,8 @@ def gettracks(trackfolder, settings=None, obsloc='obs0001', tpt=None,
 
     def getbatch(batch):
         untarred = False
-        if not os.path.isdir(trackfolder+'/'+str(batch)) and tarfile.is_tarfile(trackfolder+'/'+str(batch)+'.tar.gz'):
+        dfb = pd.DataFrame()
+        if not os.path.isdir(trackfolder+'/'+str(batch)) and _is_tarfile(trackfolder+'/'+str(batch)+'.tar.gz'):
             if verbose:
                 print('untarring tracks for batch '+str(batch))
             with tarfile.open(trackfolder+'/'+str(batch)+'.tar.gz') as tar:
@@ -238,11 +249,10 @@ def gettracks(trackfolder, settings=None, obsloc='obs0001', tpt=None,
         if os.path.isdir(trackfolder+'/'+str(batch)):
             if verbose:
                 print('reading tracks for batch '+str(batch)+' from folder')
-            dfb = pd.DataFrame()
             for part in np.arange(nppb)+1:
                 trackfile = 'track.batch'+str(batch)+'.'+obsloc+'.p'+str(part).zfill(4)
                 trackpath = trackfolder+'/'+str(batch)+'/'+trackfile
-                if os.path.isfile(trackpath):
+                try:
                     _, tracktable = readtfs(trackpath, usecols=usecols)
                     if filters is not None:
                         for (var, fun) in filters:
@@ -254,8 +264,10 @@ def gettracks(trackfolder, settings=None, obsloc='obs0001', tpt=None,
                     tracktable['NUMBER'] = tracktable['NUMBER'] + batch*nppb
                     tracktable.set_index(['NUMBER','TURN'], inplace=True)
                     dfb = dfb.append(tracktable)
-                else:
+                except IOError:
                     print('trackfile '+str(batch)+'/'+trackfile+' not found')
+                except UnboundLocalError:
+                    print('trackfile '+str(batch)+'/'+trackfile+' corrupted/empty')
         else:
             print("tracks for batch "+str(batch)+" not found")
         if untarred:
@@ -448,7 +460,7 @@ def lossmapscan(lossdict, twiss, slim=None, merge=True, apmerge=True,
 #TODO font and font size
 def plotter(data, kind='scatter', marginals=True, xax="X", yax="PX", cax=None,
             xlim=None, ylim=None, clim=[None,None], margxlim=None,
-            margylim=None, xbin=None, ybin=None, log=False, mainkwargs=None,
+            margylim=None, xbin=None, ybin=None, margnorm=100.0, log=False, mainkwargs=None,
             xkwargs=None, ykwargs=None, save=None):
     if mainkwargs is None:
         mainkwargs={}
@@ -500,7 +512,7 @@ def plotter(data, kind='scatter', marginals=True, xax="X", yax="PX", cax=None,
         g.ax_marg_x.set_axis_off()
         g.ax_marg_y.set_axis_off()
     
-    weights = 100.0*np.ones_like(g.x)/len(g.x)
+    weights = margnorm*np.ones_like(g.x)/len(g.x)
     
     # set main plot
     if kind=='scatter':
@@ -755,7 +767,8 @@ def extr_tagger(data=None, pycoll=False, aperturex=[0,1], aperturey=[0,1],
             return tag
         
     if data is not None:
-        data['tag'] = data.apply(tagger, axis=1)
+        if not data.empty:
+            data['tag'] = data.apply(tagger, axis=1)
         
     return alltags, tagger
 
@@ -779,6 +792,8 @@ def efficiency(data, alltags=['extracted', 'other'], tagger=None, conf=0.95,
     for tag in alltags:
         if tag not in result.index.values:
             result[tag] = 0
+
+    result['total_loss'] = result.sum()-result['extracted']
             
     ci = result.apply(lambda x: wilson(x,ntot, conf=conf))
     result = result/ntot
@@ -786,9 +801,10 @@ def efficiency(data, alltags=['extracted', 'other'], tagger=None, conf=0.95,
     if not silent:
         message = str(100*result['extracted'])+' % extracted\t'+str([100*x for x in ci['extracted']])+'\n'
         for tag, frac in result.iteritems():
-            if tag not in ['extracted', 'other']:
+            if tag not in ['extracted', 'other', 'total_loss']:
                 message += str(100*frac)+' % lost on '+tag+'\t'+str([100*x for x in ci[tag]])+'\n'
         message += str(100*result['other'])+' % lost elsewhere\t'+str([100*x for x in ci['other']])+'\n'
+        message += str(100*result['total_loss'])+' % lost in total\t'+str([100*x for x in ci['total_loss']])+'\n'
         message += '(total: '+str(len(data))+' particles)'
 
         if save is None:
