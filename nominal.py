@@ -4,9 +4,7 @@ Nominal SPS slow extraction with and without scattering
 
 @author: Linda Stoel
 """
-import os
 from python.batching import Settings, submit_job
-import sys
 
 bl = [True, False]
 modes = ['qsweep', 'cose', 'ampex']
@@ -33,8 +31,6 @@ for mode in modes:
         if mode=='cose':
             settings.cose = True
         elif mode=='ampex':
-            here = os.path.dirname(os.path.realpath(sys.argv[0]))
-            settings.finalchanges = here+'/madx/ampex_finalchanges.cmdx'
             settings.ampex = True
 
         if fast:
