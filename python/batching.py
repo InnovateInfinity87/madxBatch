@@ -79,6 +79,8 @@ class Settings:
         self.pycollimate = True
         self.septadb = self.home+"/input/septa_DB_nominal.tfs"
         self.septadbreplace = None
+        self.crystaldb = self.home+"/input/crystal_DB_nominal.tfs"
+        self.crystaldbreplace = None
         self.pcblack = False
 
         # knob_x_bump = offx + cx*dpp (millimeter)
@@ -528,10 +530,18 @@ def submit_job(settings):
             for key, replacement in settings.septadbreplace.iteritems():
                 replacer("septa_DB_custom.tfs", key, replacement)
 
-        #Change from scattering to black in pycollimate, if needed
-        if settings.pcblack:
+        #Customize crystal db if needed
+        if settings.crystaldbreplace is not None:
+            copyfile(settings.crystaldb, "crystal_DB_custom.tfs")
+            for key, replacement in settings.crystaldbreplace.iteritems():
+                replacer("crystal_DB_custom.tfs", key, replacement)
+
+        #Customize pycollimate if needed
+        if settings.pycollimate:
             copyfile(settings.pycolldir+"track_inside_coll.py", "track_inside_coll.py")
-            replacer("track_inside_coll.py", "black=False", "black=True")
+            replacer("track_inside_coll.py", "import pinky", "sys.path.insert(1, '"+settings.pycolldir+"')\nimport pinky")
+            if settings.pcblack:
+                replacer("track_inside_coll.py", "black=False", "black=True")
 
         #Prepare job files for each batch
         copyfile(settings.home+"/other/job.sh", "jobs/start.sh")
@@ -555,16 +565,16 @@ def submit_job(settings):
                 subfile.write("transfer_input_files = "+
                               "jobs/$(ProcId).madx, "+
                               settings.pycolldir+"madxColl, "+
-                              ("" if (settings.pcblack) else settings.pycolldir)+"track_inside_coll.py, "+
+                              "track_inside_coll.py, "+
                               settings.pycolldir+"pycollimate.py, "+
                               (settings.septadb if (settings.septadbreplace is None) else "septa_DB_custom.tfs")+", "+
-                              settings.home+"/other/matplotlibrc"+"\n")#, "+
-                              #settings.slowexfiles+"\n")
+                              settings.pycolldir+"cry_2d_pdf.p, "+
+                              (settings.crystaldb if (settings.crystaldbreplace is None) else "crystal_DB_custom.tfs")+", "+
+                              settings.home+"/other/matplotlibrc"+"\n")
             else:
                 subfile.write("transfer_input_files = "+
                               "jobs/$(ProcId).madx, "+
-                              settings.madxversion+"\n")#", "+
-                              #settings.slowexfiles+"\n")
+                              settings.madxversion+"\n")
             subfile.write('arguments = "$(ProcId)"\n')
             subfile.write("initialdir = "+settings.datadir+"\n")
             if settings.saveout:
