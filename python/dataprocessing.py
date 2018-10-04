@@ -62,7 +62,7 @@ nomap = {'tpstcirc': 0.03729401, # central orbit to inner blade edge (start tpst
          'zsex': 0.02} # centre wire to edge cathode
 
 # NTS: Does not find 'corrupted' loss files yet
-def errorcheck(errfolder):
+def errorcheck(errfolder, tracks=False):
     failed=[]
     messages=[]
     for errfile in os.listdir(errfolder):
@@ -76,6 +76,10 @@ def errorcheck(errfolder):
                         messages += [firstline]
                 elif "Missing lossfile" not in messages:
                     messages += ["Missing lossfile"]
+        elif tracks and not os.path.exists(errfolder+"/../tracks/"+jobid+".tar.gz"):
+            failed += [jobid]
+            if "Missing tracks" not in messages:
+                    messages += ["Missing tracks"]
     return failed, messages
 
 def fixlossfile(filename):

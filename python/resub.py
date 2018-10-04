@@ -23,8 +23,13 @@ from dataprocessing import errorcheck
 
 if __name__ == "__main__":
     folder = sys.argv[1]
-    subfiles = []
+    try:
+        tracks = sys.argv[2]
+        tracks = True if (tracks=='1') else False
+    except:
+        tracks = False
 
+    subfiles = []
     for file_ in os.listdir(folder):
         if file_.endswith(".sub"):
             subfiles += [file_]
@@ -42,7 +47,7 @@ if __name__ == "__main__":
                 toclone = sub
                 resub = folder+"/"+toclone[:-5]+str(subcount)+".sub"
 
-    failed, _ = errorcheck(folder+"/error")
+    failed, _ = errorcheck(folder+"/error", tracks)
 
     if len(failed)==0:
         print "no failed jobs found"
