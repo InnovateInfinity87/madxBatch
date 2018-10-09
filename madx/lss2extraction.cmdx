@@ -172,43 +172,43 @@ EPRINT;
 IF (lss2_noapp==0){
  SELECT, FLAG=ERROR, CLEAR;
  SELECT, FLAG=ERROR, RANGE=ap.UP.ZSRB21633;
- EALIGN, AREX=(zswireup+zswirethickness+0.02/2);
+ EALIGN, AREX=(zswireup+zswirethickness/2+0.02/2);
 
  SELECT, FLAG=ERROR, CLEAR;
  SELECT, FLAG=ERROR, RANGE=ap.DO.ZSRB21633;
- EALIGN, AREX=(zswireup-(zswireup-zswiredo)/18.77*3.13+zswirethickness+0.02/2);
+ EALIGN, AREX=(zswireup-(zswireup-zswiredo)/18.77*3.13+zswirethickness/2+0.02/2);
 
  SELECT, FLAG=ERROR, CLEAR;
  SELECT, FLAG=ERROR, RANGE=ap.UP.ZSRB21638;
- EALIGN, AREX=(zswireup-(zswireup-zswiredo)/18.77*3.91+zswirethickness+0.02/2);
+ EALIGN, AREX=(zswireup-(zswireup-zswiredo)/18.77*3.91+zswirethickness/2+0.02/2);
 
  SELECT, FLAG=ERROR, CLEAR;
  SELECT, FLAG=ERROR, RANGE=ap.DO.ZSRB21638;
- EALIGN, AREX=(zswireup-(zswireup-zswiredo)/18.77*7.04+zswirethickness+0.02/2);
+ EALIGN, AREX=(zswireup-(zswireup-zswiredo)/18.77*7.04+zswirethickness/2+0.02/2);
 
  SELECT, FLAG=ERROR, CLEAR;
  SELECT, FLAG=ERROR, RANGE=ap.UP.ZSRB21655;
- EALIGN, AREX=(zswireup-(zswireup-zswiredo)/18.77*7.82+zswirethickness+0.02/2);
+ EALIGN, AREX=(zswireup-(zswireup-zswiredo)/18.77*7.82+zswirethickness/2+0.02/2);
 
  SELECT, FLAG=ERROR, CLEAR;
  SELECT, FLAG=ERROR, RANGE=ap.DO.ZSRB21655;
- EALIGN, AREX=(zswireup-(zswireup-zswiredo)/18.77*10.95+zswirethickness+0.02/2);
+ EALIGN, AREX=(zswireup-(zswireup-zswiredo)/18.77*10.95+zswirethickness/2+0.02/2);
 
  SELECT, FLAG=ERROR, CLEAR;
  SELECT, FLAG=ERROR, RANGE=ap.UP.ZSRB21671;
- EALIGN, AREX=(zswireup-(zswireup-zswiredo)/18.77*11.73+zswirethickness+0.02/2);
+ EALIGN, AREX=(zswireup-(zswireup-zswiredo)/18.77*11.73+zswirethickness/2+0.02/2);
 
  SELECT, FLAG=ERROR, CLEAR;
  SELECT, FLAG=ERROR, RANGE=ap.DO.ZSRB21671;
- EALIGN, AREX=(zswireup-(zswireup-zswiredo)/18.77*14.86+zswirethickness+0.02/2);
+ EALIGN, AREX=(zswireup-(zswireup-zswiredo)/18.77*14.86+zswirethickness/2+0.02/2);
 
  SELECT, FLAG=ERROR, CLEAR;
  SELECT, FLAG=ERROR, RANGE=ap.UP.ZSRB21676;
- EALIGN, AREX=(zswireup-(zswireup-zswiredo)/18.77*15.64+zswirethickness+0.02/2);
+ EALIGN, AREX=(zswireup-(zswireup-zswiredo)/18.77*15.64+zswirethickness/2+0.02/2);
 
  SELECT, FLAG=ERROR, CLEAR;
  SELECT, FLAG=ERROR, RANGE=ap.DO.ZSRB21676;
- EALIGN, AREX=(zswiredo+zswirethickness+0.02/2);
+ EALIGN, AREX=(zswiredo+zswirethickness/2+0.02/2);
 
  /*** TPST ***/
  SELECT, FLAG=ERROR, CLEAR;
