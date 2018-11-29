@@ -246,8 +246,8 @@ def tune_setup(settings):
             line = ''
         line += 'qh = qh_end;\n'
         if settings.dynamicbump:
-            line += ('temp_bf_cx = ('+str(settings.dynamicbump_cx)+')*dpp_end;\n'+
-                     'temp_bf_cpx = ('+str(settings.dynamicbump_cpx)+')*dpp_end;\n'+
+            line += ('temp_bf_cx = '+str(settings.dynamicbump_offx)+"+("+str(settings.dynamicbump_cx)+')*dpp_end;\n'+
+                     'temp_bf_cpx = '+str(settings.dynamicbump_offpx)+"+("+str(settings.dynamicbump_cpx)+')*dpp_end;\n'+
                      'EXEC, lss2bump(knob_extr_bump, temp_bf_cx, temp_bf_cpx);\n')
         line += ("CALL, FILE='pyHOMEDIR/madx/op_matchtune_h.cmdx';\n"+
                  'qh_set_end = qh_setvalue;\n'+
@@ -256,8 +256,8 @@ def tune_setup(settings):
 
                  'qh = qh_start;\n')
         if settings.dynamicbump:
-            line += ('temp_bf_cx = ('+str(settings.dynamicbump_cx)+')*dpp_start;\n'+
-                     'temp_bf_cpx = ('+str(settings.dynamicbump_cpx)+')*dpp_start;\n'+
+            line += ('temp_bf_cx = '+str(settings.dynamicbump_offx)+"+("+str(settings.dynamicbump_cx)+')*dpp_start;\n'+
+                     'temp_bf_cpx = '+str(settings.dynamicbump_offpx)+"+("+str(settings.dynamicbump_cpx)+')*dpp_start;\n'+
                      'EXEC, lss2bump(knob_extr_bump, temp_bf_cx, temp_bf_cpx);\n')
         line += ("CALL, FILE='pyHOMEDIR/madx/op_matchtune_h.cmdx';\n"+
                  'qh_set_start = qh_setvalue;\n'+
