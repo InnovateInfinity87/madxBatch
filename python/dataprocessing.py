@@ -9,6 +9,8 @@ import matplotlib.ticker as ticker
 import numpy as np
 import os
 import pandas as pd
+from scipy.optimize import minimize
+from scipy.spatial import ConvexHull
 from scipy.stats import norm
 import seaborn as sns
 import shutil
@@ -591,6 +593,15 @@ def plotter(data, kind='scatter', marginals=True, xax="X", yax="PX", cax=None,
         plt.close()
     
     return g
+
+
+def draw_ellipse(params, ax, **kwargs):
+    plane = 'X' if 'X0' in params else 'Y'
+    xn = np.cos(np.linspace(0,2*np.pi,100))*np.sqrt(params['emittance'])
+    pxn = np.sin(np.linspace(0,2*np.pi,100))*np.sqrt(params['emittance'])
+    x = np.sqrt(params['beta'])*xn + params[plane+'0']
+    px = -params['alpha']/np.sqrt(params['beta'])*xn + pxn/np.sqrt(params['beta']) + params['P'+plane+'0']
+    ax.plot(x,px,**kwargs)
     
     
 # 4. Specialized plotting / Backward compatibility
@@ -693,6 +704,94 @@ def beamstats(data, location=None, plane='X', p0=400, disp=(None,None), save=Non
                    'statistical emittance: '+str(result['emittance'])+'\n'+
                    'normalized statistical emittance at '+str(p0)+' GeV/c: '+str(result['emittance_norm'])+'\n'+
                    'stat alpha,beta,gamma: '+str([result['alpha'], result['beta'], result['gamma']])+'\n'+
+                   '(Calculated with '+str(result['npart'])+' particles.)')
+
+        if save is None:
+            print(message)
+        else:
+            with open(save, 'w') as out:
+                out.write(message)
+            
+    return result
+
+
+def get_ellipse(data, location=None, plane='X', p0=400, disp=None,
+                x0=0, px0=0, alpha0=0, beta0=100, dx0=0, dpx0=0,
+                save=None, silent=True, method='Powell', percentile=99.99):
+    # behaves badly if dispersion should be 0 and is not forced...
+    xax = plane
+    yax = 'P'+plane
+    
+    if save is not None:
+        silent = False
+    
+    if not isinstance(data, pd.DataFrame):
+        usecols = ['NUMBER', xax, yax]
+        data = getlosses(data, lossloc=location, usecols=usecols)
+    elif location is not None:
+        data = data[data['ELEMENT']==location]
+
+    result = {}
+    
+    result['location'] = location
+    result['plane'] = plane
+    result['npart'] = len(data)
+    result['p0'] = p0
+    
+    betagamma = p0/0.938272081
+
+    coords = np.array([data[xax],data[yax]]).transpose()
+    #hull = ConvexHull(coords)
+    #coords = coords[hull.vertices]
+    coord_pt = data['PT'].values
+
+    def _calc_emit(params):
+        myx = params[0]/1E3
+        mypx = params[1]/1E3
+        myalpha = params[2]
+        mybeta = params[3]
+        if mybeta <=0:
+            return 1.0
+        if disp is None:
+            mydx = params[4]/1E3
+            mydpx = params[5]/1E3
+        else:
+            mydx = disp[0]
+            mydpx = disp[1]
+        mycoords = (coords - [myx, mypx]).transpose() - np.array([[mydx],[mydpx]])*coord_pt
+        mycoords = np.array([[1/np.sqrt(mybeta),0],[myalpha/np.sqrt(mybeta),np.sqrt(mybeta)]]).dot(mycoords)
+        return np.percentile((mycoords[0]**2+mycoords[1]**2),percentile)*1E6
+
+    if disp is None:
+        init = np.array([x0*1E3,px0*1E3,alpha0,beta0,dx0*1E3,dpx0*1E3])
+    else:
+        init = np.array([x0*1E3,px0*1E3,alpha0,beta0])
+
+    res = minimize(_calc_emit, init, method=method)
+
+    result[xax+'0'] = res['x'][0]/1E3
+    result[yax+'0'] = res['x'][1]/1E3
+    result['alpha'] = res['x'][2]
+    result['beta'] = res['x'][3]
+    result['gamma'] = (1+result['alpha']**2)/result['beta']
+    result['emittance'] = res['fun']/1E6
+    result['message'] = res['message']
+    result['emittance_norm']  = result['emittance']*betagamma
+
+    if disp is None:
+        result['D'+xax] = res['x'][4]/1E3
+        result['D'+yax] = res['x'][5]/1E3
+    else:
+        result['D'+xax] = disp[0]
+        result['D'+yax] = disp[1]
+    
+    if not silent:
+        message = ('fitted orbit: '+str((result[xax+'0'], result[yax+'0']))+'\n'+
+                   'fitted dispersion: '+str((result['D'+xax], result['D'+yax]))+'\n'+
+                   'fitted emittance: '+str(result['emittance'])+'\n'+
+                   'normalized fitted emittance at '+str(p0)+' GeV/c: '+str(result['emittance_norm'])+'\n'+
+                   'fitted alpha,beta,gamma: '+str([result['alpha'], result['beta'], result['gamma']])+'\n'+
+                   'message: '+result['message']+'\n'+
                    '(Calculated with '+str(result['npart'])+' particles.)')
 
         if save is None:

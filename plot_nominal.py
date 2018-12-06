@@ -73,10 +73,19 @@ if '0' in kind:
         print '\nLoss stats:'
         datproc.lossstats(losses, merge=False, silent=False)
         print 'Beam stats:'
-        datproc.beamstats(losses[losses['tag']=='extracted'], silent=False)
+        emita =datproc.beamstats(losses[losses['tag']=='extracted'], silent=False)
+        print '\nBeam fit (99.99%):'
+        emitb = datproc.get_ellipse(losses[losses['tag']=='extracted'],
+                                    x0=emita['X0'], px0=emita['PX0'],
+                                    alpha0=emita['alpha'], beta0=emita['beta'], silent=False)
     sys.stdout = stdout
 
 if '1' in kind:
+    emita3 = emita.copy()
+    emita5 = emita.copy()
+    emita3['emittance'] = emita['emittance']*9
+    emita5['emittance'] = emita['emittance']*25
+
     # Make loss plots
     datproc.plotter(myloss, xax="TURN", yax="PT", cax='PT', kind='hexbin',
                     ylim=[-0.0025, 0.0020], clim=[-0.0025, 0.0020],
@@ -106,10 +115,18 @@ if '1' in kind:
         lim_pt = [-0.0025, 0.0020]
         lim_x = ap['zsupmid']+np.array([-ap['zsthick']/2, ap['zsthick']+ap['zsex']])
         lim_px = [-0.00195, -0.00135]
-        datproc.plotter(myloss, xax='X', yax='PX', cax='PT',
-                        xlim=lim_x, ylim=lim_px, clim=lim_pt,
-                        xbin=0.0002, ybin=0.000005, log=False,
-                        save=plotfolder+"/losshist_"+name+".png")
+
+        g = datproc.plotter(myloss, xax='X', yax='PX', cax='PT',
+                            xlim=lim_x, ylim=lim_px, clim=lim_pt,
+                            xbin=0.0002, ybin=0.000005, log=False)
+        plt.savefig(plotfolder+"/losshist_"+name+".png")
+        datproc.draw_ellipse(emita, g.ax_joint, **{'color':'darkred','marker':'','linestyle':'-'})
+        datproc.draw_ellipse(emita3, g.ax_joint, **{'color':'darkred','marker':'','linestyle':'--'})
+        datproc.draw_ellipse(emita5, g.ax_joint, **{'color':'darkred','marker':'','linestyle':':'})
+        datproc.draw_ellipse(emitb, g.ax_joint, **{'color':'darkorange','marker':'','linestyle':'-'})
+        plt.savefig(plotfolder+"/losshist_ellipse_"+name+".png")
+        plt.close()
+
         datproc.plotter(myloss, xax='X', yax='PX', cax='PT', kind='hist2d',
                         xlim=lim_x, ylim=lim_px, clim=lim_pt,
                         xbin=0.0002, ybin=0.000005, log=False,
