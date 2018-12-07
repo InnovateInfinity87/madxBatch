@@ -269,12 +269,12 @@ def tune_setup(settings):
 
 def twiss_init(settings):
     if settings.slices is None:
-        line = "WRITE, TABLE=TWISS, FILE='"+settings.datadir+"/twiss/twiss_init.tfs';\n"
+        line = "TWISS;\nWRITE, TABLE=TWISS, FILE='"+settings.datadir+"/twiss/twiss_init.tfs';\n"
     else:
         line = ""
         for i, dpp in enumerate(settings.slices):
             line += slice_setup(str(dpp), settings)
-            line +="WRITE, TABLE=TWISS, FILE='"+settings.datadir+"/twiss/twiss_"+str(i)+".tfs';\n\n"
+            line +="TWISS;\nWRITE, TABLE=TWISS, FILE='"+settings.datadir+"/twiss/twiss_"+str(i)+".tfs';\n\n"
     return line
 
 
