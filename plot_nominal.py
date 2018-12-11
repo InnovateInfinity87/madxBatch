@@ -6,6 +6,7 @@ Script to make nominal plots
 """
 import matplotlib as mpl
 mpl.use('Agg')
+import matplotlib.pyplot as plt
 import numpy as np
 import os
 import sys

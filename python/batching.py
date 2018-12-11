@@ -236,7 +236,14 @@ def tune_setup(settings):
                     'klsdb = klsdb * (1.0+relerr);\n'+
                     'klsda = klsda * (1.0+relerr);\n'+
                     'klsdb = klsdb * (1.0+relerr);\n'+
-                    'klsdc = klsdc * (1.0+relerr);\n')
+                    'klsdc = klsdc * (1.0+relerr);\n\n'+
+
+                    'kqf1 = kqf1_start;\n'
+                    'kqd = kqd_start;\n'
+                    'abserr = relerr*kMBA/4;\n'
+                    'SELECT, FLAG=ERROR, CLEAR;\n'
+                    'SELECT, FLAG=ERROR, PATTERN="MB.*";\n'
+                    'EFCOMP, ORDER=0, DKN={abserr};\n')
     else:
         if settings.ampex:
             line = ('! dpp values provide hacked dynamic bump settings\n'+
