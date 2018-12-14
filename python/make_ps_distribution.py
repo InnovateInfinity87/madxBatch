@@ -38,7 +38,7 @@ def twissinit(twissfile):
     x0 = twiss[variables.index('X')]
     y0 = twiss[variables.index('Y')]
     px0 = twiss[variables.index('PX')]
-    py0 = twiss[variables.index('PX')]
+    py0 = twiss[variables.index('PY')]
 
 
     betx = twiss[variables.index('BETX')]
