@@ -86,9 +86,9 @@ class Settings:
         # knob_x_bump = offx + cx*dpp (millimeter)
         # knob_px_bump = offpx + cpx*dpp  (microrad)
         self.dynamicbump=False
-        self.dynamicbump_offx = 0.0
+        self.dynamicbump_offx = None
         self.dynamicbump_cx = None
-        self.dynamicbump_offpx = 0.0
+        self.dynamicbump_offpx = None
         self.dynamicbump_cpx = None
 
         self.cose = False
@@ -439,6 +439,12 @@ def submit_job(settings):
 
     if settings.dynamicbump_cpx is None:
         settings.dynamicbump_cpx = 0.0 if not settings.ampex else 77.0
+
+    if settings.dynamicbump_offx is None:
+        settings.dynamicbump_offx = 0.0 if not settings.ampex else 0.8
+
+    if settings.dynamicbump_offpx is None:
+        settings.dynamicbump_offpx = 0.0 if not settings.ampex else -34.0
 
     if os.path.exists(settings.datadir):
         settings.datadir = settings.datadir[:-1]+'_/'
