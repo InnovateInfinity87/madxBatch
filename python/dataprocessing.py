@@ -197,6 +197,8 @@ def getlosses(lossfolder, settings=None, lossloc=None, batches=None,
         lossfile = str(batch)+'.tfs'
         try:
             _, losstable = readtfs(lossfolder+'/'+lossfile, usecols=usecols)
+            if not losstable.index.is_unique:
+                print("lossfile for batch "+str(batch)+" contains non-unique particle IDs")
             if lossloc is not None:
                 losstable = losstable.loc[losstable['ELEMENT'] == lossloc]
                 if dropel:
