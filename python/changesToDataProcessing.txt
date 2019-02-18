@@ -1,0 +1,48 @@
+--- dataprocessing3.py	(original)
++++ dataprocessing3.py	(refactored)
+@@ -1,4 +1,4 @@
+-from __future__ import print_function
++
+ from future.utils import iteritems, lrange
+ 
+ import fileinput
+@@ -190,7 +190,7 @@
+     nppb = int(settings['nparperbatch'])
+     if batches is None:
+         nbatches = len(settings['slices'].split(','))*int(settings['nbatches'])
+-        batches = range(nbatches)
++        batches = list(range(nbatches))
+     df = pd.DataFrame()
+     
+     for batch in batches:
+@@ -241,7 +241,7 @@
+     nppb = int(settings['nparperbatch'])
+     if batches is None:
+         nbatches = len(settings['slices'].split(','))*int(settings['nbatches'])
+-        batches = range(nbatches)
++        batches = list(range(nbatches))
+ 
+     def getbatch(batch):
+         untarred = False
+@@ -445,10 +445,10 @@
+     pcm = ax.imshow(alldata.transpose(), cmap=cm, norm=LogNorm(vmin=clim[0], vmax=clim[1]), interpolation='none', aspect='auto')
+     
+     ax.set_xlim(-0.5,len(labels)-0.5)
+-    ax.set_xticks(range(0, len(labels)))
++    ax.set_xticks(list(range(0, len(labels))))
+     ax.set_xticklabels(labels)
+     ax.set_ylim(-0.5,len(scanvals)-0.5)
+-    ax.set_yticks(range(0, len(scanvals)))
++    ax.set_yticks(list(range(0, len(scanvals))))
+     ax.set_yticklabels(scanvals)
+     fig.autofmt_xdate(bottom=0.2, rotation=30, ha='right')
+     fig.colorbar(pcm, extend='min')
+@@ -903,7 +903,7 @@
+ 
+     if not silent:
+         message = str(100*result['extracted'])+' % extracted\t'+str([100*x for x in ci['extracted']])+'\n'
+-        for tag, frac in result.iteritems():
++        for tag, frac in result.items():
+             if tag not in ['extracted', 'other', 'total_loss']:
+                 message += str(100*frac)+' % lost on '+tag+'\t'+str([100*x for x in ci[tag]])+'\n'
+         message += str(100*result['other'])+' % lost elsewhere\t'+str([100*x for x in ci['other']])+'\n'
