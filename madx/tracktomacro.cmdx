@@ -2,10 +2,20 @@ trackto(_particletfs, _savefile): MACRO = {
   OPTION, -INFO, -WARN;
   READMYTABLE, FILE=_particletfs, TABLE=particles;
   trackto_tablen = TABLE(particles, TABLELENGTH);
-  EXEC, trackto_innerfunc(trackto_tablen);
+  IF (static == 1) {EXEC, trackto_innerfunc_tracks(trackto_tablen,_savefile);};
+  IF (static == 1) {EXEC, trackto_innerfunc_mod(trackto_tablen, trackto_tablen);};
+  ELSE {EXEC, trackto_innerfunc(trackto_tablen);};
   WRITE, TABLE=particles, FILE=_savefile;
 };
 
+run_aperture_track(counter): MACRO={
+TRACK, APERTURE, RECLOSS, ONEPASS, FILE = "aperture_track/track_counter";
+        START, X=X, PX=PX, Y=Y, PY=PY, T=T, PT=PT;
+         OBSERVE, PLACE=AP.UP.TPST21760_M;
+        OBSERVE, PLACE=TRACKTO_M;
+      RUN, TRACK_HARMON=0, MAXAPER={0.5,0.05,0.5,0.05,7000,0.1};
+ ENDTRACK;
+}
 
 trackto_innerfunc(_tablen): MACRO = {
   i = 0;
@@ -20,7 +30,11 @@ trackto_innerfunc(_tablen): MACRO = {
       IF (cose==1) {
         EXEC, set_septa(cose);
       };
-
+      IF (static==1) {
+        EXEC, set_septa(static);
+      };
+     
+      !EXEC, run_aperture_track($i);
       TRACK, APERTURE, RECLOSS, ONEPASS;
         START, X=X, PX=PX, Y=Y, PY=PY, T=T, PT=PT;
         RUN, TRACK_HARMON=0, MAXAPER={0.5,0.05,0.5,0.05,7000,0.1};
@@ -30,12 +44,129 @@ trackto_innerfunc(_tablen): MACRO = {
       S = S+trackto_start_s;
       FILL, TABLE=particles, ROW=i;
     };
-    ELSE {
+    ELSE{
       TURN=-1;
       FILL, TABLE=particles, ROW=i;
     };
   };
 };
+
+trackto_innerfunc_mod(_tablen,_trackto_tablen): MACRO = {
+  !SYSTEM, "mkdir aperture_track";
+  select, flag = twiss, clear;
+  select, flag=twiss, column = name, s, RE11, RE12, RE16, RE21, RE22, RE26, APER_1, APER_2;
+  twiss, BETX = 100, BETY = 20, rmatrix = true;
+  write, table = twiss, file = 'RMATRIX.tfs';  
+  i = 0;
+  counter = 0;
+  WHILE (i < _tablen) {
+    i = i+1;
+    SETVARS, TABLE=particles, ROW=i;
+    EXEC, trackto_gettab($i);
+    IF (S<trackto_start_s+1E-7 && S>trackto_start_s-1E-7) {
+      counter = counter + 1; ! Added this counter to fill loss table with losses only at ZS, see COMMMENT below
+      IF (hastrmacro==1) {
+        EXEC, turnmacro(TURN);
+      };
+      IF (cose==1) {
+        EXEC, set_septa(cose);
+      };
+      IF (static==1) {
+        EXEC, set_septa(static);
+      };
+     
+      !EXEC, run_aperture_track($i);
+      TRACK, APERTURE, RECLOSS, ONEPASS;
+      !TRACK, RECLOSS, ONEPASS; ! If requried, turn off aperture
+        START, X=X, PX=PX, Y=Y, PY=PY, T=T, PT=PT;
+        RUN, TRACK_HARMON=0, MAXAPER={0.5,0.05,0.5,0.05,7000,0.1};
+      ENDTRACK;
+
+      SETVARS, TABLE = trackloss, ROW=1;
+      S = S+trackto_start_s;
+      !FILL, TABLE=particles, ROW=i;
+      FILL, TABLE=particles, ROW=counter; ! Counter to fill with particle starting only at the ZS
+    };    
+  };
+  ! Update particles table length to include only tracked particles from ZS
+  SHRINK, TABLE=particles, ROW = counter-_trackto_tablen;
+};
+
+trackto_innerfunc_tracks(_tablen,_savefile2): MACRO = {
+  !SYSTEM, "mkdir aperture_track";
+    
+       select, flag = twiss, clear;
+       select, flag=twiss, column = name, s, RE11, RE12, RE16, RE21, RE22, RE26, APER_1, APER_2;
+       twiss, BETX = 100, BETY = 100, rmatrix = true;
+       write, table = twiss, file = 'RMATRIX.tfs';
+       TRACK, APERTURE, RECLOSS, ONEPASS, ONETABLE;
+       !TRACK, RECLOSS, ONEPASS, ONETABLE; ! If requried turn off aperture
+         i = 0;
+         WHILE (i < _tablen) {
+            i = i+1;
+            SETVARS, TABLE=particles, ROW=i;
+            EXEC, trackto_gettab($i);
+            IF (S<trackto_start_s+1E-7 && S>trackto_start_s-1E-7) {
+                 IF (hastrmacro==1) {
+                   EXEC, turnmacro(TURN);
+                 };
+                 IF (cose==1) {
+                   EXEC, set_septa(cose);
+                 };
+                 IF (static==1) {
+                   EXEC, set_septa(static);
+                 };
+    
+            START, X=X, PX=PX, Y=Y, PY=PY, T=T, PT=PT;
+             };};
+         
+         OBSERVE, PLACE=AP.DO.ZSRB21633;
+         OBSERVE, PLACE=AP.UP.ZSRB21638;
+         OBSERVE, PLACE=AP.DO.ZSRB21638;
+         OBSERVE, PLACE=AP.UP.ZSRB21655;
+         OBSERVE, PLACE=AP.DO.ZSRB21655;
+         OBSERVE, PLACE=AP.UP.ZSRB21671;
+         OBSERVE, PLACE=AP.DO.ZSRB21671;
+         OBSERVE, PLACE=AP.UP.ZSRB21676;
+         OBSERVE, PLACE=AP.DO.ZSRB21676;
+         OBSERVE, PLACE=TCE.21695;
+         OBSERVE, PLACE=QDA.21710..1;
+         OBSERVE, PLACE=QDA.21710..4;
+         OBSERVE, PLACE=OBS_TPST;
+         OBSERVE, PLACE=AP.UP.TPST21760_M;
+         OBSERVE, PLACE=AP.DO.TPST21760_M;
+         OBSERVE, PLACE=AP.UP.MSTRB21774;
+         OBSERVE, PLACE=AP.DO.MSTRB21774;
+         OBSERVE, PLACE=AP.UP.MSTRB21779;
+         OBSERVE, PLACE=AP.DO.MSTRB21779;
+         OBSERVE, PLACE=AP.UP.MSTRB21794;
+         OBSERVE, PLACE=AP.DO.MSTRB21794;
+         OBSERVE, PLACE=OBS_BPCE218;
+         OBSERVE, PLACE=BPCE.21806;
+         OBSERVE, PLACE=OBS_QFA218;    
+         OBSERVE, PLACE=QFA.21810..1;
+         OBSERVE, PLACE=QFA.21810..4;
+         OBSERVE, PLACE=OBS_MSE;
+         OBSERVE, PLACE=AP.UP.MSERB21832;
+         OBSERVE, PLACE=AP.DO.MSERB21832;
+         OBSERVE, PLACE=AP.UP.MSERB21837;
+         OBSERVE, PLACE=AP.DO.MSERB21837;
+         OBSERVE, PLACE=AP.UP.MSERB21852;
+         OBSERVE, PLACE=AP.DO.MSERB21852;
+         OBSERVE, PLACE=AP.UP.MSERB21857;
+         OBSERVE, PLACE=AP.DO.MSERB21857;
+         OBSERVE, PLACE=AP.UP.MSERB21872;
+         OBSERVE, PLACE=AP.DO.MSERB21872;
+         OBSERVE, PLACE=AP.UP.QDACW21910;
+         OBSERVE, PLACE=AP.DO.QDACW21910;
+         OBSERVE, PLACE=TRACKTO_M;
+         RUN, TRACK_HARMON=0, MAXAPER={0.5,0.05,0.5,0.05,7000,0.1}, turns = 1;
+      
+      ENDTRACK;
+       
+      !write, table = trackone, file = "aperture_track/tracks.tfs";
+      write, table = trackone, file = aperture_track/_savefile2;
+   };
 
 
 trackto_gettab(_i): MACRO = {

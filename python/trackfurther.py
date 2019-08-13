@@ -16,7 +16,7 @@ import sys
 import subprocess
 
 locations = {"handover": ["QDA->L/2+0.004724617306961", "QDA.21910"],
-             "zsup": ["0", "AP.UP.ZS21633"], "tpstup": ["0", "AP.UP.TPST21760"],
+             "zsup": ["-0.00000001", "AP.UP.ZS21633"], "tpstup": ["0", "AP.UP.TPST21760"],
              "Q216start": ["-QFA->L/2", "QFA.21610"],
              "Q216": ["0", "QFA.21610"], "Q219": ["0", "QDA.21910"],
              "grid218": ["0", "AP.UP.MSE21857"]}
@@ -31,10 +31,21 @@ def installmarkers(startlocation, endlocation, twisstrack):
     madcode = ("trackfrom_m: MARKER;\n"+
                "trackto_m: MARKER"+ap+";\n\n"+
 
+               "OBS_BPCE218: MARKER;\n"+
+               "OBS_QFA218: MARKER;\n"+
+               "OBS_TPST: MARKER;\n"+
+               "OBS_MSE: MARKER;\n"+
+                           
                "SEQEDIT, SEQUENCE=sps;\n"+
                " FLATTEN;\n"+
                " INSTALL, ELEMENT=trackfrom_m, AT="+startspec[0]+", FROM="+startspec[1]+";\n"+
                " INSTALL, ELEMENT=trackto_m, AT="+endspec[0]+", FROM="+endspec[1]+";\n"+
+               " INSTALL, ELEMENT=OBS_TPST, AT=-2.52/2 - 1e-6, FROM=TPST.21760;\n"+
+               " INSTALL, ELEMENT=OBS_BPCE218, AT=-0.4/2 - 1e-6, FROM=BPCE.21806;\n"+
+               " INSTALL, ELEMENT=OBS_QFA218, AT=-3.791/2 - 1e-6, FROM=QFA.21810;\n"+
+               " INSTALL, ELEMENT=OBS_MSE, AT=-2.38/2 - 1e-6, FROM=MSE.21832;\n"+         
+
+               
                " FLATTEN;\n"+
                "ENDEDIT;\n\n"+
 
@@ -78,8 +89,9 @@ def tracklossto(location, lossfolder, startpoint, cose=False,
 
     if not os.path.exists(savefolder):
         os.makedirs(savefolder)
-    os.chdir(savefolder)
-
+        os.makedirs(savefolder + '/aperture_track')
+    os.chdir(savefolder) 
+            	
     # Identify and re-use code to build the initial sequence
     # (Expects default format of madxBatch jobs)
     with open(jobfile, 'r') as infile:
@@ -145,10 +157,27 @@ def tracklossto(location, lossfolder, startpoint, cose=False,
         outf.write("hastrmacro = "+("1" if hastrmacro else "0")+";\n")
         outf.write("backtrack = "+("1" if backtrack else "0")+";\n\n")
 
-        if cose and not static:
+        #if cose and not static:
+        #    outf.write('cose = 1;\n')
+        #    outf.write("CALL, FILE='"+sloexcodedir
+        #               +"/madxBatch/madx/setseptamacro.cmdx';\n\n")
+        
+        if cose:
             outf.write('cose = 1;\n')
             outf.write("CALL, FILE='"+sloexcodedir
                        +"/madxBatch/madx/setseptamacro.cmdx';\n\n")
+        else:
+            outf.write('cose = 0;\n')
+
+        if static:
+            outf.write('static = 1;\n')
+            outf.write("CALL, FILE='"+sloexcodedir
+                       +"/madxBatch/madx/setseptamacro_ind.cmdx';\n\n")
+        else:
+            outf.write('static = 0;\n')
+
+        if cose and static:
+	    print '*** Check: we updated septum strengths with set_septa for static ***' 
 
         if twisstrack:
             outf.write("CALL, FILE='"+sloexcodedir
@@ -168,6 +197,7 @@ def tracklossto(location, lossfolder, startpoint, cose=False,
         else:
             outf.write("CALL, FILE='"+sloexcodedir
                           +"/madxBatch/madx/tracktomacro.cmdx';\n\n")
+            #outf.write("EXEC, trackto('"+lossfolder+"/"+str(batch)+".tfs', "+str(batch)+".tfs);\n\n")
             outf.write("EXEC, trackto('"+lossfolder+"/"+str(batch)+".tfs', '"+str(batch)+".tfs');\n\n")
         
         outf.flush()

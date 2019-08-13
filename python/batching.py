@@ -305,8 +305,9 @@ def track_lin(k,data,settings):
                  ' SELECT, FLAG=ERROR, CLEAR;\n'+
                  ' SELECT, FLAG=ERROR, PATTERN="MB.*";\n'+
                  ' EFCOMP, ORDER=0, DKN={abserr};\n')
-
-        #line += '\n knob_extr_bump_turn = knob_extr_bump*(1+relerr);\n'+
+        
+        # Caution! Foir a COSE implementation of the LSS2 extraction bump
+        #line += ('\n knob_extr_bump_turn = knob_extr_bump*(1+relerr);\n'+
         #        ' EXEC, lss2bump(knob_extr_bump_turn, 0, 0);\n')
              
     if settings.dynamicbump:
