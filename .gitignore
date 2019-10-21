@@ -1,3 +1,4 @@
 *.pyc
 .csync_journal.db
 .owncloudsync.log
+.DS_Store
