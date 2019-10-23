@@ -203,87 +203,111 @@ def customize_tracker(filename,searchExp,replaceExp):
 
 
 def res_setup(settings): 
-    if settings.ampex:
-        line = ('dqh_norm = 0.0;\n'+
-                "CALL, FILE='pyHOMEDIR/madx/op_matchtunechroma_h.cmdx';\n\n"+
 
-                '! qh values provide actual tune sweep\n'+
-                'qh_start = 26.6583;\n'
-                'qh_end = 26.6673;')
-    else:
-        line = "CALL, FILE='pyHOMEDIR/madx/op_matchtune_h.cmdx';"
+    if settings.machine=='SPS':
+        if settings.ampex:
+            line = ('dqh_norm = 0.0;\n'+
+                    "CALL, FILE='pyHOMEDIR/madx/op_matchtunechroma_h.cmdx';\n\n"+
+
+                    '! qh values provide actual tune sweep\n'+
+                    'qh_start = 26.6583;\n'
+                    'qh_end = 26.6673;')
+        else:
+            line = "CALL, FILE='pyHOMEDIR/madx/op_matchtune_h.cmdx';"
+
+    elif settings.machine=='MA':
+        line = ("CALL, FILE='pyHOMEDIR/madx/design_matchtune_h.cmdx';\n\n")
+
+
     return line
 
-def tune_setup(settings): 
-    if settings.cose:
-        if settings.ampex:
-            print 'ERROR: COSE and amplitude extraction are incompatible.'
-            exit()
-        if settings.dynamicbump:
-            print 'ERROR: COSE and dynamic bump are incompatible in this version of the code.'
-            exit()
+def tune_setup(settings):
+    
+    if settings.machine=='SPS': 
+        if settings.cose:
+            if settings.ampex:
+                print 'ERROR: COSE and amplitude extraction are incompatible.'
+                exit()
+            if settings.dynamicbump:
+                print 'ERROR: COSE and dynamic bump are incompatible in this version of the code.'
+                exit()
+            else:
+                line = ('relerr := dpp_turn/(1+dpp_turn);\n'+ # Let's not fuss about dpp vs PT for now...
+
+                        'qh_set_end = qh_setvalue;\n'+
+                        'dpp_turn = dpp_end;\n'+
+                        'kqf1_end = kqf1 * (1.0+relerr);\n'+
+                        'kqd_end = kqd * (1.0+relerr);\n\n'+
+
+                        'qh_set_start = qh_setvalue;\n'+
+                        'dpp_turn = dpp_start;\n'+
+                        'kqf1_start = kqf1 * (1.0+relerr);\n'+
+                        'kqd_start = kqd * (1.0+relerr);\n'+
+
+                        'klse10602 := extr_sext * knob_extr_sext * (1.0+relerr);\n'+
+                        'klse22402 := extr_sext * knob_extr_sext * (1.0+relerr);\n'+
+                        'klse40602 := extr_sext * knob_extr_sext * (1.0+relerr);\n'+
+                        'klse52402 := extr_sext * knob_extr_sext * (1.0+relerr);\n'+
+
+                        'klsda_ref = klsda;\n'+
+                        'klsdb_ref = klsdb;\n'+
+                        'klsfa_ref = klsfa;\n'+
+                        'klsfb_ref = klsfb;\n'+
+                        'klsfc_ref = klsfc;\n'+
+
+                        'klsda = klsda * (1.0+relerr);\n'+
+                        'klsdb = klsdb * (1.0+relerr);\n'+
+                        'klsda = klsda * (1.0+relerr);\n'+
+                        'klsdb = klsdb * (1.0+relerr);\n'+
+                        'klsdc = klsdc * (1.0+relerr);\n\n'+
+
+                        'kqf1 = kqf1_start;\n'
+                        'kqd = kqd_start;\n'
+                        'abserr = relerr*kMBA/4;\n'
+                        'SELECT, FLAG=ERROR, CLEAR;\n'
+                        'SELECT, FLAG=ERROR, PATTERN="MB.*";\n'
+                        'EFCOMP, ORDER=0, DKN={abserr};\n')
         else:
-            line = ('relerr := dpp_turn/(1+dpp_turn);\n'+ # Let's not fuss about dpp vs PT for now...
+            if settings.ampex:
+                line = ('! dpp values provide hacked dynamic bump settings\n'+
+                        'dpp_start = -1;\n'+
+                        'dpp_end = 1;\n\n')
+            else:
+                line = ''
+            line += 'qh = qh_end;\n'
+            if settings.dynamicbump:
+                line += ('temp_bf_cx = '+str(settings.dynamicbump_offx)+"+("+str(settings.dynamicbump_cx)+')*dpp_end;\n'+
+                         'temp_bf_cpx = '+str(settings.dynamicbump_offpx)+"+("+str(settings.dynamicbump_cpx)+')*dpp_end;\n'+
+                         'EXEC, lss2bump(knob_extr_bump, temp_bf_cx, temp_bf_cpx);\n')
+            line += ("CALL, FILE='pyHOMEDIR/madx/op_matchtune_h.cmdx';\n"+
+                     'qh_set_end = qh_setvalue;\n'+
+                     'kqf1_end = kqf1;\n'+
+                     'kqd_end = kqd;\n\n'+
 
-                    'qh_set_end = qh_setvalue;\n'+
-                    'dpp_turn = dpp_end;\n'+
-                    'kqf1_end = kqf1 * (1.0+relerr);\n'+
-                    'kqd_end = kqd * (1.0+relerr);\n\n'+
+                     'qh = qh_start;\n')
+            if settings.dynamicbump:
+                line += ('temp_bf_cx = '+str(settings.dynamicbump_offx)+"+("+str(settings.dynamicbump_cx)+')*dpp_start;\n'+
+                         'temp_bf_cpx = '+str(settings.dynamicbump_offpx)+"+("+str(settings.dynamicbump_cpx)+')*dpp_start;\n'+
+                         'EXEC, lss2bump(knob_extr_bump, temp_bf_cx, temp_bf_cpx);\n')
+            line += ("CALL, FILE='pyHOMEDIR/madx/op_matchtune_h.cmdx';\n"+
+                     'qh_set_start = qh_setvalue;\n'+
+                     'kqf1_start = kqf1;\n'+
+                     'kqd_start = kqd;\n')
 
-                    'qh_set_start = qh_setvalue;\n'+
-                    'dpp_turn = dpp_start;\n'+
-                    'kqf1_start = kqf1 * (1.0+relerr);\n'+
-                    'kqd_start = kqd * (1.0+relerr);\n'+
-
-                    'klse10602 := extr_sext * knob_extr_sext * (1.0+relerr);\n'+
-                    'klse22402 := extr_sext * knob_extr_sext * (1.0+relerr);\n'+
-                    'klse40602 := extr_sext * knob_extr_sext * (1.0+relerr);\n'+
-                    'klse52402 := extr_sext * knob_extr_sext * (1.0+relerr);\n'+
-
-                    'klsda_ref = klsda;\n'+
-                    'klsdb_ref = klsdb;\n'+
-                    'klsfa_ref = klsfa;\n'+
-                    'klsfb_ref = klsfb;\n'+
-                    'klsfc_ref = klsfc;\n'+
-
-                    'klsda = klsda * (1.0+relerr);\n'+
-                    'klsdb = klsdb * (1.0+relerr);\n'+
-                    'klsda = klsda * (1.0+relerr);\n'+
-                    'klsdb = klsdb * (1.0+relerr);\n'+
-                    'klsdc = klsdc * (1.0+relerr);\n\n'+
-
-                    'kqf1 = kqf1_start;\n'
-                    'kqd = kqd_start;\n'
-                    'abserr = relerr*kMBA/4;\n'
-                    'SELECT, FLAG=ERROR, CLEAR;\n'
-                    'SELECT, FLAG=ERROR, PATTERN="MB.*";\n'
-                    'EFCOMP, ORDER=0, DKN={abserr};\n')
-    else:
-        if settings.ampex:
-            line = ('! dpp values provide hacked dynamic bump settings\n'+
-                    'dpp_start = -1;\n'+
-                    'dpp_end = 1;\n\n')
-        else:
-            line = ''
+    if settings.machine=='MA':
+        line = ''
         line += 'qh = qh_end;\n'
-        if settings.dynamicbump:
-            line += ('temp_bf_cx = '+str(settings.dynamicbump_offx)+"+("+str(settings.dynamicbump_cx)+')*dpp_end;\n'+
-                     'temp_bf_cpx = '+str(settings.dynamicbump_offpx)+"+("+str(settings.dynamicbump_cpx)+')*dpp_end;\n'+
-                     'EXEC, lss2bump(knob_extr_bump, temp_bf_cx, temp_bf_cpx);\n')
-        line += ("CALL, FILE='pyHOMEDIR/madx/op_matchtune_h.cmdx';\n"+
-                 'qh_set_end = qh_setvalue;\n'+
-                 'kqf1_end = kqf1;\n'+
-                 'kqd_end = kqd;\n\n'+
+        line += ("CALL, FILE='pyHOMEDIR/madx/design_matchtune_h.cmdx';\n"+
+                         '!qh_set_end = qh_setvalue;\n'+
+                         'mqf1k1_end = mqf1k1;\n'+ #Only vary 1 family (ignore mqf2k1)
+                         'mqdk1_end = mqdk1;\n\n'+
 
-                 'qh = qh_start;\n')
-        if settings.dynamicbump:
-            line += ('temp_bf_cx = '+str(settings.dynamicbump_offx)+"+("+str(settings.dynamicbump_cx)+')*dpp_start;\n'+
-                     'temp_bf_cpx = '+str(settings.dynamicbump_offpx)+"+("+str(settings.dynamicbump_cpx)+')*dpp_start;\n'+
-                     'EXEC, lss2bump(knob_extr_bump, temp_bf_cx, temp_bf_cpx);\n')
-        line += ("CALL, FILE='pyHOMEDIR/madx/op_matchtune_h.cmdx';\n"+
-                 'qh_set_start = qh_setvalue;\n'+
-                 'kqf1_start = kqf1;\n'+
-                 'kqd_start = kqd;\n')
+                         'qh = qh_start;\n')
+
+        line += ("CALL, FILE='pyHOMEDIR/madx/design_matchtune_h.cmdx';\n"+
+                 '!qh_set_start = qh_setvalue;\n'+
+                 'mqf1k1_start = mqf1k1;\n'+
+                 'mqdk1_start = mqdk1;\n') #TODO: do it with linear interpolation
 
     return line
 
@@ -334,19 +358,33 @@ def track_lin(k,data,settings):
 
     elif settings.machine == 'MA': #PABLO
 
-        line = ("SYSTEM, 'mkdir "+str(k)+"';\n\n"+
-                'tr$macro(trn) : macro = {\n'+
-                '!printf text="Turn number trn (tr$turni = %g)", value = tr$turni ;\n'+
-                'IF (trn <= rampturns) {\n'+
-                'mxrk2 := MXRtarget * (trn / rampturns);    // ramp resonant sextupole\n'+
+        line = ('c_f = (mqf1k1_end-mqf1k1_start)/('+str(settings.nturns)+'-minturns-1);\n'+
+                'c_d = (mqdk1_end-mqdk1_start)/('+str(settings.nturns)+'-minturns-1);\n'+
+                'c_dpp = (dpp_end-dpp_start)/('+str(settings.nturns)+'-minturns-1);\n\n'+
+            
+                "SYSTEM, 'mkdir "+str(k)+"';\n\n")
+
+        line += ('tr$macro(turn) : macro = {\n'+ #Kept as trn because otherwise it will mess with rampTURNs
+                'IF (turn <= ramptrns) {\n'+
+                'mxrk2 = knob_extr_sext*extr_sext*(turn / ramptrns);\n'+
+                'printf text="MIN1 = %g", value = MR04000MATstr;\n'+
+                'printf text="MXR = %g", value = mxrk2;\n'+
                 '}\n'+
-                'ELSEIF (trn > rampturns && trn <= minturns) {\n'+
-                'mxrk2 := MXRtarget;        // filament out beam with MXR powered\n'+
+                'ELSEIF (turn > ramptrns && turn <= mintrns) {\n'+
+                'mxrk2 = knob_extr_sext*extr_sext;  // filament out beam with MXR powered\n'+
                 '}\n'+
                 'ELSE {\n'+
-                'mxrk2 := MXRtarget;    // ramp betatron core\n'+
-                'MR04000MATstr := myMIN;\n'+
-                '}\n')
+                'mxrk2 = knob_extr_sext*extr_sext;\n')
+
+        if settings.betatron:
+            line+=('MR04000MATstr = myMIN;\n')
+
+        else:
+            line+=('mqf1k1 = mqf1k1_start + c_f*(turn-1-mintrns);\n'+
+                 ' kqd = mqdk1_start + c_d*(turn-1-mintrns);\n'+
+                 ' dpp_turn = dpp_start + c_dpp*(turn-1-mintrns);\n')
+
+        line+=('}\n')
 
     line += "};\n\n"
 
@@ -365,9 +403,13 @@ def track_lin(k,data,settings):
                        "T = "+str(0)+", "+
                        "PT = "+str(data[4][i])+";\n")
     for place in settings.elements:
-        line += " OBSERVE, PLACE = "+place+';\n';
+        line += " OBSERVE, PLACE = "+place+';\n'
+    # line += (" RUN, TURNS="+str(settings.nturns)+", "+
+    #              "MAXAPER={0.5,0.05,0.5,0.05,"+str(0.03*settings.nturns)+",0.1}, "+
+    #              "FFILE="+str(settings.ffile)+";\n\n"+ TODO: Particles getting lost because of time too big
+
     line += (" RUN, TURNS="+str(settings.nturns)+", "+
-                 "MAXAPER={0.5,0.05,0.5,0.05,"+str(0.03*settings.nturns)+",0.1}, "+
+            "MAXAPER={0.5,0.05,0.5,0.05,1000000,0.1}, "+ #TODO; work-around maxaper in T?
                  "FFILE="+str(settings.ffile)+";\n\n"+ 
 
              "ENDTRACK;\n"+
