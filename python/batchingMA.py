@@ -263,7 +263,7 @@ def tune_setup(settings):
 
                         'kqf1 = kqf1_start;\n'
                         'kqd = kqd_start;\n'
-                        'abserr = relerr*kMBA/4;\n'
+                        'abserr = relerr*kMBA/4;\n' #Note: divided by 4 because dipoles are sliced in 4
                         'SELECT, FLAG=ERROR, CLEAR;\n'
                         'SELECT, FLAG=ERROR, PATTERN="MB.*";\n'
                         'EFCOMP, ORDER=0, DKN={abserr};\n')
@@ -294,20 +294,73 @@ def tune_setup(settings):
                      'kqf1_start = kqf1;\n'+
                      'kqd_start = kqd;\n')
 
-    if settings.machine=='MA':
-        line = ''
-        line += 'qh = qh_end;\n'
-        line += ("CALL, FILE='pyHOMEDIR/madx/design_matchtune_h.cmdx';\n"+
-                         '!qh_set_end = qh_setvalue;\n'+
-                         'mqf1k1_end = mqf1k1;\n'+ #Only vary 1 family (ignore mqf2k1)
-                         'mqdk1_end = mqdk1;\n\n'+
+    elif settings.machine=='MA':
+        if settings.cose:
+            if settings.ampex:
+                print 'ERROR: COSE and amplitude extraction are incompatible.'
+                exit()
+            if settings.dynamicbump:
+                print 'ERROR: COSE and dynamic bump are incompatible in this version of the code.'
+                exit()
+            else:
+                line = ('relerr := dpp_turn/(1+dpp_turn);\n'+ # Let's not fuss about dpp vs PT for now...
 
-                         'qh = qh_start;\n')
+                        'qh_set_end = qh_setvalue;\n'+
+                        'dpp_turn = dpp_end;\n'+
+                        'mqf1k1_end = mqf1k1 * (1.0+relerr);\n'+
+                        'mqf2k1_end = mqf2k1 * (1.0+relerr);\n'+
+                        'mqdk1_end = mqdk1 * (1.0+relerr);\n\n'+
 
-        line += ("CALL, FILE='pyHOMEDIR/madx/design_matchtune_h.cmdx';\n"+
-                 '!qh_set_start = qh_setvalue;\n'+
-                 'mqf1k1_start = mqf1k1;\n'+
-                 'mqdk1_start = mqdk1;\n') #TODO: do it with linear interpolation
+                        'qh_set_start = qh_setvalue;\n'+
+                        'dpp_turn = dpp_start;\n'+
+                        'mqf1k1_start = mqf1k1 * (1.0+relerr);\n'+
+                        'mqf2k1_start = mqf2k1 * (1.0+relerr);\n'+
+                        'mqdk1_start = mqdk1 * (1.0+relerr);\n'+
+
+                        #TODO: just ramping linear magnets
+
+                        'mxrk2 := extr_sext * knob_extr_sext * (1.0+relerr);\n'+
+                        # 'klse22402 := extr_sext * knob_extr_sext * (1.0+relerr);\n'+
+                        # 'klse40602 := extr_sext * knob_extr_sext * (1.0+relerr);\n'+
+                        # 'klse52402 := extr_sext * knob_extr_sext * (1.0+relerr);\n'+
+
+
+                        'mxfk2_ref = mxfk2;\n'+
+                        'mxdk2_ref = mxdk2;\n'+
+                        # 'klsfa_ref = klsfa;\n'+
+                        # 'klsfb_ref = klsfb;\n'+
+                        # 'klsfc_ref = klsfc;\n'+
+
+                         'mxfk2 = mxfk2 * (1.0+relerr);\n'+
+                         'mxdk2 = mxdk2 * (1.0+relerr);\n'+
+                        # 'klsda = klsda * (1.0+relerr);\n'+
+                        # 'klsdb = klsdb * (1.0+relerr);\n'+
+                        # 'klsdc = klsdc * (1.0+relerr);\n\n'+
+
+                        'mqf1k1 = mqf1k1_start;\n'+
+                        'mqf2k1 = mqf2k1_start;\n'+
+                        'mqdk1 = mqdk1_start;\n'+
+                        'abserr = relerr*(-22.5*pi/180)/2.0;\n'+
+                        'SELECT, FLAG=ERROR, CLEAR;\n'+
+                        'SELECT, FLAG=ERROR, PATTERN="MB.*";\n'+
+                        'EFCOMP, ORDER=0, DKN={abserr};\n')
+
+        else:
+            line = ''
+            line += 'qh = qh_end;\n'
+            line += ("CALL, FILE='pyHOMEDIR/madx/design_matchtune_h.cmdx';\n"+
+                             '!qh_set_end = qh_setvalue;\n'+
+                             'mqf1k1_end = mqf1k1;\n'+
+                             'mqf2k1_end = mqf2k1;\n'+  
+                             'mqdk1_end = mqdk1;\n\n'+
+
+                             'qh = qh_start;\n')
+
+            line += ("CALL, FILE='pyHOMEDIR/madx/design_matchtune_h.cmdx';\n"+
+                     '!qh_set_start = qh_setvalue;\n'+
+                     'mqf1k1_start = mqf1k1;\n'+
+                     'mqf2k1_start = mqf2k1;\n'+
+                     'mqdk1_start = mqdk1;\n') #TODO: do it with linear interpolation
 
     return line
 
@@ -358,31 +411,43 @@ def track_lin(k,data,settings):
 
     elif settings.machine == 'MA': #PABLO
 
-        line = ('c_f = (mqf1k1_end-mqf1k1_start)/('+str(settings.nturns)+'-minturns-1);\n'+
+        line = ('c_f1 = (mqf1k1_end-mqf1k1_start)/('+str(settings.nturns)+'-minturns-1);\n'+
+                'c_f2 = (mqf2k1_end-mqf2k1_start)/('+str(settings.nturns)+'-minturns-1);\n'+
                 'c_d = (mqdk1_end-mqdk1_start)/('+str(settings.nturns)+'-minturns-1);\n'+
                 'c_dpp = (dpp_end-dpp_start)/('+str(settings.nturns)+'-minturns-1);\n\n'+
             
                 "SYSTEM, 'mkdir "+str(k)+"';\n\n")
 
-        line += ('tr$macro(turn) : macro = {\n'+ #Kept as trn because otherwise it will mess with rampTURNs
+        line += ('tr$macro(turn) : macro = {\n'+ 
                 'IF (turn <= ramptrns) {\n'+
-                'mxrk2 = knob_extr_sext*extr_sext*(turn / ramptrns);\n'+
+                'knob_extr_sext = knob_extr_sext*(turn / ramptrns);\n'+
                 'printf text="MIN1 = %g", value = MR04000MATstr;\n'+
                 'printf text="MXR = %g", value = mxrk2;\n'+
                 '}\n'+
                 'ELSEIF (turn > ramptrns && turn <= mintrns) {\n'+
-                'mxrk2 = knob_extr_sext*extr_sext;  // filament out beam with MXR powered\n'+
+                'knob_extr_sext = knob_extr_sext_val;  // filament out beam with MXR powered\n'+
                 '}\n'+
                 'ELSE {\n'+
-                'mxrk2 = knob_extr_sext*extr_sext;\n')
+                'knob_extr_sext = knob_extr_sext_val;\n')
 
         if settings.betatron:
             line+=('MR04000MATstr = myMIN;\n')
 
         else:
-            line+=('mqf1k1 = mqf1k1_start + c_f*(turn-1-mintrns);\n'+
-                 ' kqd = mqdk1_start + c_d*(turn-1-mintrns);\n'+
-                 ' dpp_turn = dpp_start + c_dpp*(turn-1-mintrns);\n')
+            line+=('mqf1k1 = mqf1k1_start + c_f1*(turn-1-mintrns);\n'+
+                 'mqf2k1 = mqf2k1_start + c_f2*(turn-1-mintrns);\n'+
+                 ' mqdk1 = mqdk1_start + c_d*(turn-1-mintrns);\n'+
+                 ' dpp_turn = dpp_start + c_dpp*(turn-1-mintrns);\n'+
+                 'printf text="dpp_turn = %g", value = dpp_turn;\n')
+
+            if settings.cose:
+                line += (' relerr = dpp_turn/(1+dpp_turn);\n'+ # Let's not fuss about dpp vs PT for now...
+
+                     'abserr = relerr*(-22.5*pi/180)/2.0;\n'+
+                     'printf text="abserr = %g", value = abserr;\n'+
+                     ' SELECT, FLAG=ERROR, CLEAR;\n'+
+                     ' SELECT, FLAG=ERROR, PATTERN="MB.*";\n'+
+                     ' EFCOMP, ORDER=0, DKN={abserr};\n')
 
         line+=('}\n')
 
@@ -428,6 +493,8 @@ def track_lin(k,data,settings):
         line+="WRITE, TABLE = trackloss, FILE = 'losses.tfs';\n\n"
 
     line += "SYSTEM, 'tar -czvf tracks.tar.gz "+str(k)+"';"
+    line+= 'SELECT, FLAG=ERROR, FULL;\n'   
+    line+= 'ESAVE, FILE="/Users/Pablo/cernbox/errors_pablo.tfs";'
 
     return line
 
