@@ -255,11 +255,11 @@ def tune_setup(settings):
                         'klsfb_ref = klsfb;\n'+
                         'klsfc_ref = klsfc;\n'+
 
-                        'klsda = klsda * (1.0+relerr);\n'+
-                        'klsdb = klsdb * (1.0+relerr);\n'+
-                        'klsda = klsda * (1.0+relerr);\n'+
-                        'klsdb = klsdb * (1.0+relerr);\n'+
-                        'klsdc = klsdc * (1.0+relerr);\n\n'+
+                        'klsda := klsda * (1.0+relerr);\n'+
+                        'klsdb := klsdb * (1.0+relerr);\n'+
+                        'klsda := klsda * (1.0+relerr);\n'+
+                        'klsdb := klsdb * (1.0+relerr);\n'+
+                        'klsdc := klsdc * (1.0+relerr);\n\n'+
 
                         'kqf1 = kqf1_start;\n'
                         'kqd = kqd_start;\n'
@@ -317,30 +317,20 @@ def tune_setup(settings):
                         'mqf2k1_start = mqf2k1 * (1.0+relerr);\n'+
                         'mqdk1_start = mqdk1 * (1.0+relerr);\n'+
 
-                        #TODO: just ramping linear magnets
 
                         'mxrk2 := extr_sext * knob_extr_sext * (1.0+relerr);\n'+
-                        # 'klse22402 := extr_sext * knob_extr_sext * (1.0+relerr);\n'+
-                        # 'klse40602 := extr_sext * knob_extr_sext * (1.0+relerr);\n'+
-                        # 'klse52402 := extr_sext * knob_extr_sext * (1.0+relerr);\n'+
 
 
                         'mxfk2_ref = mxfk2;\n'+
                         'mxdk2_ref = mxdk2;\n'+
-                        # 'klsfa_ref = klsfa;\n'+
-                        # 'klsfb_ref = klsfb;\n'+
-                        # 'klsfc_ref = klsfc;\n'+
 
-                         'mxfk2 = mxfk2 * (1.0+relerr);\n'+
-                         'mxdk2 = mxdk2 * (1.0+relerr);\n'+
-                        # 'klsda = klsda * (1.0+relerr);\n'+
-                        # 'klsdb = klsdb * (1.0+relerr);\n'+
-                        # 'klsdc = klsdc * (1.0+relerr);\n\n'+
+                         'mxfk2 := mxfk2_ref * (1.0+relerr);\n'+
+                         'mxdk2 := mxdk2_ref * (1.0+relerr);\n'+
 
                         'mqf1k1 = mqf1k1_start;\n'+
                         'mqf2k1 = mqf2k1_start;\n'+
                         'mqdk1 = mqdk1_start;\n'+
-                        'abserr = relerr*(-22.5*pi/180)/2.0;\n'+
+                        'abserr = relerr*(-22.5*pi/180)/100;\n'+
                         'SELECT, FLAG=ERROR, CLEAR;\n'+
                         'SELECT, FLAG=ERROR, PATTERN="MB.*";\n'+
                         'EFCOMP, ORDER=0, DKN={abserr};\n')
@@ -360,7 +350,7 @@ def tune_setup(settings):
                      '!qh_set_start = qh_setvalue;\n'+
                      'mqf1k1_start = mqf1k1;\n'+
                      'mqf2k1_start = mqf2k1;\n'+
-                     'mqdk1_start = mqdk1;\n') #TODO: do it with linear interpolation
+                     'mqdk1_start = mqdk1;\n') #TODO: do it with linear interpolation instead of match
 
     return line
 
@@ -415,12 +405,21 @@ def track_lin(k,data,settings):
                 'c_f2 = (mqf2k1_end-mqf2k1_start)/('+str(settings.nturns)+'-minturns-1);\n'+
                 'c_d = (mqdk1_end-mqdk1_start)/('+str(settings.nturns)+'-minturns-1);\n'+
                 'c_dpp = (dpp_end-dpp_start)/('+str(settings.nturns)+'-minturns-1);\n\n'+
+
+                #Initialize streghts
+
+                'mqf1k1 = mqf1k1_start;\n'+
+                'mqf2k1 = mqf2k1_start;\n'+
+                'mqdk1 = mqdk1_start;\n'+
+                'dpp_turn = dpp_start;\n'+
             
                 "SYSTEM, 'mkdir "+str(k)+"';\n\n")
 
+        #Ramp res sext:
+
         line += ('tr$macro(turn) : macro = {\n'+ 
                 'IF (turn <= ramptrns) {\n'+
-                'knob_extr_sext = knob_extr_sext*(turn / ramptrns);\n'+
+                'knob_extr_sext = knob_extr_sext_val*(turn / ramptrns);\n'+
                 'printf text="MIN1 = %g", value = MR04000MATstr;\n'+
                 'printf text="MXR = %g", value = mxrk2;\n'+
                 '}\n'+
@@ -437,13 +436,12 @@ def track_lin(k,data,settings):
             line+=('mqf1k1 = mqf1k1_start + c_f1*(turn-1-mintrns);\n'+
                  'mqf2k1 = mqf2k1_start + c_f2*(turn-1-mintrns);\n'+
                  ' mqdk1 = mqdk1_start + c_d*(turn-1-mintrns);\n'+
-                 ' dpp_turn = dpp_start + c_dpp*(turn-1-mintrns);\n'+
-                 'printf text="dpp_turn = %g", value = dpp_turn;\n')
+                 ' dpp_turn = dpp_start + c_dpp*(turn-1-mintrns);\n')
 
             if settings.cose:
                 line += (' relerr = dpp_turn/(1+dpp_turn);\n'+ # Let's not fuss about dpp vs PT for now...
 
-                     'abserr = relerr*(-22.5*pi/180)/2.0;\n'+
+                     'abserr = relerr*(-22.5*pi/180)/100;\n'+
                      'printf text="abserr = %g", value = abserr;\n'+
                      ' SELECT, FLAG=ERROR, CLEAR;\n'+
                      ' SELECT, FLAG=ERROR, PATTERN="MB.*";\n'+
