@@ -14,9 +14,6 @@ Changes (indicated with #PABLO comment):
     -added MA folder with input files
 
 NOTE: everything should be backwards compatible!
-
-Example script for MA betatron extraction can be found in:
-/afs/cern.ch/project/sloex/code/personal/paarruti/MA_betatron_nominal.py
 """
 
 from version import __version__
@@ -330,7 +327,7 @@ def tune_setup(settings):
                         'mqf1k1 = mqf1k1_start;\n'+
                         'mqf2k1 = mqf2k1_start;\n'+
                         'mqdk1 = mqdk1_start;\n'+
-                        'abserr = relerr*(-22.5*pi/180)/100;\n'+
+                        'abserr = relerr*(-22.5*pi/180);\n'+
                         'SELECT, FLAG=ERROR, CLEAR;\n'+
                         'SELECT, FLAG=ERROR, PATTERN="MB.*";\n'+
                         'EFCOMP, ORDER=0, DKN={abserr};\n')
@@ -401,10 +398,10 @@ def track_lin(k,data,settings):
 
     elif settings.machine == 'MA': #PABLO
 
-        line = ('c_f1 = (mqf1k1_end-mqf1k1_start)/('+str(settings.nturns)+'-minturns-1);\n'+
-                'c_f2 = (mqf2k1_end-mqf2k1_start)/('+str(settings.nturns)+'-minturns-1);\n'+
-                'c_d = (mqdk1_end-mqdk1_start)/('+str(settings.nturns)+'-minturns-1);\n'+
-                'c_dpp = (dpp_end-dpp_start)/('+str(settings.nturns)+'-minturns-1);\n\n'+
+        line = ('c_f1 = (mqf1k1_end-mqf1k1_start)/('+str(settings.nturns)+'-mintrns-1);\n'+
+                'c_f2 = (mqf2k1_end-mqf2k1_start)/('+str(settings.nturns)+'-mintrns-1);\n'+
+                'c_d = (mqdk1_end-mqdk1_start)/('+str(settings.nturns)+'-mintrns-1);\n'+
+                'c_dpp = (dpp_end-dpp_start)/('+str(settings.nturns)+'-mintrns-1);\n\n'+
 
                 #Initialize streghts
 
@@ -441,7 +438,7 @@ def track_lin(k,data,settings):
             if settings.cose:
                 line += (' relerr = dpp_turn/(1+dpp_turn);\n'+ # Let's not fuss about dpp vs PT for now...
 
-                     'abserr = relerr*(-22.5*pi/180)/100;\n'+
+                     'abserr = relerr*(-22.5*pi/180);\n'+
                      'printf text="abserr = %g", value = abserr;\n'+
                      ' SELECT, FLAG=ERROR, CLEAR;\n'+
                      ' SELECT, FLAG=ERROR, PATTERN="MB.*";\n'+
